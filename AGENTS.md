@@ -26,5 +26,6 @@ snapshot verification, and Docker health checks.
 ## Model guidance
 
 Use the model matrix in the active `specs/*/plan.md`. As of 2026-09-08, prefer
-`gpt-5-6-luna-high` for UI architecture, `gpt-5-3-codex-high` for implementation,
-`claude-opus-5-high` for auth/accessibility review, and `swe-1-7` for bounded fixes.
+`gpt-5-6-luna-high` for UI architecture, `gpt-5-6-sol-high` for implementation,
+`gpt-5-6-terra-high` for auth/accessibility review, `glm-5-3-max` for long-context
+analysis, `kimi-k3-max` only for explicit cross-repo escalation, and `swe-1-7` for bounded fixes.
