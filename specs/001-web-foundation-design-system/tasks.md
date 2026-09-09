@@ -15,10 +15,10 @@ routine fixes SWE-1.7; Kimi K3 only with explicit large-artifact escalation.
 
 **Purpose**: Create the Next.js project, dependency lockfile, and testing/tooling baseline.
 
-- [ ] T001 Initialize the Next.js App Router project with TypeScript, Tailwind CSS, ESLint, `src/`, and the configured import alias using `pnpm create next-app` in the repository root.
-- [ ] T002 [P] Add and pin foundation dependencies for Radix/shadcn primitives, Phosphor icons, Motion, TanStack Query, Zod, React Hook Form, `openapi-typescript`, and `openapi-fetch` in `package.json`.
-- [ ] T003 [P] Configure Vitest/Testing Library, Playwright, axe integration, TypeScript, ESLint, and package scripts in `package.json` and test config files.
-- [ ] T004 [P] Create `.env.example`, `next.config.ts`, `Dockerfile`, `compose.yml`, and `.dockerignore` with no secrets.
+- [X] T001 Initialize the Next.js App Router project with TypeScript, Tailwind CSS, ESLint, `src/`, and the configured import alias using `pnpm create next-app` in the repository root.
+- [X] T002 [P] Add and pin foundation dependencies for Radix/shadcn primitives, Phosphor icons, Motion, TanStack Query, Zod, React Hook Form, `openapi-typescript`, and `openapi-fetch` in `package.json`.
+- [X] T003 [P] Configure Vitest/Testing Library, Playwright, axe integration, TypeScript, ESLint, and package scripts in `package.json` and test config files.
+- [X] T004 [P] Create `.env.example`, `next.config.ts`, `Dockerfile`, `compose.yml`, and `.dockerignore` with no secrets.
 
 ## Phase 2: Foundational
 
@@ -27,13 +27,13 @@ routine fixes SWE-1.7; Kimi K3 only with explicit large-artifact escalation.
 **Checkpoint**: No user-story work starts until foundation lint, type, unit, accessibility, build,
 contract, and container checks pass.
 
-- [ ] T005 Create semantic design tokens and global reset in `src/styles/tokens.css` and `src/app/globals.css` from the approved Open Design reference.
-- [ ] T006 [P] Create App Router root metadata, root layout, error, loading, and not-found boundaries in `src/app/layout.tsx`, `src/app/error.tsx`, `src/app/loading.tsx`, and `src/app/not-found.tsx`.
-- [ ] T007 [P] Create typed environment/config validation in `src/lib/config/env.ts` without exposing server secrets to client components.
-- [ ] T008 [P] Create API contract snapshot metadata and generation/check scripts in `contracts/uribap-api.openapi.json`, `src/lib/api/generated/`, and `package.json`.
-- [ ] T009 Create reusable state components for loading, empty, error, unauthorized, forbidden, stale/conflict, and unavailable states in `src/components/states/`.
-- [ ] T010 Create accessible UI primitives/wrappers for buttons, links, dialogs, menus, tabs, fields, live regions, and status badges in `src/components/ui/`.
-- [ ] T011 Create shell layout/navigation primitives in `src/components/shell/` and route groups `src/app/(public)/` and `src/app/(app)/` without domain calculations.
+- [X] T005 Create semantic design tokens and global reset in `src/styles/tokens.css` and `src/app/globals.css` from the approved Open Design reference.
+- [X] T006 [P] Create App Router root metadata, root layout, error, loading, and not-found boundaries in `src/app/layout.tsx`, `src/app/error.tsx`, `src/app/loading.tsx`, and `src/app/not-found.tsx`.
+- [X] T007 [P] Create typed environment/config validation in `src/lib/config/env.ts` without exposing server secrets to client components.
+- [X] T008 [P] Create API contract snapshot metadata and generation/check scripts in `contracts/uribap-api.openapi.json`, `src/lib/api/generated/`, and `package.json`.
+- [X] T009 Create reusable state components for loading, empty, error, unauthorized, forbidden, stale/conflict, and unavailable states in `src/components/states/`.
+- [X] T010 Create accessible UI primitives/wrappers for buttons, links, dialogs, menus, tabs, fields, live regions, and status badges in `src/components/ui/`.
+- [X] T011 Create shell layout/navigation primitives in `src/components/shell/` and route groups `src/app/(public)/` and `src/app/(app)/` without domain calculations.
 
 ## Phase 3: User Story 1 - Open a Coherent Uribap Shell (Priority: P1)
 
@@ -44,15 +44,15 @@ horizontal overflow, and verifies a useful empty state without backend data.
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Add responsive shell E2E coverage at 375, 768, 1024, and 1440px in `e2e/foundation.spec.ts`.
-- [ ] T013 [P] [US1] Add keyboard/focus and no-horizontal-overflow assertions in `tests/accessibility/shell.a11y.test.tsx`.
-- [ ] T014 [US1] Add shell loading/empty/error state component tests in `tests/component/shell-states.test.tsx`.
+- [X] T012 [P] [US1] Add responsive shell E2E coverage at 375, 768, 1024, and 1440px in `e2e/foundation.spec.ts`.
+- [X] T013 [P] [US1] Add keyboard/focus and no-horizontal-overflow assertions in `tests/accessibility/shell.a11y.test.tsx`.
+- [X] T014 [US1] Add shell loading/empty/error state component tests in `tests/component/states.test.tsx`.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implement the Uribap brand shell, desktop sidebar, mobile bottom navigation, content frame, skip link, and deep-link-safe route layout in `src/components/shell/` and `src/app/(app)/layout.tsx` to satisfy T012-T013.
-- [ ] T016 [US1] Implement the foundation home/empty view with Spanish-neutral copy, loading skeleton, and recovery action in `src/app/(public)/page.tsx` and `src/features/foundation/` to satisfy T014.
-- [ ] T017 [US1] Implement responsive tokens/layout constraints and safe long-content wrapping in `src/styles/tokens.css` and `src/app/globals.css` to satisfy T012.
+- [X] T015 [US1] Implement the Uribap brand shell, desktop sidebar, mobile bottom navigation, content frame, skip link, and deep-link-safe route layout in `src/components/shell/` and `src/app/(app)/layout.tsx` to satisfy T012-T013.
+- [X] T016 [US1] Implement the foundation home/empty view with Spanish-neutral copy, loading skeleton, and recovery action in `src/app/page.tsx` and `src/features/foundation/` to satisfy T014.
+- [X] T017 [US1] Implement responsive tokens/layout constraints and safe long-content wrapping in `src/styles/tokens.css` and `src/app/globals.css` to satisfy T012.
 
 **Checkpoint**: US1 is independently demonstrable without authentication or domain data.
 
@@ -65,16 +65,16 @@ states, reduced motion, icon treatment, and focus behavior.
 
 ### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Add token and primitive state coverage in `tests/component/design-system.test.tsx`.
-- [ ] T019 [P] [US2] Add reduced-motion and motion-property checks in `tests/accessibility/motion.a11y.test.tsx`.
-- [ ] T020 [US2] Add representative axe checks for dialogs, menus, tabs, fields, and live regions in `tests/accessibility/primitives.a11y.test.tsx`.
+- [X] T018 [P] [US2] Add token and primitive state coverage in `tests/component/design-system.test.tsx`.
+- [X] T019 [P] [US2] Add reduced-motion and motion-property checks in `tests/accessibility/motion.a11y.test.tsx`.
+- [X] T020 [US2] Add representative axe checks for dialogs, menus, tabs, fields, and live regions in `tests/accessibility/primitives.a11y.test.tsx` and `e2e/a11y.spec.ts`.
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Implement semantic token roles for surfaces, text, borders, focus, brand, and domain status colors in `src/styles/tokens.css` to satisfy T018.
-- [ ] T022 [US2] Implement accessible primitive variants and state styling using existing Radix/shadcn ownership in `src/components/ui/` to satisfy T018 and T020.
-- [ ] T023 [US2] Implement restrained, interruptible Motion/CSS transitions with reduced-motion fallback in `src/components/ui/` and `src/features/foundation/` to satisfy T019.
-- [ ] T024 [US2] Create the foundation design-system specimen/documentation surface in `src/features/foundation/design-system-specimen.tsx` for review of tokens, states, typography, and motion.
+- [X] T021 [US2] Implement semantic token roles for surfaces, text, borders, focus, brand, and domain status colors in `src/styles/tokens.css` to satisfy T018.
+- [X] T022 [US2] Implement accessible primitive variants and state styling using existing Radix/shadcn ownership in `src/components/ui/` to satisfy T018 and T020.
+- [X] T023 [US2] Implement restrained, interruptible Motion/CSS transitions with reduced-motion fallback in `src/components/ui/` and `src/features/foundation/` to satisfy T019.
+- [X] T024 [US2] Create the foundation design-system specimen/documentation surface in `src/features/foundation/DesignSystemSpecimen.tsx` for review of tokens, states, typography, and motion.
 
 **Checkpoint**: US2 is independently reviewable as the reusable Uribap visual system.
 
@@ -87,25 +87,25 @@ error, unauthorized, unavailable, and success state examples.
 
 ### Tests for User Story 3
 
-- [ ] T025 [P] [US3] Add OpenAPI snapshot freshness and generated-client determinism tests in `tests/unit/api-contract.test.ts`.
-- [ ] T026 [P] [US3] Add typed request-state component tests in `tests/component/api-state-consumer.test.tsx`.
+- [X] T025 [P] [US3] Add OpenAPI snapshot freshness and generated-client determinism tests in `tests/unit/api-contract.test.ts`.
+- [X] T026 [P] [US3] Add typed request-state component tests in `tests/component/states.test.tsx`.
 - [ ] T027 [US3] Add API-unavailable/unauthorized/error E2E scenarios in `e2e/api-state.spec.ts`.
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Add the pinned foundation OpenAPI snapshot and source revision metadata in `contracts/uribap-api.openapi.json` and `contracts/metadata.json` to satisfy T025.
-- [ ] T029 [US3] Generate and expose the typed client in `src/lib/api/generated/` with `src/lib/api/client.ts`; fail on stale output to satisfy T025.
-- [ ] T030 [US3] Implement server/client API boundary helpers and safe request-state mapping in `src/lib/api/` and `src/components/states/` to satisfy T026-T027.
-- [ ] T031 [US3] Add a contract compatibility check against the public `uribap-api` revision in `.github/workflows/contract.yml` and `package.json`.
+- [X] T028 [US3] Add the pinned foundation OpenAPI snapshot and source revision metadata in `contracts/uribap-api.openapi.json` and `contracts/metadata.json` to satisfy T025.
+- [X] T029 [US3] Generate and expose the typed client in `src/lib/api/generated/` with `src/lib/api/client.ts`; fail on stale output to satisfy T025.
+- [X] T030 [US3] Implement server/client API boundary helpers and safe request-state mapping in `src/lib/api/` and `src/components/states/` to satisfy T026-T027.
+- [X] T031 [US3] Add a contract compatibility check against the public `uribap-api` revision in `.github/workflows/contract.yml` and `package.json`.
 
 **Checkpoint**: US3 is independently demonstrable with a pinned contract and no domain calculations.
 
 ## Phase 6: Polish and Cross-Cutting Concerns
 
-- [ ] T032 [P] Run lint, TypeScript, unit/component, axe, Playwright, production build, API generation, and container checks; record results in `specs/001-web-foundation-design-system/quickstart.md`.
-- [ ] T033 [P] Add dependency/license/secret scan and performance budget checks to `.github/workflows/ci.yml`.
+- [X] T032 [P] Run lint, TypeScript, unit/component, axe, Playwright, production build, API generation, and container checks; record results in `specs/001-web-foundation-design-system/quickstart.md`.
+- [ ] T033 [P] Add dependency/license/secret scan and performance budget checks to `.github/workflows/ci.yml`; audit is present, but license/performance gates still need explicit verification.
 - [ ] T034 Review bundle size, Server/Client Component boundaries, and Web Vitals in `src/app/`, `src/components/`, and `src/lib/` using the Vercel/Next guidance.
-- [ ] T035 Run `speckit-analyze` with `glm-5-3-max`, resolve artifact drift, and update `specs/001-web-foundation-design-system/plan.md` if decisions changed.
+- [ ] T035 Run `speckit-analyze` with `glm-5-3-max`, resolve artifact drift, and update `specs/001-web-foundation-design-system/plan.md` if decisions changed. The non-interactive Devin invocation was blocked because sandbox prerequisites are unavailable; no files were modified by the attempted analysis.
 
 ## Dependencies and Execution Order
 

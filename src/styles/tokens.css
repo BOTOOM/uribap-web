@@ -1,0 +1,15 @@
+:root {
+  --bg: oklch(98% 0.009 92);
+  --surface: oklch(100% 0 0);
+  --foreground: oklch(22% 0.025 72);
+  --muted: oklch(47% 0.02 76);
+  --border: oklch(90% 0.012 88);
+  --accent: oklch(46% 0.105 157);
+  --success: oklch(48% 0.105 170);
+  --warning: oklch(58% 0.13 82);
+  --missing: oklch(47% 0.155 28);
+  --space-unit: 4px;
+  --radius: 20px;
+  --radius-small: 12px;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+}

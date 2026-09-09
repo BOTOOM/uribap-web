@@ -25,6 +25,7 @@ blob-report/
 Thumbs.db
 *.swp
 *.swo
+*.tsbuildinfo
 
 # Devin local overrides only; project skills and agents remain tracked
 .devin/config.local.json

@@ -1,0 +1,21 @@
+name: API Contract Compatibility
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: BOTOOM/uribap-api
+          ref: main
+          path: backend-contract
+      - name: Compare pinned contract with API main
+        run: cmp contracts/uribap-api.openapi.json backend-contract/openapi/openapi.json
