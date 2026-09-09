@@ -9,6 +9,10 @@ client, accessibility, responsive behavior, E2E tests, and Vercel/Docker deliver
 
 - Read `.specify/memory/constitution.md` and the active feature artifacts before changing code.
 - Follow Spec Kit in order: specify, clarify, plan, checklist, tasks, analyze, implement, converge.
+- Every roadmap item MUST have its own complete feature spec, plan, design/contracts when relevant,
+  tasks, tests, analyze result, implementation, and convergence before it is considered done.
+- No product code may start before the active spec/plan/tasks/analyze gate is complete, and no task
+  may be closed without its documented tests and quickstart validation.
 - Treat FastAPI responses as authoritative; never reimplement inventory, forecasting, shopping, or
   preparation calculations in React.
 - Prefer Server Components and isolate client state to interactive leaves.
