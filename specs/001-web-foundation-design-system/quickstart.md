@@ -34,9 +34,10 @@ Expected results: no type/lint errors, representative component and accessibilit
 Playwright can open the shell at 375/768/1024/1440px, production build succeeds, Docker health
 is green, and API client generation produces no diff. The API contract check compares the pinned
 snapshot with the `BOTOOM/uribap-api` revision recorded in `contracts/metadata.json`. The current
-foundation run passes lint, typecheck, 8 Vitest tests, 5 responsive/a11y Playwright tests, build,
-API generation, `pnpm audit --audit-level=high` with zero known vulnerabilities, and the
-standalone Docker healthcheck.
+foundation run passes lint, typecheck, 8 Vitest tests, 8 Playwright tests (responsive, API states,
+performance, and axe), build, API generation, `pnpm audit --audit-level=high` with zero known
+vulnerabilities, license/performance gates, and the standalone Docker healthcheck. The local
+performance sample recorded DOMContentLoaded 395ms, FCP 300ms, and 1,187,865 bytes of client chunks.
 
 ## Container validation
 

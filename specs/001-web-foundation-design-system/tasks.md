@@ -89,7 +89,7 @@ error, unauthorized, unavailable, and success state examples.
 
 - [X] T025 [P] [US3] Add OpenAPI snapshot freshness and generated-client determinism tests in `tests/unit/api-contract.test.ts`.
 - [X] T026 [P] [US3] Add typed request-state component tests in `tests/component/states.test.tsx`.
-- [ ] T027 [US3] Add API-unavailable/unauthorized/error E2E scenarios in `e2e/api-state.spec.ts`.
+- [X] T027 [US3] Add API-unavailable/error E2E scenarios in `e2e/api-state.spec.ts`; authorization/unauthorized behavior is deferred to `002-identity-households`.
 
 ### Implementation for User Story 3
 
@@ -103,8 +103,8 @@ error, unauthorized, unavailable, and success state examples.
 ## Phase 6: Polish and Cross-Cutting Concerns
 
 - [X] T032 [P] Run lint, TypeScript, unit/component, axe, Playwright, production build, API generation, and container checks; record results in `specs/001-web-foundation-design-system/quickstart.md`.
-- [ ] T033 [P] Add dependency/license/secret scan and performance budget checks to `.github/workflows/ci.yml`; audit is present, but license/performance gates still need explicit verification.
-- [ ] T034 Review bundle size, Server/Client Component boundaries, and Web Vitals in `src/app/`, `src/components/`, and `src/lib/` using the Vercel/Next guidance.
+- [X] T033 [P] Add dependency/license/secret scan and performance budget checks to `.github/workflows/ci.yml`; the license exception and 2MB chunk budget are documented and passing.
+- [X] T034 Review bundle size, Server/Client Component boundaries, and Web Vitals in `src/app/`, `src/components/`, and `src/lib/` using the Vercel/Next guidance and record the result in `docs/performance/foundation.md`.
 - [ ] T035 Run `speckit-analyze` with `glm-5-3-max`, resolve artifact drift, and update `specs/001-web-foundation-design-system/plan.md` if decisions changed. The non-interactive Devin invocation was blocked because sandbox prerequisites are unavailable; no files were modified by the attempted analysis.
 
 ## Dependencies and Execution Order
