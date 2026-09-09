@@ -27,6 +27,13 @@ Expected checks will be documented in the active feature plan. Foundation target
 TypeScript, unit/component tests, Playwright, accessibility checks, production build, OpenAPI
 snapshot verification, and Docker health checks.
 
+## Reusable testing skills
+
+- Use `/uribap-web-testing` before closing any Web feature; it runs component, API-state, E2E,
+  accessibility, responsive, audit, and performance gates without editing code.
+- Use `/uribap-local-identity-testing` for OIDC/household features. Local complete email flows use
+  Docker Compose with ZITADEL, dedicated PostgreSQL, and Mailpit; Brevo is never used locally.
+
 ## Model guidance
 
 Use the model matrix in the active `specs/*/plan.md`. As of 2026-09-08, prefer
