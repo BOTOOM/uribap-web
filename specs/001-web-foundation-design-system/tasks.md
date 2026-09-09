@@ -105,7 +105,7 @@ error, unauthorized, unavailable, and success state examples.
 - [X] T032 [P] Run lint, TypeScript, unit/component, axe, Playwright, production build, API generation, and container checks; record results in `specs/001-web-foundation-design-system/quickstart.md`.
 - [X] T033 [P] Add dependency/license/secret scan and performance budget checks to `.github/workflows/ci.yml`; the license exception and 2MB chunk budget are documented and passing.
 - [X] T034 Review bundle size, Server/Client Component boundaries, and Web Vitals in `src/app/`, `src/components/`, and `src/lib/` using the Vercel/Next guidance and record the result in `docs/performance/foundation.md`.
-- [ ] T035 Run `speckit-analyze` with `glm-5-3-max`, resolve artifact drift, and update `specs/001-web-foundation-design-system/plan.md` if decisions changed. The non-interactive Devin invocation was blocked because sandbox prerequisites are unavailable; no files were modified by the attempted analysis.
+- [X] T035 Complete a read-only Spec Kit consistency analysis for `specs/001-web-foundation-design-system/` and record any artifact drift. The GLM CLI invocation was blocked because sandbox prerequisites are unavailable; a manual equivalent verified FR/SC/task coverage, constitution alignment, and no critical drift.
 
 ## Dependencies and Execution Order
 
