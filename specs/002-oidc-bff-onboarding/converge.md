@@ -20,3 +20,7 @@
 5. The Next.js 16 `middleware` deprecation warning should be migrated to `proxy` before release.
 
 The feature remains `Ready for implementation`/in progress and must not be considered converged until the appended tasks pass.
+
+## Follow-up resolution
+
+- T057 was resolved after the initial convergence report: the Next.js route guard now uses `src/proxy.ts`, the deprecated `src/middleware.ts` was removed, and the production build no longer emits the middleware warning.
