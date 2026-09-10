@@ -73,11 +73,11 @@ own business logic.
   tasks → analyze → implement → converge.
 - Every feature `plan.md` MUST record its primary model, reviewer model, subagent model, and
   escalation condition using identifiers verified by `devin models list --format json`.
-- Recommended defaults as of 2026-09-08: `gpt-5-6-luna-high` for product/UI architecture,
+- Recommended defaults as of 2026-09-10: `gpt-5-6-luna-high` for product/UI architecture,
   `gpt-5-6-sol-high` for implementation, `gpt-5-6-terra-high` for auth/accessibility and
   final review, `glm-5-3-max` for long-context artifact analysis, `kimi-k3-max` only for
-  explicit cross-repo escalation, and `swe-1-7` for bounded test/type fixes. Adaptive MAY be
-  used for mixed low-risk work.
+  explicit cross-repo escalation, and `swe-2-high` for bounded test/type fixes. `swe-2-max` MAY be used for bounded multi-file
+  fixes, while Adaptive MAY be used for mixed low-risk work.
 - Model selection is a tool policy, not a runtime dependency. If a model is unavailable, the
   work MUST stop for reassignment rather than silently weakening a critical review.
 - A pull request MUST identify changed routes/components, API contract impact, accessibility

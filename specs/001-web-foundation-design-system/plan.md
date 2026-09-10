@@ -1,6 +1,6 @@
 # Implementation Plan: Web Foundation and Design System
 
-**Branch**: `001-web-foundation-design-system` | **Date**: 2026-09-08 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-web-foundation-design-system` | **Date**: 2026-09-10 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification for the Dockerized Next.js frontend foundation and Uribap design system.
 
@@ -64,7 +64,7 @@ foundation tests; later feature routes extend this structure
 - **Implementation**: `gpt-5-6-sol-high` for Next.js, tokens, generated client and tests.
 - **Reviewer**: `gpt-5-6-terra-high` for authentication boundary, accessibility and performance.
 - **Artifact analyst**: `glm-5-3-max` for long-context spec/plan/tasks analysis.
-- **Routine fixer**: `swe-1-7` for bounded type/lint/test corrections.
+- **Routine fixer**: `swe-2-high` for bounded type/lint/test corrections; use `swe-2-max` for bounded multi-file fixes.
 - **Escalation**: `gpt-5-6-terra-max` only after explicit critical-risk review; `kimi-k3-max`
   only for unusually large cross-repository artifact review.
 

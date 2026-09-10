@@ -48,7 +48,7 @@
 ## Decision 6: Model routing
 
 - **Decision**: Luna designs, Sol builds, Terra reviews, GLM-5.3 analyzes long artifacts, and
-  SWE-1.7 handles bounded fixes. Kimi K3 is opt-in only for unusually large cross-repo review.
+  SWE-2 handles bounded fixes at no model cost. Kimi K3 is opt-in only for unusually large cross-repo review.
 - **Rationale**: This follows the approved project matrix and separates authorship/review cost.
 - **Alternatives considered**: Using one premium model for every task. Rejected because it raises
   cost without improving routine work.
