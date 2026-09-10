@@ -13,6 +13,7 @@ const navigationItems: NavigationItem[] = [
   { label: "Inventario", href: "/inventario" },
   { label: "Compra", href: "/compra" },
   { label: "Preparación", href: "/preparacion" },
+  { label: "Hogar", href: "/settings/household" as Route },
 ];
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
