@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: BOTOOM/uribap-api
-          ref: main
+          ref: stack/002-api-identity
           path: backend-contract
-      - name: Compare pinned contract with API main
+      - name: Compare pinned contract with API identity stack
         run: cmp contracts/uribap-api.openapi.json backend-contract/openapi/openapi.json
