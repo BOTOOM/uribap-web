@@ -42,6 +42,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           <div className="sidebar-footer">
             <span className="eyebrow">Hogar compartido</span>
             <span className="sidebar-note">Dos personas · decisiones visibles</span>
+            <Link className="sidebar-note" href="/api/auth/federated-logout">Salir de la sesión</Link>
           </div>
         </aside>
         <div className="workspace">
