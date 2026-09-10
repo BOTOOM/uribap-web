@@ -1,5 +1,6 @@
 import { ErrorState } from "@/components/states/ErrorState";
 import { InvitationForm } from "@/components/household/InvitationForm";
+import { MemberManagement } from "@/components/household/MemberManagement";
 import { serverApiFetch } from "@/lib/api/server-client";
 
 type CurrentUser = {
@@ -26,6 +27,7 @@ type Members = {
     email: string | null;
     role: string;
     status: string;
+    version: number;
   }>;
 };
 
@@ -69,14 +71,11 @@ export default async function HouseholdSettingsPage() {
           <p className="eyebrow">Personas</p>
           <h2 id="members-title">Miembros del hogar</h2>
         </div>
-        <ul>
-          {members.items.map((member) => (
-            <li key={member.user_id}>
-              <span className="item-index">{member.role.slice(0, 2).toUpperCase()}</span>
-              <span>{member.display_name ?? member.email ?? "Persona"} · {member.role}</span>
-            </li>
-          ))}
-        </ul>
+        <MemberManagement
+          householdId={household.id}
+          initialMembers={members.items}
+          canManage={canInvite}
+        />
       </section>
       {canInvite ? (
         <section className="foundation-hero" aria-labelledby="invite-title">
