@@ -5,6 +5,8 @@
 
 # Node and Next.js
 node_modules/
+__pycache__/
+*.py[cod]
 .next/
 out/
 dist/

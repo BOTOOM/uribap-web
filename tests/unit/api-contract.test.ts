@@ -10,11 +10,14 @@ describe("pinned API contract", () => {
     const contract = JSON.parse(readFileSync(contractPath, "utf8")) as { paths: Record<string, unknown> };
     expect(contract.paths["/api/v1/health/live"]).toBeDefined();
     expect(contract.paths["/api/v1/health/ready"]).toBeDefined();
+    expect(contract.paths["/api/v1/me"]).toBeDefined();
+    expect(contract.paths["/api/v1/households"]).toBeDefined();
+    expect(contract.paths["/api/v1/invitations/accept"]).toBeDefined();
   });
 
   it("records the API repository and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
-    expect(metadata.schemaVersion).toBe("v1");
+    expect(metadata.schemaVersion).toBe("v2");
   });
 });
