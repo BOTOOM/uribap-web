@@ -1,6 +1,6 @@
 {
   "apiRepository": "BOTOOM/uribap-api",
-  "apiRevision": "ingredients-recipes-e3f5c1a7b902",
-  "schemaVersion": "v3",
+  "apiRevision": "inventory-ledger-f4a7c9d1e203-hardened",
+  "schemaVersion": "v4",
   "generatedAt": "2026-09-21"
 }
