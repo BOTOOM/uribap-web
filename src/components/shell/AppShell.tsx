@@ -9,6 +9,7 @@ type NavigationItem = {
 const navigationItems: NavigationItem[] = [
   { label: "Resumen", href: "/" },
   { label: "Plan semanal", href: "/plan" },
+  { label: "Previsión", href: "/forecast" },
   { label: "Recetas", href: "/recetas" },
   { label: "Inventario", href: "/inventario" },
   { label: "Compra", href: "/compra" },
