@@ -503,6 +503,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/preparation-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tasks Route */
+        get: operations["list_tasks_route_api_v1_preparation_tasks_get"];
+        put?: never;
+        /** Create Task Route */
+        post: operations["create_task_route_api_v1_preparation_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/preparation-tasks/{task_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Task Route */
+        post: operations["cancel_task_route_api_v1_preparation_tasks__task_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/preparation-tasks/{task_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Task Route */
+        post: operations["complete_task_route_api_v1_preparation_tasks__task_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recipes": {
         parameters: {
             query?: never;
@@ -585,6 +637,40 @@ export interface paths {
         /** Create Version Route */
         post: operations["create_version_route_api_v1_recipes__recipe_id__versions_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipes/{recipe_id}/versions/{version_id}/preparation-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Preparation Rule Route */
+        post: operations["create_preparation_rule_route_api_v1_recipes__recipe_id__versions__version_id__preparation_rules_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipes/{recipe_id}/versions/{version_id}/preparation-rules/{rule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Preparation Rule Route */
+        delete: operations["delete_preparation_rule_route_api_v1_recipes__recipe_id__versions__version_id__preparation_rules__rule_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1409,6 +1495,139 @@ export interface components {
             /** Next Cursor */
             next_cursor?: string | null;
         };
+        /** PreparationRuleCreate */
+        PreparationRuleCreate: {
+            /** Ingredient Id */
+            ingredient_id?: string | null;
+            /** Instruction */
+            instruction: string;
+            /** Lead Minutes */
+            lead_minutes: number;
+            rule_type: components["schemas"]["PreparationRuleType"];
+        };
+        /** PreparationRuleResponse */
+        PreparationRuleResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ingredient Id */
+            ingredient_id: string | null;
+            /** Ingredient Name */
+            ingredient_name: string | null;
+            /** Instruction */
+            instruction: string;
+            /** Lead Minutes */
+            lead_minutes: number;
+            /**
+             * Recipe Version Id
+             * Format: uuid
+             */
+            recipe_version_id: string;
+            rule_type: components["schemas"]["PreparationRuleType"];
+        };
+        /**
+         * PreparationRuleType
+         * @enum {string}
+         */
+        PreparationRuleType: "defrost" | "soak" | "marinate" | "prepare_ahead";
+        /** PreparationTaskCreate */
+        PreparationTaskCreate: {
+            /** Amount */
+            amount?: number | string | null;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /** Ingredient Id */
+            ingredient_id?: string | null;
+            /** Instruction */
+            instruction?: string | null;
+            /** Title */
+            title: string;
+            /** Unit */
+            unit?: string | null;
+        };
+        /** PreparationTaskMutation */
+        PreparationTaskMutation: {
+            /** Expected Version */
+            expected_version: number;
+        };
+        /**
+         * PreparationTaskOrigin
+         * @enum {string}
+         */
+        PreparationTaskOrigin: "derived" | "manual";
+        /** PreparationTaskPage */
+        PreparationTaskPage: {
+            /** Items */
+            items: components["schemas"]["PreparationTaskResponse"][];
+        };
+        /** PreparationTaskResponse */
+        PreparationTaskResponse: {
+            /** Amount */
+            amount: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Completed By User Id */
+            completed_by_user_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ingredient Id */
+            ingredient_id: string | null;
+            /** Ingredient Name */
+            ingredient_name: string | null;
+            /** Instruction */
+            instruction: string | null;
+            /** Meal Plan Entry Id */
+            meal_plan_entry_id: string | null;
+            meal_type: components["schemas"]["RecipeMealType"] | null;
+            origin: components["schemas"]["PreparationTaskOrigin"];
+            /** Planned Date */
+            planned_date: string | null;
+            /** Recipe Name */
+            recipe_name: string | null;
+            /** Recipe Version Id */
+            recipe_version_id: string | null;
+            status: components["schemas"]["PreparationTaskStatus"];
+            task_type: components["schemas"]["PreparationTaskType"];
+            /** Title */
+            title: string;
+            /** Unit */
+            unit: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * PreparationTaskStatus
+         * @enum {string}
+         */
+        PreparationTaskStatus: "pending" | "completed" | "cancelled";
+        /**
+         * PreparationTaskType
+         * @enum {string}
+         */
+        PreparationTaskType: "defrost" | "soak" | "marinate" | "prepare_ahead" | "manual";
         /** ProblemDetails */
         ProblemDetails: {
             /** Code */
@@ -3418,6 +3637,297 @@ export interface operations {
             };
         };
     };
+    list_tasks_route_api_v1_preparation_tasks_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["PreparationTaskStatus"] | null;
+                from?: string | null;
+                to?: string | null;
+            };
+            header: {
+                "X-Household-ID": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationTaskPage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    create_task_route_api_v1_preparation_tasks_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key"?: string | null;
+                "X-Household-ID": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreparationTaskCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationTaskResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    cancel_task_route_api_v1_preparation_tasks__task_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key"?: string | null;
+                "X-Household-ID": string;
+            };
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreparationTaskMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationTaskResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    complete_task_route_api_v1_preparation_tasks__task_id__complete_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key"?: string | null;
+                "X-Household-ID": string;
+            };
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreparationTaskMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationTaskResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     list_route_api_v1_recipes_get: {
         parameters: {
             query?: {
@@ -3639,6 +4149,77 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RecipeResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_preparation_rule_route_api_v1_recipes__recipe_id__versions__version_id__preparation_rules_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Household-ID": string;
+            };
+            path: {
+                recipe_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreparationRuleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationRuleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_preparation_rule_route_api_v1_recipes__recipe_id__versions__version_id__preparation_rules__rule_id__delete: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Household-ID": string;
+            };
+            path: {
+                recipe_id: string;
+                version_id: string;
+                rule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
