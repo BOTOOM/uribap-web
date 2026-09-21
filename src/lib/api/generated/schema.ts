@@ -594,6 +594,8 @@ export interface components {
             available: boolean;
             /** Expiration Date */
             expiration_date: string | null;
+            /** Expired */
+            expired: boolean;
             /**
              * Household Id
              * Format: uuid
