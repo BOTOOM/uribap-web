@@ -53,3 +53,18 @@ export async function serverApiFetch<T>(path: string, init: RequestInit = {}): P
     problem?.detail ?? "No se pudo completar la solicitud.",
   );
 }
+
+export async function serverHouseholdFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const currentUser = await serverApiFetch<{
+    memberships: Array<{ household_id: string; status: string }>;
+  }>("/me");
+  const membership = currentUser.memberships.find((item) => item.status === "active");
+  if (!membership) throw new ApiRequestError(403, "forbidden", "No hay un hogar activo.");
+  return serverApiFetch<T>(path, {
+    ...init,
+    headers: {
+      ...(init.headers ?? {}),
+      "X-Household-ID": membership.household_id,
+    },
+  });
+}
