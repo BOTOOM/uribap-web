@@ -654,6 +654,12 @@ export interface components {
              */
             lot_id: string;
             movement_type: components["schemas"]["InventoryMovementType"];
+            /** Operation */
+            operation: string;
+            /** Request Hash */
+            request_hash: string | null;
+            /** Result Quantity On Hand */
+            result_quantity_on_hand: string | null;
             /** Source Id */
             source_id: string | null;
             /** Source Type */

@@ -1,6 +1,6 @@
 {
   "apiRepository": "BOTOOM/uribap-api",
-  "apiRevision": "inventory-ledger-f4a7c9d1e203",
+  "apiRevision": "inventory-ledger-f4a7c9d1e203-hardened",
   "schemaVersion": "v4",
   "generatedAt": "2026-09-21"
 }
