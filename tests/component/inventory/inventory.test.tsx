@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 import { InventoryAdjustmentForm } from "@/components/inventory/InventoryAdjustmentForm";
 import { InventoryLotForm } from "@/components/inventory/InventoryLotForm";
 
