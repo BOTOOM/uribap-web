@@ -1,13 +1,15 @@
 import { ErrorState } from "@/components/states/ErrorState";
 import { InventoryAdjustmentForm } from "@/components/inventory/InventoryAdjustmentForm";
 import { InventoryLotForm } from "@/components/inventory/InventoryLotForm";
+import { InventoryMovementHistory } from "@/components/inventory/InventoryMovementHistory";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
+import type { components } from "@/lib/api/generated/schema";
 
-type Lot = { id: string; ingredient_id: string; quantity_on_hand: string; unit: string; location: string; available: boolean; expiration_date: string | null };
+type Lot = components["schemas"]["InventoryLotResponse"];
 
 async function loadInventory(): Promise<Lot[] | { error: string }> {
   try {
-    const data = await serverHouseholdFetch<{ items: Lot[] }>("/inventory");
+    const data = await serverHouseholdFetch<{ items: Lot[] }>("/inventory?include_expired=true");
     return data.items;
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
@@ -28,13 +30,17 @@ export default async function InventoryPage() {
         <h2 id="inventory-list-title">Lotes disponibles</h2>
         {data.length === 0 ? <p role="status">Todavía no hay lotes registrados.</p> : (
           <ul>
-            {data.map((lot) => (
-              <li key={lot.id}>
-                <span className="item-index">{lot.quantity_on_hand} {lot.unit}</span>
-                <span>{lot.ingredient_id}</span>
-                <span>{lot.location}{lot.expiration_date ? ` · vence ${lot.expiration_date}` : ""}{lot.available ? "" : " · no disponible"}</span>
-              </li>
-            ))}
+            {data.map((lot) => {
+              const expired = lot.expiration_date ? new Date(`${lot.expiration_date}T23:59:59Z`) < new Date() : false;
+              return (
+                <li key={lot.id}>
+                  <span className="item-index">{lot.quantity_on_hand} {lot.unit}</span>
+                  <span>{lot.ingredient_id}</span>
+                  <span>{lot.location}{lot.expiration_date ? ` · vence ${lot.expiration_date}` : ""}{expired ? " · caducado" : lot.available ? "" : " · no disponible"}</span>
+                  <InventoryMovementHistory lotId={lot.id} />
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
