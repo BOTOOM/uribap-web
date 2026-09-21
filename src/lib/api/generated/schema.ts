@@ -504,6 +504,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recipes/published-versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Published Versions Route */
+        get: operations["published_versions_route_api_v1_recipes_published_versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recipes/{recipe_id}": {
         parameters: {
             query?: never;
@@ -1197,6 +1214,32 @@ export interface components {
             title: string;
             /** Type */
             type: string;
+        };
+        /** PublishedRecipeVersionPage */
+        PublishedRecipeVersionPage: {
+            /** Items */
+            items: components["schemas"]["PublishedRecipeVersionResponse"][];
+        };
+        /** PublishedRecipeVersionResponse */
+        PublishedRecipeVersionResponse: {
+            /** Base Servings */
+            base_servings: number;
+            /** Prep Minutes */
+            prep_minutes: number;
+            /**
+             * Recipe Id
+             * Format: uuid
+             */
+            recipe_id: string;
+            /** Recipe Name */
+            recipe_name: string;
+            /**
+             * Recipe Version Id
+             * Format: uuid
+             */
+            recipe_version_id: string;
+            /** Version Number */
+            version_number: number;
         };
         /** ReadyHealthResponse */
         ReadyHealthResponse: {
@@ -3042,6 +3085,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecipeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    published_versions_route_api_v1_recipes_published_versions_get: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Household-ID": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishedRecipeVersionPage"];
                 };
             };
             /** @description Validation Error */
