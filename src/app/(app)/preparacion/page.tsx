@@ -37,10 +37,14 @@ function formatDue(dueAt: string): string {
   return `${date.toISOString().slice(0, 10)} ${date.toISOString().slice(11, 16)} UTC`;
 }
 
-async function loadTasks(): Promise<Task[] | { error: string }> {
+async function loadTasks(): Promise<Array<Task & { overdue: boolean }> | { error: string }> {
   try {
     const page = await serverHouseholdFetch<TaskPage>("/preparation-tasks");
-    return page.items;
+    const now = Date.now();
+    return page.items.map((task) => ({
+      ...task,
+      overdue: task.status === "pending" && new Date(task.due_at).getTime() < now,
+    }));
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
   }
@@ -55,8 +59,8 @@ async function loadIngredients(): Promise<Ingredient[]> {
   }
 }
 
-function TaskRow({ task, now }: { task: Task; now: number }) {
-  const overdue = task.status === "pending" && new Date(task.due_at).getTime() < now;
+function TaskRow({ task }: { task: Task & { overdue: boolean } }) {
+  const overdue = task.overdue;
   return (
     <li>
       <span className="item-index">{formatDue(task.due_at)}</span>
@@ -85,7 +89,6 @@ export default async function PreparationPage() {
     return <ErrorState title="No se pudieron cargar las tareas" description={tasks.error} />;
   }
 
-  const now = Date.now();
   const pending = tasks.filter((task) => task.status === "pending");
   const resolved = tasks.filter((task) => task.status !== "pending");
 
@@ -109,7 +112,7 @@ export default async function PreparationPage() {
         ) : (
           <ul>
             {pending.map((task) => (
-              <TaskRow key={task.id} task={task} now={now} />
+              <TaskRow key={task.id} task={task} />
             ))}
           </ul>
         )}
@@ -119,7 +122,7 @@ export default async function PreparationPage() {
           <h2 id="preparation-resolved-title">Resueltas</h2>
           <ul>
             {resolved.map((task) => (
-              <TaskRow key={task.id} task={task} now={now} />
+              <TaskRow key={task.id} task={task} />
             ))}
           </ul>
         </section>
