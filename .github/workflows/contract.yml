@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: BOTOOM/uribap-api
-          ref: main
+          ref: stack/005-api-planning-service
           path: backend-contract
-      - name: Compare pinned contract with API inventory stack
+      - name: Compare pinned contract with API planning stack
         run: cmp contracts/uribap-api.openapi.json backend-contract/openapi/openapi.json
