@@ -20,7 +20,7 @@ describe("pinned API contract", () => {
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
     expect(metadata.schemaVersion).toBe("v8");
     expect(metadata.apiRevision).toBe(
-      "preparation-bd7bff0",
+      "preparation-335657e",
     );
   });
 });
