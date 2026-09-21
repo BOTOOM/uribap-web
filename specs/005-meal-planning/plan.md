@@ -1,6 +1,6 @@
 # Plan: Meal Planning Web Experience
 
-Replace the `/plan` placeholder with a server-rendered week plan: day-grouped entries, state badge, and version-aware mutations. Client islands handle entry add/edit/remove and transition actions, calling BFF route handlers under `/api/plans/*` that forward `Idempotency-Key` and `expected_version` to the API. Recipe selection uses the published-versions list from the 003 contract. No planning or demand logic in Web.
+Replace the `/plan` placeholder with a server-rendered week plan: day-grouped entries, state badge, and version-aware mutations. Client islands handle entry add/edit/remove and transition actions, calling BFF route handlers under `/api/plans/*` that forward `Idempotency-Key` and `expected_version` to the API. Recipe selection uses `GET /api/v1/recipes/published-versions`, added by the API 005 service layer because the 003 contract only exposed `latest_version` numbers. No planning or demand logic in Web.
 
 ## Model policy
 
