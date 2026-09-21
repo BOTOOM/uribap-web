@@ -1,6 +1,6 @@
 {
   "apiRepository": "BOTOOM/uribap-api",
-  "apiRevision": "inventory-ledger-f4a7c9d1e203-hardened",
-  "schemaVersion": "v4",
+  "apiRevision": "meal-planning-70e63a1bac6a46e0595eedf13bb1acfee3973345",
+  "schemaVersion": "v5",
   "generatedAt": "2026-09-21"
 }
