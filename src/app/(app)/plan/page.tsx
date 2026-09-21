@@ -1,3 +1,6 @@
+import { CompleteMealButton } from "@/components/completion/CompleteMealButton";
+import { CorrectLineForm } from "@/components/completion/CorrectLineForm";
+import { ReopenCompletionButton } from "@/components/completion/ReopenCompletionButton";
 import { ErrorState } from "@/components/states/ErrorState";
 import { MealPlanCreateButton } from "@/components/planning/MealPlanCreateButton";
 import { MealPlanEntryActions } from "@/components/planning/MealPlanEntryActions";
@@ -7,6 +10,7 @@ import { ApiRequestError, serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
 
 type MealPlan = components["schemas"]["MealPlanResponse"];
+type MealCompletion = components["schemas"]["MealCompletionResponse"];
 type PublishedVersion = components["schemas"]["PublishedRecipeVersionResponse"];
 type MealType = components["schemas"]["RecipeMealType"];
 type PlanState = components["schemas"]["MealPlanState"];
@@ -53,9 +57,24 @@ async function loadPublishedVersions(): Promise<PublishedVersion[]> {
   }
 }
 
+async function loadCompletions(): Promise<MealCompletion[] | { error: string }> {
+  try {
+    const data = await serverHouseholdFetch<{ items: MealCompletion[] }>(
+      "/meal-completions",
+    );
+    return data.items;
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
+  }
+}
+
 export default async function PlanPage() {
   const weekStart = currentMonday();
-  const [plan, versions] = await Promise.all([loadPlan(weekStart), loadPublishedVersions()]);
+  const [plan, versions, completions] = await Promise.all([
+    loadPlan(weekStart),
+    loadPublishedVersions(),
+    loadCompletions(),
+  ]);
   const versionNames = new Map(versions.map((item) => [item.recipe_version_id, item.recipe_name]));
 
   if (plan !== null && "error" in plan) {
@@ -83,6 +102,16 @@ export default async function PlanPage() {
     entriesByDay.set(day, [...(entriesByDay.get(day) ?? []), entry]);
   }
   const editable = plan.state === "draft";
+  const completable = plan.state === "approved";
+  const entryIds = new Set(plan.entries.map((entry) => entry.id));
+  const planCompletions = Array.isArray(completions)
+    ? completions.filter((item) => entryIds.has(item.meal_plan_entry_id))
+    : [];
+  const recordedByEntry = new Map(
+    planCompletions
+      .filter((item) => item.state === "recorded")
+      .map((item) => [item.meal_plan_entry_id, item]),
+  );
 
   return (
     <div className="foundation-shell">
@@ -117,6 +146,9 @@ export default async function PlanPage() {
                       version={plan.version}
                       editable={editable}
                     />
+                    {completable && !recordedByEntry.has(entry.id) ? (
+                      <CompleteMealButton planId={plan.id} entryId={entry.id} />
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -135,6 +167,58 @@ export default async function PlanPage() {
               versions={versions}
             />
           </div>
+        </section>
+      ) : null}
+      {planCompletions.length > 0 || (completions && "error" in completions) ? (
+        <section className="foundation-list" aria-labelledby="completions-title">
+          <h2 id="completions-title">Comidas completadas</h2>
+          {completions && "error" in completions ? (
+            <p role="alert">{completions.error}</p>
+          ) : null}
+          <ul>
+            {planCompletions.map((completion) => (
+              <li key={completion.id}>
+                <span className="item-index">
+                  {completion.planned_date ?? ""}
+                  {completion.meal_type ? ` · ${MEAL_LABELS[completion.meal_type]}` : ""}
+                  {completion.state === "reopened" ? " · reabierta" : ""}
+                </span>
+                <span>{completion.recipe_name ?? completion.recipe_version_id}</span>
+                <ul>
+                  {completion.lines.map((line) => {
+                    const differs = line.actual_amount !== line.planned_amount;
+                    return (
+                      <li key={line.id}>
+                        <span>
+                          {line.ingredient_name ?? line.ingredient_id}: {line.actual_amount}{" "}
+                          {line.unit}
+                          {differs ? ` (plan: ${line.planned_amount} ${line.unit})` : ""}
+                        </span>
+                        {completion.state === "recorded" ? (
+                          <CorrectLineForm
+                            completionId={completion.id}
+                            lineId={line.id}
+                            version={completion.version}
+                            currentAmount={line.actual_amount}
+                            unit={line.unit}
+                          />
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {completion.state === "recorded" ? (
+                  <ReopenCompletionButton
+                    completionId={completion.id}
+                    version={completion.version}
+                  />
+                ) : null}
+                {completion.state === "reopened" && completion.reopen_reason ? (
+                  <span>{completion.reopen_reason}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
     </div>
