@@ -15,9 +15,12 @@ describe("pinned API contract", () => {
     expect(contract.paths["/api/v1/invitations/accept"]).toBeDefined();
   });
 
-  it("records the API repository and schema revision", () => {
+  it("records the API repository, revision, and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
     expect(metadata.schemaVersion).toBe("v5");
+    expect(metadata.apiRevision).toBe(
+      "meal-planning-70e63a1bac6a46e0595eedf13bb1acfee3973345",
+    );
   });
 });
