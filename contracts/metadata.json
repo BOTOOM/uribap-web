@@ -1,6 +1,6 @@
 {
   "apiRepository": "BOTOOM/uribap-api",
-  "apiRevision": "meal-planning-e05e067",
-  "schemaVersion": "v5",
+  "apiRevision": "demand-forecasting-cfd73ef209fe1f711913eac9dfc2244b64270776",
+  "schemaVersion": "v6",
   "generatedAt": "2026-09-21"
 }
