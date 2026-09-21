@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/forecast/demand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demand Forecast Route */
+        get: operations["demand_forecast_route_api_v1_forecast_demand_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/identity": {
         parameters: {
             query?: never;
@@ -609,6 +626,45 @@ export interface components {
             id: string;
             /** Memberships */
             memberships: components["schemas"]["MembershipResponse"][];
+        };
+        /** DemandForecastLine */
+        DemandForecastLine: {
+            /**
+             * Ingredient Id
+             * Format: uuid
+             */
+            ingredient_id: string;
+            /** Ingredient Name */
+            ingredient_name: string;
+            /** On Hand Amount */
+            on_hand_amount: string;
+            /** Optional Amount */
+            optional_amount: string;
+            /** Required Amount */
+            required_amount: string;
+            /** Shortfall Amount */
+            shortfall_amount: string;
+            /** Total Amount */
+            total_amount: string;
+            /** Unit */
+            unit: string;
+        };
+        /** DemandForecastResponse */
+        DemandForecastResponse: {
+            /** Considered Plan Ids */
+            considered_plan_ids: string[];
+            /**
+             * From Date
+             * Format: date
+             */
+            from_date: string;
+            /** Items */
+            items: components["schemas"]["DemandForecastLine"][];
+            /**
+             * To Date
+             * Format: date
+             */
+            to_date: string;
         };
         /** DependencyHealth */
         DependencyHealth: {
@@ -1365,6 +1421,58 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    demand_forecast_route_api_v1_forecast_demand_get: {
+        parameters: {
+            query?: {
+                from_date?: string | null;
+                to_date?: string | null;
+            };
+            header: {
+                "X-Household-ID": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemandForecastResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     identity_api_v1_health_identity_get: {
         parameters: {
             query?: never;
