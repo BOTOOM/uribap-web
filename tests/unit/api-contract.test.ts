@@ -20,7 +20,7 @@ describe("pinned API contract", () => {
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
     expect(metadata.schemaVersion).toBe("v5");
     expect(metadata.apiRevision).toBe(
-      "meal-planning-70e63a1bac6a46e0595eedf13bb1acfee3973345",
+      "meal-planning-e05e067",
     );
   });
 });
