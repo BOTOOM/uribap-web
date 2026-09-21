@@ -30,17 +30,14 @@ export default async function InventoryPage() {
         <h2 id="inventory-list-title">Lotes disponibles</h2>
         {data.length === 0 ? <p role="status">Todavía no hay lotes registrados.</p> : (
           <ul>
-            {data.map((lot) => {
-              const expired = lot.expiration_date ? new Date(`${lot.expiration_date}T23:59:59Z`) < new Date() : false;
-              return (
-                <li key={lot.id}>
-                  <span className="item-index">{lot.quantity_on_hand} {lot.unit}</span>
-                  <span>{lot.ingredient_id}</span>
-                  <span>{lot.location}{lot.expiration_date ? ` · vence ${lot.expiration_date}` : ""}{expired ? " · caducado" : lot.available ? "" : " · no disponible"}</span>
-                  <InventoryMovementHistory lotId={lot.id} />
-                </li>
-              );
-            })}
+            {data.map((lot) => (
+              <li key={lot.id}>
+                <span className="item-index">{lot.quantity_on_hand} {lot.unit}</span>
+                <span>{lot.ingredient_id}</span>
+                <span>{lot.location}{lot.expiration_date ? ` · vence ${lot.expiration_date}` : ""}{lot.expired ? " · caducado" : lot.available ? "" : " · no disponible"}</span>
+                <InventoryMovementHistory lotId={lot.id} />
+              </li>
+            ))}
           </ul>
         )}
       </section>
