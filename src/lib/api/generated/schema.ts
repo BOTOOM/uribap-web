@@ -1032,6 +1032,8 @@ export interface components {
             planned_date?: string | null;
             /** Position */
             position?: number | null;
+            /** Recipe Version Id */
+            recipe_version_id?: string | null;
             /** Servings */
             servings?: number | null;
         };
