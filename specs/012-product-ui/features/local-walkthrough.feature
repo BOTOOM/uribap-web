@@ -65,3 +65,25 @@ Característica: Recorrido de producto verificado en local
     Cuando navego a "/inventario" o "/plan"
     Entonces soy redirigido a "/login" con returnTo
     # Verificado: POST logout → borrado de cookie → proxy 307 → /login.
+
+  Escenario: Inventario como lista por ingrediente con acciones en diálogo
+    Dado el hogar con lotes comprados y el plan aprobado
+    Cuando abro "/inventario"
+    Entonces veo una fila por ingrediente con Real, Proyectado, Caducidad y estado
+    Y las pestañas de ubicación filtran la lista
+    Cuando expando la fila de "Arroz"
+    Entonces veo sus lotes, la explicación del proyectado y acciones por lote
+    Cuando pulso "Ajustar" en el lote
+    Entonces se abre un diálogo con "Quitar"/"Añadir" y cantidad positiva
+    Y al registrar 500 g el saldo real pasa de 0 g a 500 g
+    # Verificado en navegador: el ajuste quedó registrado en el ledger
+    # y el proyectado de Arroz pasó de -300 g a 200 g.
+
+  Escenario: Añadir comida desde diálogo con búsqueda e impacto
+    Dado un plan semanal en borrador
+    Cuando pulso "Añadir" en un día vacío
+    Entonces el diálogo ofrece buscador y lista de recetas publicadas
+    Y cada opción muestra minutos, raciones base y número de versión
+    Y un panel explica que la demanda se proyecta al guardar
+    Cuando elijo "Arroz con pollo · v2", Almuerzo y 4 raciones
+    Entonces la comida aparece en el día sin tocar el inventario real
