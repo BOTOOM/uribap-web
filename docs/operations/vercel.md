@@ -1,0 +1,77 @@
+# Vercel Operations Runbook
+
+This document describes how the Web app is configured and operated on Vercel.
+Deployment itself is out of scope for this phase — this runbook is the
+contract a future deploy must satisfy.
+
+## Build
+
+- Vercel auto-detects Next.js; `pnpm` is the package manager (pinned via
+  `packageManager` in `package.json`). No `vercel.json` is required —
+  `next.config.ts` owns output mode (`standalone`), security headers, and
+  typed routes.
+- The repository `Dockerfile` stays as the container fallback (standalone
+  output, non-root `node` user); both paths run the same build.
+
+## Environment contract
+
+| Variable | Scope | Purpose | Notes |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_API_BASE_URL` | browser | Public API base for direct client use | points at the API origin; default localhost |
+| `URIBAP_API_INTERNAL_URL` | server-only | BFF route handlers' upstream | internal network URL in prod; never exposed to the browser |
+| `AUTH_SECRET` | server-only | NextAuth JWT/session encryption | ≥32 chars, generated per environment |
+| `AUTH_ZITADEL_ID` / `AUTH_ZITADEL_SECRET` | server-only | OIDC client credentials | ZITADEL app credentials; secret storage |
+| `AUTH_ZITADEL_ISSUER` | server-only | OIDC issuer URL | e.g. `https://zitadel.example.com` |
+| `AUTH_TRUST_HOST` | server-only | Trust `X-Forwarded-Host` | `true` behind Vercel/proxy |
+
+Rules:
+
+- Only `NEXT_PUBLIC_*` vars reach the browser bundle. `serverEnv` values are
+  consumed exclusively by Server Components and `/api/*` BFF route handlers.
+- `.env.example` documents the full list with placeholders — real values live
+  in Vercel's environment variable storage (and local `.env.local`, git-ignored).
+- The BFF derives the active household from `/me`; no internal household or
+  tenant id needs to be exposed to the client.
+
+## Preview vs. production
+
+- Preview deployments: same env contract, pointing at a staging API and a
+  preview ZITADEL client if needed. `AUTH_TRUST_HOST=true` is required because
+  Vercel serves previews behind its proxy.
+- Production: `URIBAP_API_INTERNAL_URL` should reach the API over the private
+  path when available; otherwise the public API origin with TLS.
+
+## Health
+
+- `GET /api/health` — lightweight liveness for the app process; returns JSON.
+  Use it for uptime checks; deep readiness depends on the API's own
+  `/api/v1/health/ready`.
+
+## Security headers
+
+`next.config.ts` sets on every route:
+
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy: strict-origin-when-cross-origin`,
+  `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+- CSP: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src
+  'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src
+  'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'`.
+  - `connect-src 'self'` confines browser fetches to the same-origin BFF —
+    no token or provider call happens cross-origin.
+  - `script-src 'unsafe-inline'` is the pragmatic Next baseline (inline
+    hydration payloads); a nonce-based CSP is deferred follow-up work.
+- HSTS is owned by the TLS-terminating edge, not the app.
+
+## Secret rotation
+
+- `AUTH_SECRET`: rotate via a new env var value → redeploy; active sessions
+  invalidate (acceptable, sessions re-establish via ZITADEL).
+- `AUTH_ZITADEL_SECRET`: rotate in ZITADEL first, update the env var, redeploy.
+
+## Release checklist (no deploy performed in this phase)
+
+1. `pnpm api:check` clean — contract pinned to the deployed API revision.
+2. Env vars above configured in the Vercel project (Production + Preview).
+3. `pnpm build` green; headers visible via `curl -I` on the deployment.
+4. `/api/health` returns 200 on the deployment.
