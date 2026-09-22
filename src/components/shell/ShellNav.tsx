@@ -21,6 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Ingredientes", href: "/ingredientes", icon: "carrot" },
   { label: "Preparación", href: "/preparacion", icon: "clock" },
   { label: "Hogar", href: "/settings/household" as Route, icon: "users" },
+  { label: "Agentes", href: "/settings/agentes" as Route, icon: "bot" },
 ];
 
 function isActive(pathname: string, href: string): boolean {

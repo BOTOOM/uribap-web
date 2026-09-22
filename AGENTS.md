@@ -40,3 +40,13 @@ Use the model matrix in the active `specs/*/plan.md`. As of 2026-09-10, prefer
 `gpt-5-6-luna-high` for UI architecture, `gpt-5-6-sol-high` for implementation,
 `gpt-5-6-terra-high` for auth/accessibility review, `glm-5-3-max` for long-context
 analysis, `kimi-k3-max` only for explicit cross-repo escalation, and `swe-2-high` for bounded fixes.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

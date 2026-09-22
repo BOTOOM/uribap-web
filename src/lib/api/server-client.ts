@@ -42,7 +42,10 @@ export async function serverApiFetch<T>(path: string, init: RequestInit = {}): P
     },
     cache: "no-store",
   });
-  if (response.ok) return (await response.json()) as T;
+  if (response.ok) {
+    if (response.status === 204) return null as T;
+    return (await response.json()) as T;
+  }
   const problem = (await response.json().catch(() => null)) as {
     code?: string;
     detail?: string;

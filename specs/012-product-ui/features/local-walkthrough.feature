@@ -126,3 +126,20 @@ Característica: Recorrido de producto verificado en local
     Entonces solo se muestra la columna de ese día con sus comidas y el botón añadir
     # Regresión evitada: el CSS esperaba .day.is-current pero el componente
     # emite .day.active — en móvil no se mostraba ningún día.
+
+  Escenario: Gestionar tokens MCP y configurar un agente externo
+    Dado que navego a "/settings/agentes"
+    Entonces veo la URL del servidor MCP y las guías de Devin Desktop, Devin Cloud,
+      VS Code, Claude y otros clientes
+    Cuando escribo un nombre y pulso "Crear token"
+    Entonces el token en claro se muestra una sola vez con aviso para guardarlo
+    Y aparece en la lista con prefijo, fecha de creación y último uso
+    Cuando lo revoco
+    Entonces desaparece de la lista y el endpoint MCP responde 401 a ese token
+    # Verificado en vivo: token "Devin Desktop" creado desde la UI autenticó el
+    # handshake MCP y uribap_get_context devolvió "Casa Demo"; tras revocar → 401.
+
+  Escenario: Agentes MCP en móvil
+    Dado un viewport de 375x812
+    Cuando navego a "/settings/agentes"
+    Entonces la página no desborda horizontalmente y "Más" en la nav marca la sección

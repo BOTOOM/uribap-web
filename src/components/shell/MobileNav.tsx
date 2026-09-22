@@ -15,7 +15,7 @@ const PRIMARY_ITEMS = [
   { label: "Preparar", href: "/preparacion" as Route, icon: "clock" as const },
 ];
 
-const MORE_HREFS = ["/forecast", "/recetas", "/ingredientes", "/settings/household"];
+const MORE_HREFS = ["/forecast", "/recetas", "/ingredientes", "/settings/household", "/settings/agentes"];
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
