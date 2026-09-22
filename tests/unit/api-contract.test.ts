@@ -18,9 +18,9 @@ describe("pinned API contract", () => {
   it("records the API repository, revision, and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
-    expect(metadata.schemaVersion).toBe("v9");
+    expect(metadata.schemaVersion).toBe("v10");
     expect(metadata.apiRevision).toBe(
-      "604331184c0ee9d2f2c5fc0b70c2752f9d0dcfcf",
+      "events-da5403e",
     );
   });
 });

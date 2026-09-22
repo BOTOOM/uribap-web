@@ -107,6 +107,23 @@ export interface paths {
         patch: operations["update_api_v1_households__household_id__patch"];
         trace?: never;
     };
+    "/api/v1/households/{household_id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Activity */
+        get: operations["activity_api_v1_households__household_id__activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/households/{household_id}/invitations": {
         parameters: {
             query?: never;
@@ -935,6 +952,43 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActivityEntry */
+        ActivityEntry: {
+            /** Actoruserid */
+            actorUserId: string | null;
+            /** Aggregateid */
+            aggregateId: string | null;
+            /** Aggregatetype */
+            aggregateType: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Occurredat
+             * Format: date-time
+             */
+            occurredAt: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+        };
+        /** ActivityFeedResponse */
+        ActivityFeedResponse: {
+            /** Entries */
+            entries: components["schemas"]["ActivityEntry"][];
+            /** Hasmore */
+            hasMore: boolean;
+            outbox: components["schemas"]["OutboxSummary"];
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
         /** CompletionActualLine */
         CompletionActualLine: {
             /** Actual Amount */
@@ -1689,6 +1743,29 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** OutboxSummary */
+        OutboxSummary: {
+            /**
+             * Failed
+             * @default 0
+             */
+            failed: number;
+            /**
+             * Pending
+             * @default 0
+             */
+            pending: number;
+            /**
+             * Sent
+             * @default 0
+             */
+            sent: number;
+            /**
+             * Suppressed
+             * @default 0
+             */
+            suppressed: number;
+        };
         /** PageInfo */
         PageInfo: {
             /**
@@ -2333,6 +2410,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activity_api_v1_households__household_id__activity_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                household_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityFeedResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

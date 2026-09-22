@@ -1,4 +1,5 @@
 import { ErrorState } from "@/components/states/ErrorState";
+import { ActivityFeed } from "@/components/household/ActivityFeed";
 import { InvitationForm } from "@/components/household/InvitationForm";
 import { MemberManagement } from "@/components/household/MemberManagement";
 import { serverApiFetch } from "@/lib/api/server-client";
@@ -31,10 +32,32 @@ type Members = {
   }>;
 };
 
+type Activity = {
+  entries: Array<{
+    id: string;
+    kind: string;
+    occurredAt: string;
+    aggregateType: string;
+    aggregateId: string | null;
+    actorUserId: string | null;
+    payload: Record<string, unknown>;
+  }>;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+  outbox: {
+    pending: number;
+    sent: number;
+    failed: number;
+    suppressed: number;
+  };
+};
+
 type HouseholdPageData = {
   household: Household;
   members: Members;
   membership: CurrentUser["memberships"][number];
+  activity: Activity | null;
 };
 
 async function loadHouseholdData(): Promise<HouseholdPageData | { error: string }> {
@@ -42,11 +65,12 @@ async function loadHouseholdData(): Promise<HouseholdPageData | { error: string 
     const currentUser = await serverApiFetch<CurrentUser>("/me");
     const membership = currentUser.memberships.find((item) => item.status === "active");
     if (!membership) return { error: "Crea o acepta una invitación antes de administrar el hogar." };
-    const [household, members] = await Promise.all([
+    const [household, members, activity] = await Promise.all([
       serverApiFetch<Household>(`/households/${membership.household_id}`),
       serverApiFetch<Members>(`/households/${membership.household_id}/members`),
+      serverApiFetch<Activity>(`/households/${membership.household_id}/activity`).catch(() => null),
     ]);
-    return { household, members, membership };
+    return { household, members, membership, activity };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
   }
@@ -57,7 +81,7 @@ export default async function HouseholdSettingsPage() {
   if ("error" in data) {
     return <ErrorState title="No se pudo cargar el hogar" description={data.error} />;
   }
-  const { household, members, membership } = data;
+  const { household, members, membership, activity } = data;
   const canInvite = membership.role === "owner" || membership.role === "admin";
   return (
     <div className="foundation-shell">
@@ -76,6 +100,17 @@ export default async function HouseholdSettingsPage() {
           initialMembers={members.items}
           canManage={canInvite}
         />
+      </section>
+      <section className="foundation-list" aria-labelledby="activity-title">
+        <div>
+          <p className="eyebrow">Registro</p>
+          <h2 id="activity-title">Actividad del hogar</h2>
+        </div>
+        {activity ? (
+          <ActivityFeed initialFeed={activity} outbox={activity.outbox} />
+        ) : (
+          <p role="status">No se pudo cargar la actividad del hogar.</p>
+        )}
       </section>
       {canInvite ? (
         <section className="foundation-hero" aria-labelledby="invite-title">
