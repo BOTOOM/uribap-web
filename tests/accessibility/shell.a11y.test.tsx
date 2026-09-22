@@ -1,16 +1,44 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import Home from "@/app/page";
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
-describe("foundation accessibility contract", () => {
-  it("exposes named navigation and a skip link", () => {
-    render(<Home />);
+import { MobileNav } from "@/components/shell/MobileNav";
+import { ShellNav } from "@/components/shell/ShellNav";
+import { SkipLink } from "@/components/shell/SkipLink";
 
-    expect(screen.getByRole("navigation", { name: /principal/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /saltar al contenido/i })).toHaveAttribute(
-      "href",
-      "#main-content",
+describe("shell accessibility contract", () => {
+  it("exposes named navigation landmarks and a skip link", () => {
+    render(
+      <>
+        <SkipLink />
+        <ShellNav shoppingCount={3} />
+        <MobileNav />
+      </>,
     );
+
+    expect(
+      screen.getByRole("navigation", { name: "Navegación principal" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Navegación móvil" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /saltar al contenido/i }),
+    ).toHaveAttribute("href", "#main-content");
+  });
+
+  it("marks the current section and surfaces the shopping count", () => {
+    render(<ShellNav shoppingCount={2} />);
+
+    expect(
+      screen.getByRole("link", { name: "Resumen" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: /compra/i }),
+    ).toHaveTextContent("2");
   });
 });

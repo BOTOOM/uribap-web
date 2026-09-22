@@ -5,7 +5,7 @@ import nextConfig from "../../next.config";
 describe("security headers configuration", () => {
   it("applies baseline headers to every route", async () => {
     const groups = await nextConfig.headers?.();
-    expect(groups).toHaveLength(1);
+    expect(groups).toHaveLength(2);
     const group = groups?.[0];
     expect(group?.source).toBe("/(.*)");
 
@@ -27,5 +27,17 @@ describe("security headers configuration", () => {
     expect(csp).toContain("connect-src 'self' http://localhost:8010");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+  });
+
+  it("marks document routes as non-cacheable but spares static assets", async () => {
+    const groups = await nextConfig.headers?.();
+    const group = groups?.[1];
+    expect(group?.source).toContain("_next/static");
+
+    const cacheControl = group?.headers.find(
+      (entry) => entry.key === "Cache-Control",
+    )?.value;
+    expect(cacheControl).toContain("no-store");
+    expect(cacheControl).toContain("private");
   });
 });

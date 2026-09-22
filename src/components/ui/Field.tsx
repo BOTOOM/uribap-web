@@ -12,11 +12,27 @@ export function Field({ id, label, hint, error, ...inputProps }: FieldProps) {
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className="ui-field">
-      <label htmlFor={id}>{label}</label>
-      <input id={id} aria-describedby={describedBy} aria-invalid={Boolean(error)} {...inputProps} />
-      {hint ? <span id={hintId} className="ui-field-hint">{hint}</span> : null}
-      {error ? <span id={errorId} className="ui-field-error" role="alert">{error}</span> : null}
+    <div className="field">
+      <label className="field-label" htmlFor={id}>
+        {label}
+      </label>
+      <input
+        className="input"
+        id={id}
+        aria-describedby={describedBy}
+        aria-invalid={Boolean(error)}
+        {...inputProps}
+      />
+      {hint ? (
+        <span className="helper" id={hintId}>
+          {hint}
+        </span>
+      ) : null}
+      {error ? (
+        <span className="field-error" id={errorId} role="alert">
+          {error}
+        </span>
+      ) : null}
     </div>
   );
 }

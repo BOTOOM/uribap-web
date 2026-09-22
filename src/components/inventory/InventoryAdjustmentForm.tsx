@@ -4,15 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/generated/schema";
+import { toast } from "@/lib/toast";
 
-export function InventoryAdjustmentForm() {
+export type LotOption = {
+  id: string;
+  ingredientName: string;
+  quantity: string;
+  unit: string;
+};
+
+export function InventoryAdjustmentForm({ lots }: { lots: LotOption[] }) {
   const router = useRouter();
-  const [lotId, setLotId] = useState("");
+  const [lotId, setLotId] = useState(lots[0]?.id ?? "");
   const [delta, setDelta] = useState("");
-  const [unit, setUnit] = useState("unit");
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const selected = lots.find((item) => item.id === lotId);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,7 +30,7 @@ export function InventoryAdjustmentForm() {
     const payload: components["schemas"]["InventoryAdjustment"] = {
       lot_id: lotId,
       delta,
-      unit,
+      unit: selected?.unit ?? "unit",
       movement_type: "manual_adjustment",
     };
     try {
@@ -32,7 +41,7 @@ export function InventoryAdjustmentForm() {
       });
       const body = (await response.json().catch(() => null)) as { detail?: string } | null;
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo ajustar el inventario.");
-      setMessage("Ajuste registrado en el ledger.");
+      toast("Ajuste registrado en el ledger");
       setDelta("");
       setIdempotencyKey(crypto.randomUUID());
       router.refresh();
@@ -44,12 +53,54 @@ export function InventoryAdjustmentForm() {
   }
 
   return (
-    <form className="foundation-actions" onSubmit={submit}>
-      <label>ID del lote<input required value={lotId} onChange={(event) => setLotId(event.target.value)} /></label>
-      <label>Cambio firmado<input required inputMode="decimal" value={delta} onChange={(event) => setDelta(event.target.value)} /></label>
-      <label>Unidad<input required value={unit} onChange={(event) => setUnit(event.target.value)} /></label>
-      <button className="status status-ready" disabled={pending} type="submit">{pending ? "Guardando…" : "Registrar ajuste"}</button>
-      {message ? <p role="status">{message}</p> : null}
+    <form className="form" onSubmit={submit}>
+      <div className="field">
+        <label className="field-label" htmlFor="adj-lot">
+          Lote
+        </label>
+        <select
+          className="select"
+          id="adj-lot"
+          required
+          value={lotId}
+          onChange={(event) => setLotId(event.target.value)}
+        >
+          {lots.length === 0 ? <option value="">Sin lotes disponibles</option> : null}
+          {lots.map((lot) => (
+            <option key={lot.id} value={lot.id}>
+              {lot.ingredientName} · {lot.quantity} {lot.unit}
+            </option>
+          ))}
+        </select>
+        {lots.length === 0 ? (
+          <span className="helper">Registra un lote antes de ajustar saldo.</span>
+        ) : null}
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="adj-delta">
+          Cambio firmado{selected ? ` (${selected.unit})` : ""}
+        </label>
+        <input
+          className="input"
+          id="adj-delta"
+          inputMode="decimal"
+          placeholder="-0.5 para restar"
+          required
+          value={delta}
+          onChange={(event) => setDelta(event.target.value)}
+        />
+        <span className="helper">Negativo descuenta, positivo suma al saldo real.</span>
+      </div>
+      <div>
+        <button className="btn btn-secondary" disabled={pending || lots.length === 0} type="submit">
+          {pending ? "Guardando…" : "Registrar ajuste"}
+        </button>
+      </div>
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

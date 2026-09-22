@@ -1,16 +1,38 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { MotionReveal } from "@/features/foundation/MotionReveal";
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-describe("foundation motion contract", () => {
-  it("keeps content available inside the motion boundary", () => {
+import { PlanBoard } from "@/components/planning/PlanBoard";
+
+const ENTRY = {
+  id: "entry-1",
+  plannedDate: "2026-09-28",
+  mealType: "dinner" as const,
+  servings: 2,
+  notes: null,
+  recipeName: "Arroz con pollo",
+  completed: false,
+};
+
+describe("planner motion contract", () => {
+  it("keeps content available without depending on animation", () => {
     render(
-      <MotionReveal>
-        <p>Estado disponible sin depender del movimiento.</p>
-      </MotionReveal>,
+      <PlanBoard
+        entries={[ENTRY]}
+        planId="plan-1"
+        state="draft"
+        today="2026-09-28"
+        version={1}
+        versions={[]}
+        weekStart="2026-09-28"
+      />,
     );
 
-    expect(screen.getByText("Estado disponible sin depender del movimiento.")).toBeVisible();
+    expect(
+      screen.getByRole("tablist", { name: "Días de la semana" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("tab")).toHaveLength(7);
+    expect(screen.getByText("Arroz con pollo")).toBeVisible();
   });
 });

@@ -43,35 +43,47 @@ export function ShoppingListCreateForm({
   }
 
   return (
-    <form className="foundation-grid" aria-label="Crear lista de compra" onSubmit={submit}>
-      <div>
-        <label htmlFor="shopping-from">Desde</label>
-        <input
-          id="shopping-from"
-          type="date"
-          required
-          value={fromDate}
-          onChange={(event) => setFromDate(event.target.value)}
-        />
+    <form aria-label="Crear lista de compra" className="form" onSubmit={submit}>
+      <div className="form-row">
+        <div className="field">
+          <label className="field-label" htmlFor="shopping-from">
+            Desde
+          </label>
+          <input
+            className="input"
+            id="shopping-from"
+            required
+            type="date"
+            value={fromDate}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="shopping-to">
+            Hasta
+          </label>
+          <input
+            className="input"
+            id="shopping-to"
+            required
+            type="date"
+            value={toDate}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+        </div>
       </div>
       <div>
-        <label htmlFor="shopping-to">Hasta</label>
-        <input
-          id="shopping-to"
-          type="date"
-          required
-          value={toDate}
-          onChange={(event) => setToDate(event.target.value)}
-        />
-      </div>
-      <div className="foundation-actions">
-        <button type="submit" className="status status-ready" disabled={pending}>
+        <button className="btn btn-primary" disabled={pending} type="submit">
           {pending ? "Generando…" : "Generar lista"}
         </button>
       </div>
-      {message ? <p role="status">{message}</p> : null}
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar lista activa
         </button>
       ) : null}

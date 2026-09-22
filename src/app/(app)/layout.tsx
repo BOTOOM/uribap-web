@@ -5,6 +5,8 @@ import { AppShell } from "@/components/shell/AppShell";
 import { auth } from "@/lib/auth/auth";
 import { serverApiFetch } from "@/lib/api/server-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   if (!session) redirect("/login" as Route);

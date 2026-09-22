@@ -83,35 +83,62 @@ export function ActivityFeed({ initialFeed, outbox }: {
 
   return (
     <div>
-      <dl role="group" aria-label="Resumen de correo" className="outbox-summary">
-        <div><dt>Pendiente</dt><dd>{outbox.pending}</dd></div>
-        <div><dt>Enviado</dt><dd>{outbox.sent}</dd></div>
-        <div><dt>Fallido</dt><dd>{outbox.failed}</dd></div>
-        <div><dt>Suprimido</dt><dd>{outbox.suppressed}</dd></div>
+      <dl
+        aria-label="Resumen de correo"
+        className="grid grid-4"
+        role="group"
+        style={{ marginBottom: 14 }}
+      >
+        <div className="quantity-box">
+          <span>Pendiente</span>
+          <strong>{outbox.pending}</strong>
+        </div>
+        <div className="quantity-box">
+          <span>Enviado</span>
+          <strong>{outbox.sent}</strong>
+        </div>
+        <div className="quantity-box">
+          <span>Fallido</span>
+          <strong>{outbox.failed}</strong>
+        </div>
+        <div className="quantity-box">
+          <span>Suprimido</span>
+          <strong>{outbox.suppressed}</strong>
+        </div>
       </dl>
-      <p className="form-hint">
+      <p className="helper">
         El envío de email está deshabilitado: los avisos suprimidos se registran sin enviarse.
       </p>
       {entries.length === 0 ? (
-        <p role="status">Todavía no hay actividad registrada en este hogar.</p>
+        <p className="muted" role="status">
+          Todavía no hay actividad registrada en este hogar.
+        </p>
       ) : (
-        <ul>
+        <div className="detail-list">
           {entries.map((entry) => (
-            <li key={entry.id}>
-              <span className="item-index">{entry.aggregateType.slice(0, 2).toUpperCase()}</span>
+            <div className="detail-row" key={entry.id}>
               <div>
-                <strong>{KIND_LABELS[entry.kind] ?? entry.kind}</strong>
-                <span className="form-hint">
+                <span className="meal-name">{KIND_LABELS[entry.kind] ?? entry.kind}</span>
+                <span className="meta" style={{ display: "block" }}>
                   <time dateTime={entry.occurredAt}>{formatTimestamp(entry.occurredAt)}</time>
                 </span>
               </div>
-            </li>
+              <span className="meta">{entry.aggregateType}</span>
+              <span />
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       {error ? <p role="alert">{error}</p> : null}
       {hasMore ? (
-        <button type="button" onClick={loadMore} disabled={loading} aria-busy={loading}>
+        <button
+          aria-busy={loading}
+          className="btn btn-secondary"
+          disabled={loading}
+          onClick={loadMore}
+          style={{ marginTop: 14 }}
+          type="button"
+        >
           {loading ? "Cargando…" : "Cargar más"}
         </button>
       ) : null}

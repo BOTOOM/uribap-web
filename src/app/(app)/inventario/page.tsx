@@ -2,10 +2,27 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { InventoryAdjustmentForm } from "@/components/inventory/InventoryAdjustmentForm";
 import { InventoryLotForm } from "@/components/inventory/InventoryLotForm";
 import { InventoryMovementHistory } from "@/components/inventory/InventoryMovementHistory";
+import { Icon } from "@/components/ui/Icon";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
+import { formatDayMonth, formatQuantity, relativeDay } from "@/lib/format";
 
 type Lot = components["schemas"]["InventoryLotResponse"];
+type Location = components["schemas"]["InventoryLocation"];
+
+type Ingredient = { id: string; name: string; base_unit: string };
+
+const LOCATION_LABELS: Record<Location, string> = {
+  pantry: "Despensa",
+  refrigerator: "Refrigerador",
+  freezer: "Congelador",
+};
+
+const LOCATION_ICONS: Record<Location, "package" | "snow" | "home"> = {
+  pantry: "package",
+  refrigerator: "snow",
+  freezer: "snow",
+};
 
 async function loadInventory(): Promise<Lot[] | { error: string }> {
   try {
@@ -16,35 +33,110 @@ async function loadInventory(): Promise<Lot[] | { error: string }> {
   }
 }
 
+async function loadIngredients(): Promise<Ingredient[]> {
+  try {
+    const data = await serverHouseholdFetch<{ items: Ingredient[] }>("/ingredients");
+    return data.items;
+  } catch {
+    return [];
+  }
+}
+
 export default async function InventoryPage() {
-  const data = await loadInventory();
-  if ("error" in data) return <ErrorState title="No se pudo cargar el inventario" description={data.error} />;
+  const [data, ingredients] = await Promise.all([loadInventory(), loadIngredients()]);
+  if ("error" in data) {
+    return (
+      <ErrorState description={data.error} title="No se pudo cargar el inventario" />
+    );
+  }
+
+  const names = new Map(ingredients.map((item) => [item.id, item.name]));
+  const lotOptions = data
+    .filter((lot) => lot.available && !lot.expired)
+    .map((lot) => ({
+      id: lot.id,
+      ingredientName: names.get(lot.ingredient_id) ?? lot.ingredient_id,
+      quantity: lot.quantity_on_hand,
+      unit: lot.unit,
+    }));
+
   return (
-    <div className="foundation-shell">
-      <section className="foundation-hero" aria-labelledby="inventory-title">
-        <p className="eyebrow">Uribap · inventario</p>
-        <h1 id="inventory-title">Lo que existe, lote por lote.</h1>
-        <p className="lede">El ledger conserva cada entrada y ajuste. Las proyecciones futuras no alteran este saldo real.</p>
-      </section>
-      <section className="foundation-list" aria-labelledby="inventory-list-title">
-        <h2 id="inventory-list-title">Lotes disponibles</h2>
-        {data.length === 0 ? <p role="status">Todavía no hay lotes registrados.</p> : (
-          <ul>
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Inventario</h1>
+          <p>
+            Lo que existe, lote por lote. El ledger conserva cada entrada y ajuste; las
+            proyecciones futuras no alteran este saldo real.
+          </p>
+        </div>
+      </div>
+
+      <article className="card card-flush">
+        <div className="card-title">
+          <h2>Lotes</h2>
+          <span className="meta">
+            {data.length} registrados · {lotOptions.length} disponibles
+          </span>
+        </div>
+        {data.length === 0 ? (
+          <div className="empty">
+            <strong>Todavía no hay lotes registrados.</strong>
+            <p>Registra la primera compra o crea un lote manual con el formulario.</p>
+          </div>
+        ) : (
+          <div>
             {data.map((lot) => (
-              <li key={lot.id}>
-                <span className="item-index">{lot.quantity_on_hand} {lot.unit}</span>
-                <span>{lot.ingredient_id}</span>
-                <span>{lot.location}{lot.expiration_date ? ` · vence ${lot.expiration_date}` : ""}{lot.expired ? " · caducado" : lot.available ? "" : " · no disponible"}</span>
+              <div className="inventory-row" key={lot.id}>
+                <div>
+                  <span className="meal-name">
+                    {names.get(lot.ingredient_id) ?? lot.ingredient_id}
+                  </span>
+                  <span className="muted" style={{ display: "block" }}>
+                    <Icon
+                      name={LOCATION_ICONS[lot.location]}
+                      size={13}
+                      style={{ verticalAlign: "-2px", marginRight: 4 }}
+                    />
+                    {LOCATION_LABELS[lot.location]}
+                  </span>
+                </div>
+                <strong className="num">
+                  {formatQuantity(lot.quantity_on_hand, lot.unit)}
+                </strong>
+                <span className="meta">
+                  {lot.expiration_date
+                    ? `vence ${formatDayMonth(lot.expiration_date)} · ${relativeDay(lot.expiration_date)}`
+                    : "sin caducidad"}
+                </span>
+                {lot.expired ? (
+                  <span className="status missing">Caducado</span>
+                ) : lot.available ? (
+                  <span className="status available">Disponible</span>
+                ) : (
+                  <span className="status pending">No disponible</span>
+                )}
                 <InventoryMovementHistory lotId={lot.id} />
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-      </section>
-      <section className="foundation-grid" aria-label="Acciones de inventario">
-        <div><h2>Registrar lote</h2><InventoryLotForm /></div>
-        <div><h2>Ajustar saldo</h2><InventoryAdjustmentForm /></div>
-      </section>
-    </div>
+      </article>
+
+      <div className="grid grid-2" style={{ marginTop: 18 }}>
+        <article className="card">
+          <div className="card-title">
+            <h2>Registrar lote</h2>
+          </div>
+          <InventoryLotForm ingredients={ingredients} />
+        </article>
+        <article className="card">
+          <div className="card-title">
+            <h2>Ajustar saldo</h2>
+          </div>
+          <InventoryAdjustmentForm lots={lotOptions} />
+        </article>
+      </div>
+    </>
   );
 }

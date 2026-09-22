@@ -62,17 +62,21 @@ export function CorrectLineForm({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)}>
+      <button className="btn btn-ghost" type="button" onClick={() => setOpen(true)}>
         Corregir
       </button>
     );
   }
 
   return (
-    <form onSubmit={submit}>
-      <label>
-        Cantidad real ({unit})
+    <form className="form-row" onSubmit={submit} style={{ alignItems: "flex-end" }}>
+      <div className="field" style={{ maxWidth: 140 }}>
+        <label className="field-label" htmlFor={`correct-${lineId}`}>
+          Cantidad real ({unit})
+        </label>
         <input
+          className="input"
+          id={`correct-${lineId}`}
           type="number"
           min="0.000001"
           step="0.000001"
@@ -80,16 +84,16 @@ export function CorrectLineForm({
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
         />
-      </label>
-      <button type="submit" disabled={pending}>
+      </div>
+      <button className="btn btn-secondary" type="submit" disabled={pending}>
         {pending ? "Guardando…" : "Guardar"}
       </button>
-      <button type="button" disabled={pending} onClick={() => setOpen(false)}>
+      <button className="btn btn-ghost" type="button" disabled={pending} onClick={() => setOpen(false)}>
         Cancelar
       </button>
-      {message ? <span role="status">{message}</span> : null}
+      {message ? <span className="form-status" role="status">{message}</span> : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar
         </button>
       ) : null}

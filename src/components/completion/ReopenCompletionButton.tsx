@@ -42,12 +42,16 @@ export function ReopenCompletionButton({
 
   return (
     <span>
-      <button type="button" disabled={pending} onClick={reopen}>
+      <button className="btn btn-ghost" disabled={pending} onClick={reopen} type="button">
         {pending ? "Reabriendo…" : "Reabrir"}
       </button>
-      {message ? <span role="status">{message}</span> : null}
+      {message ? (
+        <span className="form-status" role="status">
+          {message}
+        </span>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar
         </button>
       ) : null}

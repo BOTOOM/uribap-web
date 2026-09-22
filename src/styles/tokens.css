@@ -1,15 +1,43 @@
 :root {
   --bg: oklch(98% 0.009 92);
   --surface: oklch(100% 0 0);
-  --foreground: oklch(22% 0.025 72);
+  --fg: oklch(22% 0.025 72);
+  --foreground: var(--fg);
   --muted: oklch(47% 0.02 76);
   --border: oklch(90% 0.012 88);
   --accent: oklch(46% 0.105 157);
   --success: oklch(48% 0.105 170);
-  --warning: oklch(58% 0.13 82);
+
+  --available: oklch(48% 0.105 170);
+  --low: oklch(58% 0.13 70);
   --missing: oklch(47% 0.155 28);
-  --space-unit: 4px;
-  --radius: 20px;
-  --radius-small: 12px;
+  --warning: oklch(58% 0.13 82);
+  --frozen: oklch(51% 0.10 240);
+  --expiring: oklch(56% 0.15 45);
+  --completed: oklch(46% 0.09 155);
+  --pending: oklch(51% 0.07 285);
+
+  --surface-subtle: color-mix(in oklch, var(--fg) 3%, var(--surface));
+  --control: color-mix(in oklch, var(--fg) 4%, var(--surface));
+
+  --shadow-sm: 0 1px 2px color-mix(in oklch, var(--fg) 5%, transparent);
+  --shadow: 0 18px 54px color-mix(in oklch, var(--fg) 10%, transparent);
+
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  --radius-sm: 10px;
+  --radius-small: 12px;
+  --radius: 14px;
+  --radius-lg: 20px;
+
+  --font-display: var(--font-newsreader), "Charter", Georgia, serif;
+  --font-body: var(--font-manrope), "Avenir Next", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "SFMono-Regular", Consolas, monospace;
+
+  --z-nav: 20;
+  --z-sheet: 34;
+  --z-fab: 40;
+  --z-overlay: 50;
+  --z-dialog: 60;
+  --z-toast: 80;
 }

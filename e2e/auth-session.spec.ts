@@ -22,8 +22,11 @@ test.describe("local Auth.js session boundary", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page).toHaveURL(/localhost:3000\/(onboarding|plan)/);
 
-    await page.goto("http://localhost:3000/api/auth/federated-logout", { waitUntil: "commit" }).catch(() => undefined);
-    await expect(page).toHaveURL(/localhost:3000\/|localhost:8080\//, { timeout: 30000 });
+    const logoutResponse = await page.request.post(
+      "http://localhost:3000/api/auth/federated-logout",
+      { maxRedirects: 0 },
+    );
+    expect([302, 303, 307]).toContain(logoutResponse.status());
     const cookies = await context.cookies("http://localhost:3000");
     expect(cookies.some((cookie) => /authjs\.session-token/i.test(cookie.name))).toBe(false);
   });

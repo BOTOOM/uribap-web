@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/generated/schema";
+import { toast } from "@/lib/toast";
 
 export function MealPlanCreateButton({ weekStart }: { weekStart: string }) {
   const router = useRouter();
@@ -23,6 +24,7 @@ export function MealPlanCreateButton({ weekStart }: { weekStart: string }) {
       });
       const body = (await response.json().catch(() => null)) as { detail?: string } | null;
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo crear el plan.");
+      toast("Plan de la semana creado");
       setMessage("Plan creado.");
       setIdempotencyKey(crypto.randomUUID());
       router.refresh();
@@ -34,11 +36,15 @@ export function MealPlanCreateButton({ weekStart }: { weekStart: string }) {
   }
 
   return (
-    <div className="foundation-actions">
-      <button className="status status-ready" disabled={pending} onClick={create} type="button">
+    <div className="planner-empty-actions">
+      <button className="btn btn-primary" disabled={pending} onClick={create} type="button">
         {pending ? "Creando…" : "Crear plan de la semana"}
       </button>
-      {message ? <p role="status">{message}</p> : null}
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }

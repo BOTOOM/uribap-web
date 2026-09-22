@@ -28,14 +28,26 @@ export function InventoryMovementHistory({ lotId }: { lotId: string }) {
 
   return (
     <div>
-      <button className="status" type="button" disabled={pending} onClick={() => void load()}>
+      <button className="btn btn-ghost" disabled={pending} onClick={() => void load()} type="button">
         {pending ? "Cargando historial…" : items ? "Actualizar historial" : "Ver movimientos"}
       </button>
       {message ? <p role="alert">{message}</p> : null}
       {items ? (
-        items.length === 0 ? <p role="status">Sin movimientos.</p> : (
-          <ul aria-label="Historial de movimientos">
-            {items.map((movement) => <li key={movement.id}>{movement.delta} {movement.unit} · {movement.movement_type}</li>)}
+        items.length === 0 ? (
+          <p className="muted" role="status">
+            Sin movimientos.
+          </p>
+        ) : (
+          <ul
+            aria-label="Historial de movimientos"
+            className="meta"
+            style={{ margin: "8px 0 0", paddingLeft: 16, listStyle: "disc" }}
+          >
+            {items.map((movement) => (
+              <li key={movement.id}>
+                {movement.delta} {movement.unit} · {movement.movement_type}
+              </li>
+            ))}
           </ul>
         )
       ) : null}

@@ -45,16 +45,30 @@ export function PreparationTaskActions({ task }: { task: PreparationTask }) {
   }
 
   return (
-    <span className="preparation-task-actions">
-      <button type="button" disabled={pending} onClick={() => transition("complete")}>
+    <span className="planner-actions" style={{ marginLeft: 0 }}>
+      <button
+        className="btn btn-secondary"
+        disabled={pending}
+        onClick={() => transition("complete")}
+        type="button"
+      >
         Completar
       </button>
-      <button type="button" disabled={pending} onClick={() => transition("cancel")}>
+      <button
+        className="btn btn-ghost"
+        disabled={pending}
+        onClick={() => transition("cancel")}
+        type="button"
+      >
         Cancelar
       </button>
-      {message ? <p role="status">{message}</p> : null}
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar tareas actualizadas
         </button>
       ) : null}

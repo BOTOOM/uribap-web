@@ -18,10 +18,11 @@ const LINE = {
 describe("demand forecast table", () => {
   it("renders api-verbatim amounts and a shortfall badge", () => {
     render(<DemandTable items={[LINE]} />);
-    expect(screen.getByText("Arroz (g)")).toBeInTheDocument();
-    expect(screen.getByText("Necesario: 700.000000")).toBeInTheDocument();
-    expect(screen.getByText("En inventario: 500.000000")).toBeInTheDocument();
-    expect(screen.getByText("Faltan 200.000000")).toBeInTheDocument();
+    expect(screen.getByText("Arroz")).toBeInTheDocument();
+    expect(screen.getByText("(g)")).toBeInTheDocument();
+    expect(screen.getByText(/700 necesario/)).toBeInTheDocument();
+    expect(screen.getByText(/500 en casa/)).toBeInTheDocument();
+    expect(screen.getByText("Faltan 200")).toBeInTheDocument();
   });
 
   it("marks covered lines without a shortfall badge", () => {
@@ -36,8 +37,9 @@ describe("demand forecast table", () => {
         items={[LINE, { ...LINE, unit: "kg", required_amount: "1.000000" }]}
       />,
     );
-    expect(screen.getByText("Arroz (g)")).toBeInTheDocument();
-    expect(screen.getByText("Arroz (kg)")).toBeInTheDocument();
+    expect(screen.getAllByText("Arroz")).toHaveLength(2);
+    expect(screen.getByText("(g)")).toBeInTheDocument();
+    expect(screen.getByText("(kg)")).toBeInTheDocument();
   });
 
   it("shows an explicit empty state", () => {

@@ -64,11 +64,15 @@ async function loadHouseholdData(): Promise<HouseholdPageData | { error: string 
   try {
     const currentUser = await serverApiFetch<CurrentUser>("/me");
     const membership = currentUser.memberships.find((item) => item.status === "active");
-    if (!membership) return { error: "Crea o acepta una invitación antes de administrar el hogar." };
+    if (!membership) {
+      return { error: "Crea o acepta una invitación antes de administrar el hogar." };
+    }
     const [household, members, activity] = await Promise.all([
       serverApiFetch<Household>(`/households/${membership.household_id}`),
       serverApiFetch<Members>(`/households/${membership.household_id}/members`),
-      serverApiFetch<Activity>(`/households/${membership.household_id}/activity`).catch(() => null),
+      serverApiFetch<Activity>(`/households/${membership.household_id}/activity`).catch(
+        () => null,
+      ),
     ]);
     return { household, members, membership, activity };
   } catch (error) {
@@ -76,51 +80,78 @@ async function loadHouseholdData(): Promise<HouseholdPageData | { error: string 
   }
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  owner: "propietario",
+  admin: "administración",
+  member: "miembro",
+};
+
 export default async function HouseholdSettingsPage() {
   const data = await loadHouseholdData();
   if ("error" in data) {
-    return <ErrorState title="No se pudo cargar el hogar" description={data.error} />;
+    return <ErrorState description={data.error} title="No se pudo cargar el hogar" />;
   }
   const { household, members, membership, activity } = data;
   const canInvite = membership.role === "owner" || membership.role === "admin";
+
   return (
-    <div className="foundation-shell">
-      <section className="foundation-hero" aria-labelledby="household-settings-title">
-        <p className="eyebrow">Uribap · hogar</p>
-        <h1 id="household-settings-title">{household.name}</h1>
-        <p className="lede">{household.locale} · {household.timezone} · rol {membership.role}</p>
-      </section>
-      <section className="foundation-list" aria-labelledby="members-title">
+    <>
+      <div className="page-head">
         <div>
-          <p className="eyebrow">Personas</p>
-          <h2 id="members-title">Miembros del hogar</h2>
+          <h1>{household.name}</h1>
+          <p>
+            {household.locale} · {household.timezone} · tu rol:{" "}
+            {ROLE_LABELS[membership.role] ?? membership.role}
+          </p>
         </div>
-        <MemberManagement
-          householdId={household.id}
-          initialMembers={members.items}
-          canManage={canInvite}
-        />
-      </section>
-      <section className="foundation-list" aria-labelledby="activity-title">
-        <div>
-          <p className="eyebrow">Registro</p>
-          <h2 id="activity-title">Actividad del hogar</h2>
+      </div>
+
+      <div className="grid grid-2">
+        <article className="card card-flush">
+          <div className="card-title">
+            <h2>Miembros del hogar</h2>
+            <span className="meta">
+              {members.items.filter((item) => item.status === "active").length} activos
+            </span>
+          </div>
+          <MemberManagement
+            canManage={canInvite}
+            householdId={household.id}
+            initialMembers={members.items}
+          />
+        </article>
+
+        <article className="card">
+          <div className="card-title">
+            <h2>Invitar a otra persona</h2>
+          </div>
+          {canInvite ? (
+            <InvitationForm householdId={household.id} />
+          ) : (
+            <p className="muted" role="status">
+              Tu rol puede consultar miembros, pero no administrar invitaciones.
+            </p>
+          )}
+        </article>
+      </div>
+
+      <article className="card card-flush" style={{ marginTop: 18 }}>
+        <div className="card-title">
+          <div>
+            <h2>Actividad del hogar</h2>
+            <span className="muted">
+              Registro de eventos y avisos de correo capturados localmente.
+            </span>
+          </div>
         </div>
         {activity ? (
           <ActivityFeed initialFeed={activity} outbox={activity.outbox} />
         ) : (
-          <p role="status">No se pudo cargar la actividad del hogar.</p>
+          <p className="muted" role="status">
+            No se pudo cargar la actividad del hogar.
+          </p>
         )}
-      </section>
-      {canInvite ? (
-        <section className="foundation-hero" aria-labelledby="invite-title">
-          <p className="eyebrow">Acceso</p>
-          <h2 id="invite-title">Invitar a otra persona</h2>
-          <InvitationForm householdId={household.id} />
-        </section>
-      ) : (
-        <p role="status">Tu rol puede consultar miembros, pero no administrar invitaciones.</p>
-      )}
-    </div>
+      </article>
+    </>
   );
 }

@@ -4,14 +4,22 @@ import { RecipeForm } from "@/components/recipes/RecipeForm";
 
 export default function NewRecipePage() {
   return (
-    <div className="foundation-shell">
-      <section className="foundation-hero" aria-labelledby="new-recipe-title">
-        <p className="eyebrow">Uribap · receta nueva</p>
-        <h1 id="new-recipe-title">Crea un borrador reproducible.</h1>
-        <p className="lede">La versión queda en borrador hasta que sus ingredientes e instrucciones estén listos.</p>
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Nueva receta</h1>
+          <p>
+            Crea un borrador reproducible: la versión queda en borrador hasta que sus
+            ingredientes e instrucciones estén listos.
+          </p>
+        </div>
+        <Link className="btn btn-ghost" href="/recetas">
+          Volver
+        </Link>
+      </div>
+      <article className="card" style={{ maxWidth: 560 }}>
         <RecipeForm />
-        <Link className="status status-ready" href="/recetas">Cancelar</Link>
-      </section>
-    </div>
+      </article>
+    </>
   );
 }
