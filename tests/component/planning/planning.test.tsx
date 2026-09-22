@@ -29,6 +29,7 @@ describe("meal planning forms", () => {
   it("sends expected_version and the stable idempotency key", async () => {
     render(
       <MealPlanEntryForm
+        ingredients={[]}
         planId="plan-1"
         weekStart="2026-09-28"
         version={3}

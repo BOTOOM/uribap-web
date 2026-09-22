@@ -20,6 +20,7 @@ describe("planner motion contract", () => {
     render(
       <PlanBoard
         entries={[ENTRY]}
+        ingredients={[]}
         planId="plan-1"
         state="draft"
         today="2026-09-28"

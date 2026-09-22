@@ -15,6 +15,7 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import type { components } from "@/lib/api/generated/schema";
 import { dayInitial, formatDayLong, formatDayMonth } from "@/lib/format";
+import type { CatalogIngredient } from "@/lib/ingredients";
 
 type MealType = components["schemas"]["RecipeMealType"];
 type PlanState = components["schemas"]["MealPlanState"];
@@ -53,6 +54,7 @@ export function PlanBoard({
   weekStart,
   entries,
   versions,
+  ingredients,
   today,
 }: {
   planId: string;
@@ -61,6 +63,7 @@ export function PlanBoard({
   weekStart: string;
   entries: BoardEntry[];
   versions: PublishedVersion[];
+  ingredients: CatalogIngredient[];
   today: string;
 }) {
   const days = useMemo(
@@ -265,6 +268,7 @@ export function PlanBoard({
               La comida se proyecta como demanda; no toca el inventario.
             </DialogDescription>
             <MealPlanEntryForm
+              ingredients={ingredients}
               initialDate={addDate ?? weekStart}
               onDone={() => setAddDate(null)}
               planId={planId}

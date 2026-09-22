@@ -87,3 +87,37 @@ Característica: Recorrido de producto verificado en local
     Y un panel explica que la demanda se proyecta al guardar
     Cuando elijo "Arroz con pollo · v2", Almuerzo y 4 raciones
     Entonces la comida aparece en el día sin tocar el inventario real
+
+  Escenario: Crear una receta sin salir del diálogo del plan
+    Dado un plan semanal en borrador
+    Cuando abro "Añadir comida" y busco "huevos"
+    Entonces el estado vacío ofrece "Crear “huevos”" sin navegar a otra vista
+    Cuando lo pulso
+    Entonces aparece "Nueva receta rápida" con el nombre prellenado
+    Y conserva el día y el tipo de comida que había elegido
+    Cuando completo raciones base, tiempo y líneas de ingrediente
+    Y pulso "Crear y seleccionar"
+    Entonces la receta se crea como borrador, se le asignan las líneas y se publica
+    Y vuelvo al buscador con la receta nueva ya seleccionada
+    Cuando confirmo "Añadir al plan"
+    Entonces la comida aparece en el día elegido
+    # Verificado en navegador: "Huevos rancheros" creada, publicada y
+    # añadida al miércoles sin salir del diálogo.
+
+  Escenario: Crear un ingrediente desde la receta rápida
+    Dado el creador de receta abierto dentro del diálogo del plan
+    Cuando el ingrediente que necesito no existe en el selector
+    Y pulso "Crear ingrediente nuevo"
+    Entonces el mismo diálogo cambia a "Nuevo ingrediente" sin perder lo escrito
+    Cuando creo "Huevo" con dimensión Unidades
+    Entonces vuelvo a la receta con "Huevo" ya seleccionado en la línea
+    Y el nombre y las líneas que había escrito se conservan
+    # Verificado en navegador: Huevo (unit) quedó seleccionado y la línea
+    # "Huevo · 4 unit" se guardó en la versión publicada.
+
+  Escenario: El tablero del plan en móvil muestra el día activo
+    Dado un viewport de 375x812
+    Cuando navego a "/plan" y elijo un día en el selector
+    Entonces solo se muestra la columna de ese día con sus comidas y el botón añadir
+    # Regresión evitada: el CSS esperaba .day.is-current pero el componente
+    # emite .day.active — en móvil no se mostraba ningún día.

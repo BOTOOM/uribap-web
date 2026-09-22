@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -17,10 +17,25 @@ const VERSIONS = [
   },
 ];
 
+const INGREDIENTS = [
+  {
+    id: "33333333-3333-3333-3333-333333333333",
+    name: "Arroz",
+    dimension: "mass" as const,
+    base_unit: "g",
+  },
+];
+
 describe("meal planning accessibility", () => {
   it("keeps entry form controls associated with visible labels", () => {
     render(
-      <MealPlanEntryForm planId="plan-1" weekStart="2026-09-28" version={1} versions={VERSIONS} />,
+      <MealPlanEntryForm
+        ingredients={INGREDIENTS}
+        planId="plan-1"
+        weekStart="2026-09-28"
+        version={1}
+        versions={VERSIONS}
+      />,
     );
     expect(
       screen.getByRole("listbox", { name: "Recetas disponibles" }),
@@ -31,6 +46,32 @@ describe("meal planning accessibility", () => {
     expect(screen.getByLabelText("Día")).toBeInTheDocument();
     expect(screen.getByLabelText("Comida")).toBeInTheDocument();
     expect(screen.getByLabelText("Raciones")).toBeInTheDocument();
+  });
+
+  it("keeps the inline recipe and ingredient creators labelled", () => {
+    render(
+      <MealPlanEntryForm
+        ingredients={INGREDIENTS}
+        planId="plan-1"
+        weekStart="2026-09-28"
+        version={1}
+        versions={VERSIONS}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /crear una receta/i }));
+    expect(screen.getByLabelText("Nombre de la receta")).toBeInTheDocument();
+    expect(screen.getByLabelText("Raciones base")).toBeInTheDocument();
+    expect(screen.getByLabelText(/tiempo estimado/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Ingrediente")).toBeInTheDocument();
+    expect(screen.getByLabelText(/cantidad/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /crear ingrediente nuevo/i }));
+    expect(screen.getByLabelText("Nombre")).toBeInTheDocument();
+    expect(screen.getByLabelText("Dimensión")).toBeInTheDocument();
+    expect(screen.getByLabelText("Unidad base")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Volver a la receta" }),
+    ).toBeInTheDocument();
   });
 
   it("groups transition actions under a named group", () => {

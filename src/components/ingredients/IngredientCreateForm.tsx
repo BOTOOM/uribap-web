@@ -4,27 +4,33 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/generated/schema";
+import {
+  DIMENSION_LABELS,
+  UNITS_BY_DIMENSION,
+  type IngredientDimension,
+  type IngredientResponse,
+} from "@/lib/ingredients";
 import { toast } from "@/lib/toast";
 
-type Dimension = components["schemas"]["IngredientDimension"];
-
-const DIMENSION_LABELS: Record<Dimension, string> = {
-  count: "Unidades",
-  mass: "Peso",
-  volume: "Volumen",
-};
-
-const UNITS_BY_DIMENSION: Record<Dimension, string[]> = {
-  count: ["unit"],
-  mass: ["g", "kg"],
-  volume: ["ml", "l"],
-};
-
-export function IngredientCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+export function IngredientCreateForm({
+  autoFocusName = false,
+  initialName = "",
+  onCancel,
+  onCreated,
+  onSuccess,
+  submitLabel = "Añadir ingrediente",
+}: {
+  autoFocusName?: boolean;
+  initialName?: string;
+  onCancel?: () => void;
+  onCreated?: (ingredient: IngredientResponse) => void;
+  onSuccess?: () => void;
+  submitLabel?: string;
+}) {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName);
   const [category, setCategory] = useState("");
-  const [dimension, setDimension] = useState<Dimension>("mass");
+  const [dimension, setDimension] = useState<IngredientDimension>("mass");
   const [baseUnit, setBaseUnit] = useState("g");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,8 +51,11 @@ export function IngredientCreateForm({ onSuccess }: { onSuccess?: () => void }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+      const body = (await response.json().catch(() => null)) as
+        | (Partial<IngredientResponse> & { detail?: string })
+        | null;
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo crear el ingrediente.");
+      if (body?.id) onCreated?.(body as IngredientResponse);
       toast("Ingrediente añadido a la despensa");
       setName("");
       setCategory("");
@@ -67,6 +76,7 @@ export function IngredientCreateForm({ onSuccess }: { onSuccess?: () => void }) 
             Nombre
           </label>
           <input
+            autoFocus={autoFocusName}
             className="input"
             id="ing-name"
             maxLength={160}
@@ -97,7 +107,7 @@ export function IngredientCreateForm({ onSuccess }: { onSuccess?: () => void }) 
             id="ing-dimension"
             value={dimension}
             onChange={(event) => {
-              const next = event.target.value as Dimension;
+              const next = event.target.value as IngredientDimension;
               setDimension(next);
               setBaseUnit(UNITS_BY_DIMENSION[next][0]);
             }}
@@ -127,9 +137,14 @@ export function IngredientCreateForm({ onSuccess }: { onSuccess?: () => void }) 
           </select>
         </div>
       </div>
-      <div>
+      <div className="quick-recipe-actions">
+        {onCancel ? (
+          <button className="btn btn-ghost" onClick={onCancel} type="button">
+            Cancelar
+          </button>
+        ) : null}
         <button className="btn btn-primary" disabled={pending} type="submit">
-          {pending ? "Guardando…" : "Añadir ingrediente"}
+          {pending ? "Guardando…" : submitLabel}
         </button>
       </div>
       {message ? (

@@ -12,10 +12,12 @@ import { ApiRequestError, serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
 import { formatDayMonth, formatQuantity, formatWeekRangeLong, toIsoDay } from "@/lib/format";
 import { mondayOf } from "@/lib/forecast/window";
+import type { CatalogIngredient } from "@/lib/ingredients";
 
 type MealPlan = components["schemas"]["MealPlanResponse"];
 type MealCompletion = components["schemas"]["MealCompletionResponse"];
 type PublishedVersion = components["schemas"]["PublishedRecipeVersionResponse"];
+type Ingredient = components["schemas"]["IngredientResponse"];
 type MealType = components["schemas"]["RecipeMealType"];
 type PlanState = components["schemas"]["MealPlanState"];
 
@@ -68,6 +70,20 @@ async function loadCompletions(): Promise<MealCompletion[] | { error: string }> 
   }
 }
 
+async function loadIngredients(): Promise<CatalogIngredient[]> {
+  try {
+    const data = await serverHouseholdFetch<{ items: Ingredient[] }>("/ingredients");
+    return data.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      dimension: item.dimension,
+      base_unit: item.base_unit,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function PlanPage({
   searchParams,
 }: {
@@ -79,10 +95,11 @@ export default async function PlanPage({
   const today = toIsoDay(new Date());
   const currentWeek = toIsoDay(mondayOf(new Date()));
 
-  const [plan, versions, completions] = await Promise.all([
+  const [plan, versions, completions, ingredients] = await Promise.all([
     loadPlan(weekStart),
     loadPublishedVersions(),
     loadCompletions(),
+    loadIngredients(),
   ]);
   const versionNames = new Map(
     versions.map((item) => [item.recipe_version_id, item.recipe_name]),
@@ -199,6 +216,7 @@ export default async function PlanPage({
 
       <PlanBoard
         entries={boardEntries}
+        ingredients={ingredients}
         planId={plan.id}
         state={plan.state}
         today={today}

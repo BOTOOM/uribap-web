@@ -2280,6 +2280,97 @@ button.inventory-row:focus-visible {
   margin-top: 14px;
 }
 
+.meal-search-empty {
+  padding: 26px 18px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.meal-search-empty p {
+  margin: 4px auto 14px;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 34ch;
+}
+
+.meal-create-link {
+  margin-top: 8px;
+}
+
+.quick-recipe {
+  margin-top: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  animation: formReveal 0.22s var(--ease-out);
+}
+
+@keyframes formReveal {
+  from {
+    opacity: 0.3;
+    transform: translateY(7px);
+  }
+}
+
+.quick-recipe-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.quick-recipe-head h3 {
+  margin: 0;
+}
+
+.quick-recipe-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.quick-recipe-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.quick-lines {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.quick-lines > legend {
+  margin-bottom: 8px;
+}
+
+.quick-lines > .btn {
+  margin-top: 10px;
+}
+
+.quick-line-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr auto auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.quick-line-optional {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+
+.quick-line-optional input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
 /* ---------- Dialogs (Radix) ---------- */
 
 .ui-dialog-overlay,
@@ -2483,6 +2574,7 @@ button.inventory-row:focus-visible {
   .planner-actions {
     width: 100%;
     margin-left: 0;
+    flex-wrap: wrap;
   }
   .planner-actions > .btn-primary {
     flex: 1;
@@ -2532,7 +2624,7 @@ button.inventory-row:focus-visible {
   .day {
     display: none;
   }
-  .day.is-current {
+  .day.active {
     display: block;
     animation: dayReveal 0.22s var(--ease-out);
   }
@@ -2726,6 +2818,15 @@ button.inventory-row:focus-visible {
   }
   .dialog-foot .btn {
     width: 100%;
+  }
+  .quick-recipe-actions {
+    flex-direction: column-reverse;
+  }
+  .quick-recipe-actions .btn {
+    width: 100%;
+  }
+  .quick-line-row {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

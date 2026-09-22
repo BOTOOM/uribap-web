@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { QuickRecipeForm } from "@/components/planning/QuickRecipeForm";
 import { Icon } from "@/components/ui/Icon";
 import type { components } from "@/lib/api/generated/schema";
 import { formatDayLong } from "@/lib/format";
+import type { CatalogIngredient } from "@/lib/ingredients";
 import { toast } from "@/lib/toast";
 
 type PublishedVersion = components["schemas"]["PublishedRecipeVersionResponse"];
@@ -23,6 +25,7 @@ export function MealPlanEntryForm({
   weekStart,
   version,
   versions,
+  ingredients,
   initialDate,
   onDone,
 }: {
@@ -30,6 +33,7 @@ export function MealPlanEntryForm({
   weekStart: string;
   version: number;
   versions: PublishedVersion[];
+  ingredients: CatalogIngredient[];
   initialDate?: string;
   onDone?: () => void;
 }) {
@@ -39,9 +43,12 @@ export function MealPlanEntryForm({
     day.setUTCDate(day.getUTCDate() + index);
     return day.toISOString().slice(0, 10);
   });
+  const [createdVersions, setCreatedVersions] = useState<PublishedVersion[]>([]);
   const [recipeVersionId, setRecipeVersionId] = useState(
     versions[0]?.recipe_version_id ?? "",
   );
+  const [mode, setMode] = useState<"picker" | "recipe">("picker");
+  const [recipeSeed, setRecipeSeed] = useState("");
   const [query, setQuery] = useState("");
   const [plannedDate, setPlannedDate] = useState(initialDate ?? weekStart);
   const [mealType, setMealType] = useState<MealType>("dinner");
@@ -52,17 +59,42 @@ export function MealPlanEntryForm({
   const [conflict, setConflict] = useState(false);
   const [pending, setPending] = useState(false);
 
+  const versionList = useMemo(() => {
+    const known = new Set(versions.map((item) => item.recipe_version_id));
+    return [
+      ...createdVersions.filter((item) => !known.has(item.recipe_version_id)),
+      ...versions,
+    ];
+  }, [createdVersions, versions]);
+
   const filteredVersions = useMemo(() => {
     const term = query.trim().toLocaleLowerCase("es");
-    if (!term) return versions;
-    return versions.filter((versionItem) =>
+    if (!term) return versionList;
+    return versionList.filter((versionItem) =>
       versionItem.recipe_name.toLocaleLowerCase("es").includes(term),
     );
-  }, [query, versions]);
+  }, [query, versionList]);
 
-  const selected = versions.find(
+  const selected = versionList.find(
     (versionItem) => versionItem.recipe_version_id === recipeVersionId,
   );
+
+  function openRecipeCreator(seed = "") {
+    setRecipeSeed(seed);
+    setMode("recipe");
+  }
+
+  function handleRecipeCreated(versionItem: PublishedVersion) {
+    setCreatedVersions((current) => [
+      versionItem,
+      ...current.filter(
+        (item) => item.recipe_version_id !== versionItem.recipe_version_id,
+      ),
+    ]);
+    setRecipeVersionId(versionItem.recipe_version_id);
+    setQuery("");
+    setMode("picker");
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -106,6 +138,22 @@ export function MealPlanEntryForm({
     }
   }
 
+  if (mode === "recipe") {
+    return (
+      <QuickRecipeForm
+        initialName={recipeSeed}
+        ingredients={ingredients}
+        onBack={() => setMode("picker")}
+        onCreated={handleRecipeCreated}
+      />
+    );
+  }
+
+  const trimmedQuery = query.trim();
+  const createLabel = trimmedQuery
+    ? `Crear “${trimmedQuery}”`
+    : "Crear una receta";
+
   return (
     <form className="form" onSubmit={submit}>
       <div className="search-wrap meal-dialog-search">
@@ -124,21 +172,25 @@ export function MealPlanEntryForm({
           value={query}
         />
       </div>
-      {versions.length === 0 ? (
-        <div className="empty" role="status">
-          <span className="recipe-glyph">
-            <Icon name="book" size={19} />
-          </span>
-          <strong>No hay recetas publicadas</strong>
-          <p>Publica una receta antes de planificar comidas.</p>
-        </div>
-      ) : filteredVersions.length === 0 ? (
-        <div className="empty" role="status">
-          <span className="recipe-glyph">
-            <Icon name="search" size={19} />
-          </span>
-          <strong>No encontramos esa receta</strong>
-          <p>Prueba con otro nombre o crea una receta nueva.</p>
+      {versionList.length === 0 || filteredVersions.length === 0 ? (
+        <div className="meal-search-empty" role="status">
+          <strong>
+            {versionList.length === 0
+              ? "Todavía no hay recetas"
+              : `“${trimmedQuery}” aún no está en tus recetas`}
+          </strong>
+          <p>
+            Créala aquí y añádela sin salir del plan; podrás completarla después
+            desde Recetas.
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => openRecipeCreator(trimmedQuery)}
+            type="button"
+          >
+            <Icon name="plus" size={15} />
+            {versionList.length === 0 ? "Crear tu primera receta" : createLabel}
+          </button>
         </div>
       ) : (
         <div
@@ -175,6 +227,16 @@ export function MealPlanEntryForm({
           })}
         </div>
       )}
+      {filteredVersions.length > 0 ? (
+        <button
+          className="btn btn-ghost meal-create-link"
+          onClick={() => openRecipeCreator(trimmedQuery)}
+          type="button"
+        >
+          <Icon name="plus" size={14} />
+          {createLabel}
+        </button>
+      ) : null}
       {selected ? (
         <div className="callout dialog-impact" role="status">
           <strong>Se añadirá {selected.recipe_name}</strong>
