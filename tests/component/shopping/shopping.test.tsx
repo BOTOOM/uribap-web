@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-import { ShoppingItemActions } from "@/components/shopping/ShoppingItemActions";
+import { ShoppingItemRow } from "@/components/shopping/ShoppingItemRow";
 import { ShoppingListCreateForm } from "@/components/shopping/ShoppingListCreateForm";
 import { ShoppingListTransitionBar } from "@/components/shopping/ShoppingListTransitionBar";
 
@@ -64,8 +64,8 @@ describe("shopping list flows", () => {
   });
 
   it("skips a pending item and restores a skipped one", async () => {
-    render(<ShoppingItemActions listId="list-1" item={ITEM} version={1} mutable />);
-    fireEvent.click(screen.getByRole("button", { name: "Omitir" }));
+    render(<ShoppingItemRow listId="list-1" item={ITEM} onHand={null} shortfall={null} version={1} mutable />);
+    fireEvent.click(screen.getByRole("button", { name: /^Omitir/ }));
     expect(fetch).toHaveBeenCalledWith(
       "/api/shopping-lists/list-1/items/item-1/skip",
       expect.objectContaining({ method: "POST" }),
@@ -73,8 +73,8 @@ describe("shopping list flows", () => {
   });
 
   it("submits a purchase with quantity, unit and location", async () => {
-    render(<ShoppingItemActions listId="list-1" item={ITEM} version={1} mutable />);
-    fireEvent.click(screen.getByRole("button", { name: "Comprar" }));
+    render(<ShoppingItemRow listId="list-1" item={ITEM} onHand={null} shortfall={null} version={1} mutable />);
+    fireEvent.click(screen.getByRole("button", { name: /^Comprar/ }));
     fireEvent.submit(screen.getByRole("button", { name: "Registrar compra" }));
     expect(fetch).toHaveBeenCalledWith(
       "/api/shopping-lists/list-1/items/item-1/purchase",
@@ -106,7 +106,7 @@ describe("shopping list flows", () => {
   it("hides actions for purchased items or non-open lists", () => {
     const purchased = { ...ITEM, status: "purchased" as const };
     const { container } = render(
-      <ShoppingItemActions listId="list-1" item={purchased} version={2} mutable />,
+      <ShoppingItemRow listId="list-1" item={purchased} onHand={null} shortfall={null} version={2} mutable />,
     );
     expect(container.querySelector("button")).toBeNull();
   });

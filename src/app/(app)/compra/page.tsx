@@ -1,26 +1,19 @@
 import { ErrorState } from "@/components/states/ErrorState";
-import { ShoppingItemActions } from "@/components/shopping/ShoppingItemActions";
+import { ShoppingItemRow } from "@/components/shopping/ShoppingItemRow";
 import { ShoppingListCreateForm } from "@/components/shopping/ShoppingListCreateForm";
 import { ShoppingListTransitionBar } from "@/components/shopping/ShoppingListTransitionBar";
-import { Icon } from "@/components/ui/Icon";
 import { ApiRequestError, serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
-import { formatDayMonth, formatDayShort, formatQuantity } from "@/lib/format";
+import { formatDayMonth, formatDayShort } from "@/lib/format";
 
 type ShoppingList = components["schemas"]["ShoppingListResponse"];
 type ListState = components["schemas"]["ShoppingListState"];
-type ItemStatus = components["schemas"]["ShoppingItemStatus"];
+type DemandLine = components["schemas"]["DemandForecastLine"];
 
 const STATE_LABELS: Record<ListState, string> = {
   open: "abierta",
   completed: "completada",
   archived: "archivada",
-};
-
-const STATUS_LABELS: Record<ItemStatus, string> = {
-  pending: "pendiente",
-  purchased: "comprado",
-  skipped: "omitido",
 };
 
 function defaultWindow(): { from: string; to: string } {
@@ -36,6 +29,17 @@ async function loadList(): Promise<ShoppingList | null | { error: string }> {
   } catch (error) {
     if (error instanceof ApiRequestError && error.status === 404) return null;
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
+  }
+}
+
+async function loadForecast(fromDate: string, toDate: string): Promise<DemandLine[]> {
+  try {
+    const data = await serverHouseholdFetch<{ items: DemandLine[] }>(
+      `/forecast/demand?from_date=${fromDate}&to_date=${toDate}`,
+    );
+    return data.items;
+  } catch {
+    return [];
   }
 }
 
@@ -72,6 +76,9 @@ export default async function ShoppingPage() {
     );
   }
 
+  const forecast = await loadForecast(list.from_date, list.to_date);
+  const demandByIngredient = new Map(forecast.map((line) => [line.ingredient_id, line]));
+
   const pending = list.items.filter((item) => item.status === "pending");
   const resolved = list.items.filter((item) => item.status !== "pending");
   const mutable = list.state === "open";
@@ -84,8 +91,8 @@ export default async function ShoppingPage() {
             Compra del {formatDayShort(list.from_date)} al {formatDayMonth(list.to_date)}
           </h1>
           <p>
-            Lista {STATE_LABELS[list.state]}. Cada ítem nace de un faltante proyectado; la
-            compra crea el lote de inventario en la misma operación.
+            Lista {STATE_LABELS[list.state]}. Cada cantidad explica cuánto falta en
+            casa; la compra crea el lote de inventario en la misma operación.
           </p>
         </div>
         <ShoppingListTransitionBar listId={list.id} state={list.state} version={list.version} />
@@ -105,32 +112,20 @@ export default async function ShoppingPage() {
           </div>
         ) : (
           <div>
-            {pending.map((item) => (
-              <div className="shopping-item" key={item.id}>
-                <span className="task-icon tone-accent" aria-hidden="true">
-                  <Icon name="package" size={17} />
-                </span>
-                <div>
-                  <span className="meal-name">{item.ingredient_name}</span>
-                  {item.notes ? (
-                    <span className="muted" style={{ display: "block" }}>
-                      {item.notes}
-                    </span>
-                  ) : null}
-                </div>
-                <strong className="num">
-                  {formatQuantity(item.needed_amount, item.unit)}
-                </strong>
-                <span className="meta">esta ventana</span>
-                <span className="status missing">{STATUS_LABELS[item.status]}</span>
-                <ShoppingItemActions
+            {pending.map((item) => {
+              const demand = demandByIngredient.get(item.ingredient_id);
+              return (
+                <ShoppingItemRow
                   item={item}
+                  key={item.id}
                   listId={list.id}
                   mutable={mutable}
+                  onHand={demand?.on_hand_amount ?? null}
+                  shortfall={demand?.shortfall_amount ?? null}
                   version={list.version}
                 />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </article>
@@ -143,39 +138,15 @@ export default async function ShoppingPage() {
           </div>
           <div>
             {resolved.map((item) => (
-              <div
-                className={`shopping-item${item.status === "purchased" ? " purchased" : ""}`}
+              <ShoppingItemRow
+                item={item}
                 key={item.id}
-              >
-                <span
-                  className={`check${item.status === "purchased" ? " checked" : ""}`}
-                  aria-hidden="true"
-                >
-                  <Icon name="check" size={18} />
-                </span>
-                <div>
-                  <span className="meal-name">{item.ingredient_name}</span>
-                </div>
-                <strong className="num">
-                  {item.status === "purchased" && item.purchased_amount
-                    ? formatQuantity(item.purchased_amount, item.unit)
-                    : formatQuantity(item.needed_amount, item.unit)}
-                </strong>
-                <span className="meta">
-                  {item.purchased_at ? formatDayMonth(item.purchased_at.slice(0, 10)) : "—"}
-                </span>
-                <span
-                  className={`status ${item.status === "purchased" ? "available" : "pending"}`}
-                >
-                  {STATUS_LABELS[item.status]}
-                </span>
-                <ShoppingItemActions
-                  item={item}
-                  listId={list.id}
-                  mutable={mutable}
-                  version={list.version}
-                />
-              </div>
+                listId={list.id}
+                mutable={mutable}
+                onHand={null}
+                shortfall={null}
+                version={list.version}
+              />
             ))}
           </div>
         </article>

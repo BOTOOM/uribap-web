@@ -17,6 +17,7 @@ import {
   SignOut,
   Snowflake,
   Sparkle,
+  ThermometerCold,
   Users,
   X,
 } from "@phosphor-icons/react/ssr";
@@ -31,6 +32,7 @@ const registry = {
   check: Check,
   clock: Clock,
   cooking: CookingPot,
+  fridge: ThermometerCold,
   heart: Heart,
   home: House,
   more: DotsThree,

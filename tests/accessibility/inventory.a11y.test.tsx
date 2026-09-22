@@ -19,9 +19,15 @@ describe("inventory form accessibility", () => {
       </>,
     );
     expect(screen.getByLabelText("Ingrediente")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Cantidad/)).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Cantidad/)).toHaveLength(2);
     expect(screen.getByLabelText("Ubicación")).toBeInTheDocument();
     expect(screen.getByLabelText("Lote")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Cambio firmado/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Tipo de ajuste" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 });

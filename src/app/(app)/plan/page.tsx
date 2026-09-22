@@ -10,7 +10,7 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { Icon } from "@/components/ui/Icon";
 import { ApiRequestError, serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
-import { formatDayMonth, formatWeekRangeLong, toIsoDay } from "@/lib/format";
+import { formatDayMonth, formatQuantity, formatWeekRangeLong, toIsoDay } from "@/lib/format";
 import { mondayOf } from "@/lib/forecast/window";
 
 type MealPlan = components["schemas"]["MealPlanResponse"];
@@ -232,9 +232,11 @@ export default async function PlanPage({
                       const differs = line.actual_amount !== line.planned_amount;
                       return (
                         <li className="muted" key={line.id} style={{ fontSize: 12 }}>
-                          {line.ingredient_name ?? line.ingredient_id}: {line.actual_amount}{" "}
-                          {line.unit}
-                          {differs ? ` (plan: ${line.planned_amount} ${line.unit})` : ""}
+                          {line.ingredient_name ?? line.ingredient_id}:{" "}
+                          {formatQuantity(line.actual_amount, line.unit)}
+                          {differs
+                            ? ` (plan: ${formatQuantity(line.planned_amount, line.unit)})`
+                            : ""}
                           {completion.state === "recorded" ? (
                             <CorrectLineForm
                               completionId={completion.id}

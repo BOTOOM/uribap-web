@@ -51,8 +51,8 @@ describe("inventory mutation forms", () => {
       </>,
     );
     fireEvent.change(screen.getByLabelText("Lote"), { target: { value: "lot-1" } });
-    fireEvent.change(screen.getByLabelText(/Cambio firmado/), {
-      target: { value: "-0.500000" },
+    fireEvent.change(screen.getByLabelText(/Cantidad/), {
+      target: { value: "0.500000" },
     });
     fireEvent.submit(screen.getByRole("button", { name: "Registrar ajuste" }));
     expect(fetch).toHaveBeenCalledWith(
@@ -64,6 +64,10 @@ describe("inventory mutation forms", () => {
         }),
       }),
     );
+    const body = JSON.parse(
+      (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body as string,
+    );
+    expect(body.delta).toBe("-0.500000");
     expect(await screen.findByText("Ajuste registrado en el ledger")).toBeInTheDocument();
   });
 

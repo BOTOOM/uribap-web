@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-import { ShoppingItemActions } from "@/components/shopping/ShoppingItemActions";
+import { ShoppingItemRow } from "@/components/shopping/ShoppingItemRow";
 import { ShoppingListCreateForm } from "@/components/shopping/ShoppingListCreateForm";
 import { ShoppingListTransitionBar } from "@/components/shopping/ShoppingListTransitionBar";
 
@@ -41,8 +41,8 @@ describe("shopping accessibility", () => {
   });
 
   it("labels the purchase form per item", async () => {
-    render(<ShoppingItemActions listId="list-1" item={ITEM} version={1} mutable />);
-    screen.getByRole("button", { name: "Comprar" }).click();
+    render(<ShoppingItemRow listId="list-1" item={ITEM} onHand={null} shortfall={null} version={1} mutable />);
+    screen.getByRole("button", { name: /^Comprar/ }).click();
     expect(
       await screen.findByRole("form", { name: "Comprar Arroz" }),
     ).toBeInTheDocument();

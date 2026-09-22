@@ -64,7 +64,12 @@ describe("weekly plan board", () => {
       screen.getAllByRole("button", { name: /añadir comida el/i })[0],
     );
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByLabelText("Receta")).toBeInTheDocument();
+    expect(
+      screen.getByRole("listbox", { name: "Recetas disponibles" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /arroz con pollo/i }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Raciones")).toBeInTheDocument();
   });
 

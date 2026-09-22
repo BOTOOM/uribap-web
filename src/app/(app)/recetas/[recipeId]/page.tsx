@@ -11,7 +11,9 @@ import {
 import { ErrorState } from "@/components/states/ErrorState";
 import { Icon } from "@/components/ui/Icon";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
+import type { components } from "@/lib/api/generated/schema";
 import { formatQuantity } from "@/lib/format";
+import { weekWindow } from "@/lib/forecast/window";
 
 type Recipe = {
   id: string;
@@ -74,6 +76,19 @@ async function loadIngredients(): Promise<EditorIngredient[]> {
   }
 }
 
+type DemandLine = components["schemas"]["DemandForecastLine"];
+
+async function loadForecast(fromDate: string, toDate: string): Promise<DemandLine[]> {
+  try {
+    const data = await serverHouseholdFetch<{ items: DemandLine[] }>(
+      `/forecast/demand?from_date=${fromDate}&to_date=${toDate}`,
+    );
+    return data.items;
+  } catch {
+    return [];
+  }
+}
+
 export default async function RecipeDetailPage({
   params,
 }: {
@@ -84,10 +99,13 @@ export default async function RecipeDetailPage({
   if ("error" in recipe) {
     return <ErrorState description={recipe.error} title="No se pudo cargar la receta" />;
   }
-  const [version, ingredients] = await Promise.all([
+  const { fromDate, toDate } = weekWindow();
+  const [version, ingredients, forecast] = await Promise.all([
     recipe.latest_version ? loadVersion(recipe.id, recipe.latest_version) : null,
     loadIngredients(),
+    loadForecast(fromDate, toDate),
   ]);
+  const demandByIngredient = new Map(forecast.map((line) => [line.ingredient_id, line]));
 
   const editable = recipe.latest_state === "draft" && version !== null;
   const initialLines: VersionLine[] =
@@ -102,6 +120,10 @@ export default async function RecipeDetailPage({
     <>
       <div className="page-head">
         <div>
+          <Link className="btn btn-ghost" href="/recetas" style={{ marginBottom: 8 }}>
+            <Icon name="chevron" size={14} style={{ transform: "rotate(180deg)" }} />
+            Volver a recetas
+          </Link>
           <h1>{recipe.name}</h1>
           <p>{recipe.description ?? "Sin descripción todavía."}</p>
         </div>
@@ -120,10 +142,6 @@ export default async function RecipeDetailPage({
             />
           ) : null}
           <RecipeFavoriteButton recipeId={recipe.id} />
-          <Link className="btn btn-ghost" href="/recetas">
-            <Icon name="book" size={15} />
-            Volver a recetas
-          </Link>
         </div>
       </div>
       <article className="card" style={{ maxWidth: 560 }}>
@@ -153,16 +171,39 @@ export default async function RecipeDetailPage({
             versionNumber={recipe.latest_version}
           />
         ) : version && version.ingredients.length > 0 ? (
-          <ul className="detail-list" aria-label="Ingredientes de la versión">
-            {version.ingredients.map((line) => (
-              <li className="detail-row" key={line.id}>
-                <span className="meal-name">
-                  {line.ingredient_name || "Ingrediente"} · {formatQuantity(line.amount, line.unit)}
-                  {line.optional ? " (opcional)" : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <table className="ingredient-table">
+            <thead>
+              <tr>
+                <th scope="col">Ingrediente</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {version.ingredients.map((line) => {
+                const demand = demandByIngredient.get(line.ingredient_id);
+                const missing = demand !== undefined && Number(demand.shortfall_amount) > 0;
+                return (
+                  <tr key={line.id}>
+                    <td>
+                      {line.ingredient_name || "Ingrediente"}
+                      {line.optional ? <span className="muted"> (opcional)</span> : null}
+                    </td>
+                    <td className="num">{formatQuantity(line.amount, line.unit)}</td>
+                    <td>
+                      {demand === undefined ? (
+                        <span className="status pending">Sin demanda</span>
+                      ) : missing ? (
+                        <span className="status missing">Falta</span>
+                      ) : (
+                        <span className="status available">Disponible</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         ) : (
           <p className="helper">
             Esta versión no tiene ingredientes. Sin líneas, el plan no proyecta demanda

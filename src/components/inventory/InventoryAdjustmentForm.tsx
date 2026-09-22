@@ -13,15 +13,25 @@ export type LotOption = {
   unit: string;
 };
 
-export function InventoryAdjustmentForm({ lots }: { lots: LotOption[] }) {
+export function InventoryAdjustmentForm({
+  lots,
+  defaultLotId,
+  onSuccess,
+}: {
+  lots: LotOption[];
+  defaultLotId?: string;
+  onSuccess?: () => void;
+}) {
   const router = useRouter();
-  const [lotId, setLotId] = useState(lots[0]?.id ?? "");
-  const [delta, setDelta] = useState("");
+  const [lotId, setLotId] = useState(defaultLotId ?? lots[0]?.id ?? "");
+  const [direction, setDirection] = useState<"out" | "in">("out");
+  const [amount, setAmount] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const selected = lots.find((item) => item.id === lotId);
+  const delta = direction === "out" ? `-${amount}` : amount;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,8 +52,9 @@ export function InventoryAdjustmentForm({ lots }: { lots: LotOption[] }) {
       const body = (await response.json().catch(() => null)) as { detail?: string } | null;
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo ajustar el inventario.");
       toast("Ajuste registrado en el ledger");
-      setDelta("");
+      setAmount("");
       setIdempotencyKey(crypto.randomUUID());
+      onSuccess?.();
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo ajustar el inventario.");
@@ -77,19 +88,49 @@ export function InventoryAdjustmentForm({ lots }: { lots: LotOption[] }) {
         ) : null}
       </div>
       <div className="field">
+        <span className="field-label" id="adj-direction-label">
+          Tipo de ajuste
+        </span>
+        <div aria-labelledby="adj-direction-label" className="tabs" role="group">
+          <button
+            aria-pressed={direction === "out"}
+            className={`tab${direction === "out" ? " active" : ""}`}
+            onClick={() => setDirection("out")}
+            type="button"
+          >
+            Quitar
+          </button>
+          <button
+            aria-pressed={direction === "in"}
+            className={`tab${direction === "in" ? " active" : ""}`}
+            onClick={() => setDirection("in")}
+            type="button"
+          >
+            Añadir
+          </button>
+        </div>
+      </div>
+      <div className="field">
         <label className="field-label" htmlFor="adj-delta">
-          Cambio firmado{selected ? ` (${selected.unit})` : ""}
+          Cantidad{selected ? ` (${selected.unit})` : ""}
         </label>
         <input
           className="input"
           id="adj-delta"
           inputMode="decimal"
-          placeholder="-0.5 para restar"
+          min="0.000001"
+          placeholder={selected ? `ej. 100 ${selected.unit}` : "ej. 100"}
           required
-          value={delta}
-          onChange={(event) => setDelta(event.target.value)}
+          step="any"
+          type="number"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
         />
-        <span className="helper">Negativo descuenta, positivo suma al saldo real.</span>
+        <span className="helper">
+          {direction === "out"
+            ? `Se restará del saldo real${selected ? ` (quedan ${selected.quantity} ${selected.unit})` : ""}.`
+            : "Se sumará al saldo real del lote."}
+        </span>
       </div>
       <div>
         <button className="btn btn-secondary" disabled={pending || lots.length === 0} type="submit">

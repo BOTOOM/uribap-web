@@ -19,6 +19,19 @@ const STATE_LABELS: Record<string, string> = {
   archived: "archivada",
 };
 
+const STATE_TONES: Record<string, string> = {
+  draft: "pending",
+  published: "available",
+  archived: "neutral",
+};
+
+const FILTERS: { value: string; label: string }[] = [
+  { value: "", label: "Todas" },
+  { value: "published", label: "Publicadas" },
+  { value: "draft", label: "Borradores" },
+  { value: "archived", label: "Archivadas" },
+];
+
 async function loadRecipes(query: string): Promise<Recipe[] | { error: string }> {
   try {
     const params = new URLSearchParams();
@@ -35,25 +48,34 @@ async function loadRecipes(query: string): Promise<Recipe[] | { error: string }>
 export default async function RecipesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string }>;
+  searchParams: Promise<{ query?: string; estado?: string }>;
 }) {
-  const { query = "" } = await searchParams;
+  const { query = "", estado = "" } = await searchParams;
   const data = await loadRecipes(query);
   if ("error" in data) {
     return (
       <ErrorState description={data.error} title="No se pudieron cargar las recetas" />
     );
   }
-  const [featured, ...rest] = data;
+  const filtered = estado ? data.filter((r) => r.latest_state === estado) : data;
+  const [featured, ...rest] = filtered;
+
+  function filterHref(value: string): Route {
+    const params = new URLSearchParams();
+    if (query) params.set("query", query);
+    if (value) params.set("estado", value);
+    const qs = params.toString();
+    return (qs ? `/recetas?${qs}` : "/recetas") as Route;
+  }
 
   return (
     <>
       <div className="page-head">
         <div>
-          <h1>Recetas</h1>
+          <h1>Recetas del hogar</h1>
           <p>
-            Recetas que se pueden volver a cocinar: versiones claras, ingredientes
-            compatibles y preparación visible.
+            Busca por nombre y reutiliza lo que ya funciona: versiones claras,
+            ingredientes compatibles y preparación visible.
           </p>
         </div>
         <Link className="btn btn-primary" href={"/recetas/nueva" as Route}>
@@ -62,41 +84,51 @@ export default async function RecipesPage({
         </Link>
       </div>
 
-      <form action="/recetas" className="filters" method="get">
-        <div className="search-wrap">
-          <Icon name="search" size={16} />
-          <input
-            aria-label="Buscar receta"
-            className="search"
-            defaultValue={query}
-            name="query"
-            placeholder="Buscar por nombre…"
-            type="search"
-          />
-        </div>
-        <button className="btn btn-secondary" type="submit">
-          Buscar
-        </button>
+      <form action="/recetas" className="search-wrap" method="get" style={{ marginBottom: 14 }}>
+        {estado ? <input name="estado" type="hidden" value={estado} /> : null}
+        <Icon name="search" size={16} />
+        <input
+          aria-label="Buscar recetas"
+          className="search"
+          defaultValue={query}
+          name="query"
+          placeholder="Buscar por nombre…"
+          type="search"
+        />
       </form>
 
-      {data.length === 0 ? (
-        <article className="card">
-          <div className="empty">
-            <strong>
-              {query
-                ? `Ninguna receta coincide con "${query}".`
-                : "Todavía no hay recetas para este hogar."}
-            </strong>
-            <p>
-              {query
-                ? "Prueba con otro término o crea la receta que buscas."
-                : "Crea la primera receta para poder planificar comidas de verdad."}
-            </p>
-            <Link className="btn btn-primary" href={"/recetas/nueva" as Route}>
-              Crear receta
-            </Link>
-          </div>
-        </article>
+      <div aria-label="Filtrar recetas por estado" className="filters">
+        {FILTERS.map((filter) => (
+          <Link
+            aria-current={estado === filter.value || (!estado && filter.value === "") ? "true" : undefined}
+            className={`chip${estado === filter.value || (!estado && filter.value === "") ? " active" : ""}`}
+            href={filterHref(filter.value)}
+            key={filter.value || "all"}
+          >
+            {filter.label}
+          </Link>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="empty" role="status" style={{ marginTop: 16 }}>
+          <span className="recipe-glyph">
+            <Icon name="search" />
+          </span>
+          <strong>
+            {query || estado
+              ? "Ninguna receta coincide con ese filtro."
+              : "Todavía no hay recetas para este hogar."}
+          </strong>
+          <p style={{ margin: "4px auto 0" }}>
+            {query || estado
+              ? "Prueba con otro término o crea la receta que buscas."
+              : "Crea la primera receta para poder planificar comidas de verdad."}
+          </p>
+          <Link className="btn btn-primary" href={"/recetas/nueva" as Route} style={{ marginTop: 14 }}>
+            Crear receta
+          </Link>
+        </div>
       ) : (
         <div className="recipe-grid">
           {featured ? (
@@ -105,7 +137,10 @@ export default async function RecipesPage({
               href={`/recetas/${featured.id}` as Route}
             >
               <div className="card-title">
-                <span className="status available">
+                <span className="recipe-glyph">
+                  <Icon name="book" size={17} />
+                </span>
+                <span className={`status ${STATE_TONES[featured.latest_state ?? "draft"] ?? "pending"}`}>
                   {STATE_LABELS[featured.latest_state ?? "draft"] ?? "borrador"}
                 </span>
               </div>
@@ -122,7 +157,10 @@ export default async function RecipesPage({
           {rest.map((recipe) => (
             <Link className="recipe-card" href={`/recetas/${recipe.id}` as Route} key={recipe.id}>
               <div className="card-title">
-                <span className="status pending">
+                <span className="recipe-glyph">
+                  <Icon name="book" size={17} />
+                </span>
+                <span className={`status ${STATE_TONES[recipe.latest_state ?? "draft"] ?? "pending"}`}>
                   {STATE_LABELS[recipe.latest_state ?? "draft"] ?? "borrador"}
                 </span>
               </div>

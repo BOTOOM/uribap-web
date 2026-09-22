@@ -16,7 +16,13 @@ const LOCATION_LABELS: Record<Location, string> = {
 
 export type IngredientOption = { id: string; name: string; base_unit: string };
 
-export function InventoryLotForm({ ingredients }: { ingredients: IngredientOption[] }) {
+export function InventoryLotForm({
+  ingredients,
+  onSuccess,
+}: {
+  ingredients: IngredientOption[];
+  onSuccess?: () => void;
+}) {
   const router = useRouter();
   const [ingredientId, setIngredientId] = useState(ingredients[0]?.id ?? "");
   const [quantity, setQuantity] = useState("");
@@ -49,6 +55,7 @@ export function InventoryLotForm({ ingredients }: { ingredients: IngredientOptio
       toast("Lote registrado en el inventario");
       setQuantity("");
       setExpiration("");
+      onSuccess?.();
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo crear el lote.");

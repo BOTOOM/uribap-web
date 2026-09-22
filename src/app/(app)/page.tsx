@@ -300,7 +300,7 @@ export default async function DashboardPage() {
                   <div className="detail-row" key={item.id}>
                     <span className="meal-name">{item.ingredient_name}</span>
                     <span className="muted">
-                      Comprar {item.needed_amount} {item.unit}
+                      Comprar {formatQuantity(item.needed_amount, item.unit)}
                     </span>
                     <span className="meta">esta ventana</span>
                   </div>
@@ -337,7 +337,9 @@ export default async function DashboardPage() {
                   {latestCompletion.lines.length > 0
                     ? `: ${latestCompletion.lines
                         .slice(0, 2)
-                        .map((line) => `${line.actual_amount} ${line.unit} ${line.ingredient_name ?? ""}`.trim())
+                        .map((line) =>
+                          `${formatQuantity(line.actual_amount, line.unit)} ${line.ingredient_name ?? ""}`.trim(),
+                        )
                         .join(", ")}`
                     : "."}
                 </p>

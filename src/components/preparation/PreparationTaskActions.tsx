@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Icon } from "@/components/ui/Icon";
 import type { components } from "@/lib/api/generated/schema";
 
 type PreparationTask = components["schemas"]["PreparationTaskResponse"];
@@ -45,14 +46,17 @@ export function PreparationTaskActions({ task }: { task: PreparationTask }) {
   }
 
   return (
-    <span className="planner-actions" style={{ marginLeft: 0 }}>
+    <span className="planner-actions" style={{ marginLeft: 0, alignItems: "center" }}>
       <button
-        className="btn btn-secondary"
+        aria-label={`Completar ${task.title}`}
+        className="check"
         disabled={pending}
         onClick={() => transition("complete")}
+        style={{ color: "var(--muted)" }}
+        title="Marcar como hecha"
         type="button"
       >
-        Completar
+        <Icon name="check" size={18} />
       </button>
       <button
         className="btn btn-ghost"

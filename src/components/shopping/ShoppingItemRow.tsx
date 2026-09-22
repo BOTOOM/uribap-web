@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/generated/schema";
+import { formatQuantity } from "@/lib/format";
 import { toast } from "@/lib/toast";
 
 type ShoppingItem = components["schemas"]["ShoppingItemResponse"];
@@ -15,16 +16,20 @@ const LOCATION_LABELS: Record<Location, string> = {
   freezer: "Congelador",
 };
 
-export function ShoppingItemActions({
+export function ShoppingItemRow({
   listId,
   item,
   version,
   mutable,
+  onHand,
+  shortfall,
 }: {
   listId: string;
   item: ShoppingItem;
   version: number;
   mutable: boolean;
+  onHand: string | null;
+  shortfall: string | null;
 }) {
   const router = useRouter();
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
@@ -32,12 +37,10 @@ export function ShoppingItemActions({
   const [conflict, setConflict] = useState(false);
   const [pending, setPending] = useState(false);
   const [showPurchase, setShowPurchase] = useState(false);
-  const [quantity, setQuantity] = useState(item.needed_amount);
+  const [quantity, setQuantity] = useState(shortfall ?? item.needed_amount);
   const [location, setLocation] = useState<Location>("pantry");
   const [expiration, setExpiration] = useState("");
   const [notes, setNotes] = useState("");
-
-  if (!mutable || item.status === "purchased") return null;
 
   async function send(action: string, body: Record<string, unknown>, done?: string) {
     setPending(true);
@@ -57,6 +60,7 @@ export function ShoppingItemActions({
       if (!response.ok) throw new Error(payload?.detail ?? "No se pudo actualizar el ítem.");
       if (done) toast(done);
       setIdempotencyKey(crypto.randomUUID());
+      setShowPurchase(false);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo actualizar el ítem.");
@@ -78,50 +82,139 @@ export function ShoppingItemActions({
     await send("purchase", payload, "Compra registrada — lote añadido al inventario");
   }
 
-  async function transition(action: "skip" | "restore") {
-    await send(action, { expected_version: version });
+  if (item.status !== "pending") {
+    return (
+      <div className={`shopping-item${item.status === "purchased" ? " purchased" : ""}`}>
+        <span
+          aria-hidden="true"
+          className={`check${item.status === "purchased" ? " checked" : ""}`}
+        />
+        <div>
+          <div className="meal-name">{item.ingredient_name}</div>
+          <div className="reason">
+            {item.status === "purchased"
+              ? `Comprado${item.purchased_at ? ` — el lote ya está en el inventario` : ""}.`
+              : "Omitido: no se comprará en esta ventana."}
+          </div>
+        </div>
+        <div className="quantity">
+          <span className="meta">{item.status === "purchased" ? "Comprados" : "Necesarios"}</span>
+          <strong className="num" style={{ display: "block" }}>
+            {formatQuantity(
+              item.status === "purchased" && item.purchased_amount
+                ? item.purchased_amount
+                : item.needed_amount,
+              item.unit,
+            )}
+          </strong>
+        </div>
+        <div className="hide-mid" />
+        <div className="hide-mid" />
+        <div className="shopping-item-actions">
+          {item.status === "skipped" && mutable ? (
+            <button
+              className="btn btn-ghost"
+              disabled={pending}
+              onClick={() => void send("restore", { expected_version: version })}
+              type="button"
+            >
+              Restaurar
+            </button>
+          ) : null}
+          {message ? (
+            <p className="form-status" role="status">
+              {message}
+            </p>
+          ) : null}
+          {conflict ? (
+            <button className="btn btn-secondary" onClick={() => router.refresh()} type="button">
+              Recargar lista actualizada
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
   }
 
+  const reason = item.notes?.trim()
+    ? item.notes
+    : onHand !== null && Number(onHand) > 0
+      ? `En casa quedan ${formatQuantity(onHand, item.unit)}; el plan necesita más.`
+      : "El plan aprobado lo necesita y no hay existencias en casa.";
+
   return (
-    <div className="shopping-item-actions">
-      {item.status === "pending" ? (
-        <>
-          <button
-            className="btn btn-secondary"
-            disabled={pending}
-            onClick={() => setShowPurchase((v) => !v)}
-            type="button"
-          >
-            {showPurchase ? "Cancelar" : "Comprar"}
+    <div className="shopping-item">
+      <button
+        aria-expanded={showPurchase}
+        aria-label={`Registrar compra de ${item.ingredient_name}`}
+        className="check"
+        disabled={!mutable}
+        onClick={() => setShowPurchase((v) => !v)}
+        style={mutable ? undefined : { opacity: 0.4, cursor: "default" }}
+        type="button"
+      />
+      <div>
+        <div className="meal-name">{item.ingredient_name}</div>
+        <div className="reason">{reason}</div>
+      </div>
+      <div className="quantity">
+        <span className="meta">Necesarios</span>
+        <strong className="num" style={{ display: "block" }}>
+          {formatQuantity(item.needed_amount, item.unit)}
+        </strong>
+      </div>
+      <div className="hide-mid">
+        <span className="meta">En casa</span>
+        <strong className="num" style={{ display: "block" }}>
+          {onHand === null ? "—" : formatQuantity(onHand, item.unit)}
+        </strong>
+      </div>
+      <div className="hide-mid">
+        <span className="meta">Faltan</span>
+        <strong className="num" style={{ display: "block" }}>
+          {shortfall === null ? "—" : formatQuantity(shortfall, item.unit)}
+        </strong>
+      </div>
+      <div className="shopping-item-actions">
+        {mutable ? (
+          <>
+            <button
+              className="btn btn-secondary"
+              disabled={pending}
+              onClick={() => setShowPurchase((v) => !v)}
+              type="button"
+            >
+              {showPurchase ? "Cancelar" : `Comprar ${formatQuantity(item.needed_amount, item.unit)}`}
+            </button>
+            <button
+              aria-label={`Omitir ${item.ingredient_name}`}
+              className="btn btn-ghost"
+              disabled={pending}
+              onClick={() => void send("skip", { expected_version: version })}
+              type="button"
+            >
+              Omitir
+            </button>
+          </>
+        ) : null}
+        {message ? (
+          <p className="form-status" role="status">
+            {message}
+          </p>
+        ) : null}
+        {conflict ? (
+          <button className="btn btn-secondary" onClick={() => router.refresh()} type="button">
+            Recargar lista actualizada
           </button>
-          <button
-            className="btn btn-ghost"
-            disabled={pending}
-            onClick={() => transition("skip")}
-            type="button"
-          >
-            Omitir
-          </button>
-        </>
-      ) : null}
-      {item.status === "skipped" ? (
-        <button
-          className="btn btn-ghost"
-          disabled={pending}
-          onClick={() => transition("restore")}
-          type="button"
-        >
-          Restaurar
-        </button>
-      ) : null}
-      {showPurchase && item.status === "pending" ? (
+        ) : null}
+      </div>
+      {showPurchase && mutable ? (
         <form
           aria-label={`Comprar ${item.ingredient_name}`}
-          className="form-row"
+          className="shopping-purchase-form"
           onSubmit={submitPurchase}
-          style={{ flexBasis: "100%", alignItems: "flex-end" }}
         >
-          <div className="field" style={{ maxWidth: 120 }}>
+          <div className="field" style={{ maxWidth: 140 }}>
             <label className="field-label" htmlFor={`qty-${item.id}`}>
               Cantidad ({item.unit})
             </label>
@@ -182,16 +275,6 @@ export function ShoppingItemActions({
             {pending ? "Registrando…" : "Registrar compra"}
           </button>
         </form>
-      ) : null}
-      {message ? (
-        <p className="form-status" role="status">
-          {message}
-        </p>
-      ) : null}
-      {conflict ? (
-        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
-          Recargar lista actualizada
-        </button>
       ) : null}
     </div>
   );

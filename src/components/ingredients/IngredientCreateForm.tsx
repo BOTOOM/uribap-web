@@ -20,7 +20,7 @@ const UNITS_BY_DIMENSION: Record<Dimension, string[]> = {
   volume: ["ml", "l"],
 };
 
-export function IngredientCreateForm() {
+export function IngredientCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -50,6 +50,7 @@ export function IngredientCreateForm() {
       toast("Ingrediente añadido a la despensa");
       setName("");
       setCategory("");
+      onSuccess?.();
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo crear el ingrediente.");

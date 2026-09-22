@@ -46,7 +46,7 @@ describe("preparation accessibility", () => {
 
   it("exposes pending-task actions as labelled buttons", () => {
     render(<PreparationTaskActions task={TASK} />);
-    expect(screen.getByRole("button", { name: "Completar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Completar/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
   });
 

@@ -222,7 +222,7 @@ svg {
   width: 32px;
   height: 32px;
   flex: none;
-  color: var(--fg);
+  color: var(--accent);
   overflow: visible;
   transition: transform 0.22s var(--ease-out);
 }
@@ -341,14 +341,14 @@ svg {
   place-items: center;
   border: 2px solid var(--surface);
   border-radius: 50%;
-  background: color-mix(in oklch, var(--accent) 18%, var(--surface));
+  background: color-mix(in oklch, var(--coral) 55%, var(--surface));
   font-size: 11px;
   font-weight: 700;
 }
 
 .avatar + .avatar {
   margin-left: -7px;
-  background: color-mix(in oklch, var(--pending) 18%, var(--surface));
+  background: color-mix(in oklch, var(--sage) 55%, var(--surface));
 }
 
 button.avatar {
@@ -528,6 +528,7 @@ button.avatar {
 
 .card-hero {
   border: 0;
+  background: color-mix(in oklch, var(--blush) 46%, var(--surface));
   box-shadow: 0 1px 2px color-mix(in oklch, var(--fg) 4%, transparent),
     0 16px 42px color-mix(in oklch, var(--fg) 5%, transparent);
 }
@@ -674,12 +675,18 @@ button.avatar {
 }
 
 .status.available,
-.status.status-ready,
-.status.completed {
+.status.status-ready {
   color: var(--available);
 }
 
-.status.low,
+.status.completed {
+  color: var(--completed);
+}
+
+.status.low {
+  color: var(--low);
+}
+
 .status.warning,
 .status.status-warning {
   color: color-mix(in oklch, var(--warning) 85%, var(--fg));
@@ -1134,9 +1141,15 @@ button.avatar {
 }
 
 .chip.active {
-  color: var(--surface);
-  border-color: var(--fg);
-  background: var(--fg);
+  color: var(--fg);
+  border-color: color-mix(in oklch, var(--yolk) 70%, var(--fg));
+  background: var(--yolk);
+}
+
+.chip.active:hover {
+  color: var(--fg);
+  border-color: color-mix(in oklch, var(--yolk) 55%, var(--fg));
+  background: color-mix(in oklch, var(--yolk) 88%, var(--fg));
 }
 
 .search {
@@ -1198,7 +1211,7 @@ button.avatar {
   padding: 28px;
   border: 0;
   border-radius: var(--radius-lg);
-  background: color-mix(in oklch, var(--accent) 5%, var(--surface));
+  background: color-mix(in oklch, var(--apricot) 26%, var(--surface));
 }
 
 .recipe-card:not(.is-featured) {
@@ -1380,8 +1393,14 @@ button.avatar {
 
 .tab.active,
 .tab[data-state="active"] {
-  background: var(--fg);
-  color: var(--surface);
+  background: var(--yolk);
+  color: var(--fg);
+}
+
+.tab.active:hover,
+.tab[data-state="active"]:hover {
+  background: color-mix(in oklch, var(--yolk) 88%, var(--fg));
+  color: var(--fg);
 }
 
 /* ---------- Inventory ---------- */
@@ -1397,6 +1416,60 @@ button.avatar {
 
 .inventory-row:first-child {
   border-top: 0;
+}
+
+.inventory-group + .inventory-group .inventory-row {
+  border-top: 1px solid var(--border);
+}
+
+.inventory-group .inventory-row {
+  border-top: 0;
+}
+
+button.inventory-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.inventory-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.inventory-row-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventory-expand {
+  padding: 2px 0 18px;
+  border-top: 1px dashed var(--border);
+}
+
+.inventory-lot {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.inventory-lot:first-child {
+  border-top: 0;
+}
+
+.inventory-lot-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .actual-projected {
@@ -1489,6 +1562,26 @@ button.avatar {
   55% {
     transform: scale(0.9);
   }
+}
+
+.shopping-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shopping-purchase-form {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;
+  margin-top: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
 }
 
 .reason {
@@ -2151,6 +2244,42 @@ button.avatar {
   background: color-mix(in oklch, var(--accent) 7%, var(--surface));
 }
 
+.meal-dialog-search {
+  margin: 14px 0;
+}
+
+.meal-dialog-search .search {
+  width: 100%;
+}
+
+.meal-options {
+  display: grid;
+  gap: 8px;
+  max-height: 286px;
+  padding: 2px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.meal-options .option + .option {
+  margin-top: 0;
+}
+
+.meal-options .option {
+  animation: optionIn 0.18s var(--ease-out) both;
+}
+
+@keyframes optionIn {
+  from {
+    opacity: 0.35;
+    transform: translateY(4px);
+  }
+}
+
+.dialog-impact {
+  margin-top: 14px;
+}
+
 /* ---------- Dialogs (Radix) ---------- */
 
 .ui-dialog-overlay,
@@ -2446,6 +2575,14 @@ button.avatar {
   }
   .inventory-row > *:not(:first-child):not(:last-child) {
     display: none;
+  }
+  .inventory-lot {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .inventory-lot-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
   .shopping-item {
     grid-template-columns: auto minmax(0, 1fr);

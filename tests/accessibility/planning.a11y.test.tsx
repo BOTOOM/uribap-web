@@ -22,7 +22,12 @@ describe("meal planning accessibility", () => {
     render(
       <MealPlanEntryForm planId="plan-1" weekStart="2026-09-28" version={1} versions={VERSIONS} />,
     );
-    expect(screen.getByLabelText("Receta")).toBeInTheDocument();
+    expect(
+      screen.getByRole("listbox", { name: "Recetas disponibles" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /arroz con pollo/i }),
+    ).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText("Día")).toBeInTheDocument();
     expect(screen.getByLabelText("Comida")).toBeInTheDocument();
     expect(screen.getByLabelText("Raciones")).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { IngredientCreateForm } from "@/components/ingredients/IngredientCreateForm";
+import { IngredientCreateDialog } from "@/components/ingredients/IngredientCreateDialog";
 import { ErrorState } from "@/components/states/ErrorState";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
 
@@ -45,13 +45,8 @@ export default async function IngredientsPage() {
             base para que las recetas no hagan suposiciones.
           </p>
         </div>
+        <IngredientCreateDialog />
       </div>
-      <article className="card" style={{ maxWidth: 560 }}>
-        <div className="card-title">
-          <h2>Nuevo ingrediente</h2>
-        </div>
-        <IngredientCreateForm />
-      </article>
       <article className="card card-flush">
         <div className="card-title">
           <h2>Catálogo disponible</h2>
@@ -60,7 +55,7 @@ export default async function IngredientsPage() {
         {data.length === 0 ? (
           <div className="empty">
             <strong>Todavía no hay ingredientes en este hogar.</strong>
-            <p>Crealos con el formulario de arriba y úsalos en tus recetas.</p>
+            <p>Crea el primero con el botón de arriba y úsalo en tus recetas.</p>
           </div>
         ) : (
           <table className="ingredient-table">

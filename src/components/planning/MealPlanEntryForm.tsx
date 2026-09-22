@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Icon } from "@/components/ui/Icon";
 import type { components } from "@/lib/api/generated/schema";
 import { formatDayLong } from "@/lib/format";
 import { toast } from "@/lib/toast";
@@ -41,6 +42,7 @@ export function MealPlanEntryForm({
   const [recipeVersionId, setRecipeVersionId] = useState(
     versions[0]?.recipe_version_id ?? "",
   );
+  const [query, setQuery] = useState("");
   const [plannedDate, setPlannedDate] = useState(initialDate ?? weekStart);
   const [mealType, setMealType] = useState<MealType>("dinner");
   const [servings, setServings] = useState("2");
@@ -49,6 +51,18 @@ export function MealPlanEntryForm({
   const [message, setMessage] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [pending, setPending] = useState(false);
+
+  const filteredVersions = useMemo(() => {
+    const term = query.trim().toLocaleLowerCase("es");
+    if (!term) return versions;
+    return versions.filter((versionItem) =>
+      versionItem.recipe_name.toLocaleLowerCase("es").includes(term),
+    );
+  }, [query, versions]);
+
+  const selected = versions.find(
+    (versionItem) => versionItem.recipe_version_id === recipeVersionId,
+  );
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -94,29 +108,83 @@ export function MealPlanEntryForm({
 
   return (
     <form className="form" onSubmit={submit}>
-      <div className="field">
-        <label className="field-label" htmlFor="entry-recipe">
-          Receta
+      <div className="search-wrap meal-dialog-search">
+        <Icon name="search" size={19} />
+        <label className="sr-only" htmlFor="entry-recipe-search">
+          Buscar una receta para el plan
         </label>
-        <select
-          className="select"
-          id="entry-recipe"
-          required
-          value={recipeVersionId}
-          onChange={(event) => setRecipeVersionId(event.target.value)}
-        >
-          {versions.length === 0 ? <option value="">Sin versiones publicadas</option> : null}
-          {versions.map((versionItem) => (
-            <option key={versionItem.recipe_version_id} value={versionItem.recipe_version_id}>
-              {versionItem.recipe_name} · v{versionItem.version_number}
-            </option>
-          ))}
-        </select>
-        {versions.length === 0 ? (
-          <span className="helper">Publica una receta antes de planificar comidas.</span>
-        ) : null}
+        <input
+          autoComplete="off"
+          className="search"
+          id="entry-recipe-search"
+          name="recipeSearch"
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar por nombre…"
+          type="search"
+          value={query}
+        />
       </div>
-      <div className="form-row">
+      {versions.length === 0 ? (
+        <div className="empty" role="status">
+          <span className="recipe-glyph">
+            <Icon name="book" size={19} />
+          </span>
+          <strong>No hay recetas publicadas</strong>
+          <p>Publica una receta antes de planificar comidas.</p>
+        </div>
+      ) : filteredVersions.length === 0 ? (
+        <div className="empty" role="status">
+          <span className="recipe-glyph">
+            <Icon name="search" size={19} />
+          </span>
+          <strong>No encontramos esa receta</strong>
+          <p>Prueba con otro nombre o crea una receta nueva.</p>
+        </div>
+      ) : (
+        <div
+          aria-label="Recetas disponibles"
+          className="meal-options"
+          role="listbox"
+        >
+          {filteredVersions.map((versionItem) => {
+            const isSelected = versionItem.recipe_version_id === recipeVersionId;
+            return (
+              <button
+                aria-selected={isSelected}
+                className={`option${isSelected ? " selected" : ""}`}
+                key={versionItem.recipe_version_id}
+                onClick={() => setRecipeVersionId(versionItem.recipe_version_id)}
+                role="option"
+                type="button"
+              >
+                <span className="recipe-glyph" style={{ margin: 0 }}>
+                  <Icon name="clock" size={19} />
+                </span>
+                <div>
+                  <strong>{versionItem.recipe_name}</strong>
+                  <div className="muted">
+                    {versionItem.prep_minutes} min · {versionItem.base_servings}{" "}
+                    raciones base
+                  </div>
+                </div>
+                <span className="status pending" style={{ marginLeft: "auto" }}>
+                  v{versionItem.version_number}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {selected ? (
+        <div className="callout dialog-impact" role="status">
+          <strong>Se añadirá {selected.recipe_name}</strong>
+          <p className="muted" style={{ margin: 0 }}>
+            Su demanda de ingredientes se proyecta en la previsión; inventario,
+            compra y preparación se recalculan al guardar.
+          </p>
+        </div>
+      ) : null}
+      <div className="form-row" style={{ marginTop: 14 }}>
         <div className="field">
           <label className="field-label" htmlFor="entry-day">
             Día
@@ -187,7 +255,7 @@ export function MealPlanEntryForm({
       <div className="dialog-foot" style={{ padding: "4px 0 0", borderTop: 0 }}>
         <button
           className="btn btn-primary"
-          disabled={pending || versions.length === 0}
+          disabled={pending || !recipeVersionId}
           type="submit"
         >
           {pending ? "Guardando…" : "Añadir al plan"}
