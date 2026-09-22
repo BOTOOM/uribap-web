@@ -12,3 +12,12 @@ test-results
 .env.*
 !.env.example
 *.log
+tests
+e2e
+specs
+docs
+.github
+compose*.yml
+Dockerfile
+.dockerignore
+*.md
