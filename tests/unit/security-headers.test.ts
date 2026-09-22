@@ -24,7 +24,7 @@ describe("security headers configuration", () => {
 
     expect(csp).toBeDefined();
     expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("connect-src 'self'");
+    expect(csp).toContain("connect-src 'self' http://localhost:8010");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
   });

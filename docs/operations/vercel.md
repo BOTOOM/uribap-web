@@ -56,9 +56,12 @@ Rules:
   `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
 - CSP: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src
   'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src
-  'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'`.
-  - `connect-src 'self'` confines browser fetches to the same-origin BFF —
-    no token or provider call happens cross-origin.
+  'self' <api-origin>; frame-ancestors 'none'; form-action 'self'; base-uri
+  'self'` — where `<api-origin>` is derived from `NEXT_PUBLIC_API_BASE_URL`
+  at boot.
+  - `connect-src` confines browser fetches to the same-origin BFF plus the
+    single configured API origin (used by the `/foundation/api-state`
+    diagnostic); no other cross-origin target is allowed.
   - `script-src 'unsafe-inline'` is the pragmatic Next baseline (inline
     hydration payloads); a nonce-based CSP is deferred follow-up work.
 - HSTS is owned by the TLS-terminating edge, not the app.
