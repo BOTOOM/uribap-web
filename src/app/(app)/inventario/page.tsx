@@ -1,14 +1,27 @@
-import { InventoryView, type InventoryRowData } from "@/components/inventory/InventoryView";
+import {
+  InventoryView,
+  type InventoryRowData,
+  type PendingShoppingRow,
+  type ShoppingBandData,
+} from "@/components/inventory/InventoryView";
 import type { LotOption } from "@/components/inventory/InventoryAdjustmentForm";
 import type { IngredientOption } from "@/components/inventory/InventoryLotForm";
 import { ErrorState } from "@/components/states/ErrorState";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
-import { formatDayMonth, formatWeekRangeLong, relativeDay, toIsoDay } from "@/lib/format";
+import {
+  formatDayMonth,
+  formatDayShort,
+  formatWeekRangeLong,
+  relativeDay,
+  toIsoDay,
+} from "@/lib/format";
 import { weekWindow } from "@/lib/forecast/window";
 
 type Lot = components["schemas"]["InventoryLotResponse"];
 type DemandLine = components["schemas"]["DemandForecastLine"];
+type ShoppingList = components["schemas"]["ShoppingListResponse"];
+type ShoppingItem = components["schemas"]["ShoppingItemResponse"];
 
 async function loadInventory(): Promise<Lot[] | { error: string }> {
   try {
@@ -16,6 +29,14 @@ async function loadInventory(): Promise<Lot[] | { error: string }> {
     return data.items;
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
+  }
+}
+
+async function loadShoppingList(): Promise<ShoppingList | null> {
+  try {
+    return await serverHouseholdFetch<ShoppingList>("/shopping-lists/current");
+  } catch {
+    return null;
   }
 }
 
@@ -91,6 +112,19 @@ function buildRows(
     } else if (expirySoon) {
       statusTone = "expiring";
       statusLabel = `Vence ${relativeDay(nextExpiry ?? today, today)}`;
+    } else if (real === 0) {
+      statusTone = "low";
+      statusLabel = "Sin stock";
+    }
+
+    const tags: InventoryRowData["tags"] = [];
+    if (shortfall > 0) tags.push({ tone: "missing", label: "Falta" });
+    if (expirySoon) tags.push({ tone: "expiring", label: "Por caducar" });
+    if (usableLots.length > 0 && ingredientLots.some((lot) => lot.expired)) {
+      tags.push({ tone: "warning", label: "Con caducados" });
+    }
+    if (real === 0 && usableLots.length > 0) {
+      tags.push({ tone: "low", label: "Sin stock" });
     }
 
     return {
@@ -101,11 +135,20 @@ function buildRows(
       real: String(real),
       projected: String(projected),
       required: required === null ? null : String(required),
+      shortage:
+        shortfall > 0 && required !== null
+          ? {
+              needed: String(required),
+              onHand: String(real),
+              missing: String(shortfall),
+            }
+          : null,
       expiryLabel: nextExpiry
         ? `${formatDayMonth(nextExpiry)} · ${relativeDay(nextExpiry, today)}`
         : null,
       statusTone,
       statusLabel,
+      tags,
       lots: ingredientLots.map((lot) => ({
         id: lot.id,
         location: lot.location,
@@ -121,23 +164,54 @@ function buildRows(
     };
   });
 
-  const toneRank = { missing: 0, expiring: 1, available: 2 };
+  const toneRank = { missing: 0, expiring: 1, low: 2, available: 3 };
   rows.sort(
     (a, b) => toneRank[a.statusTone] - toneRank[b.statusTone] || a.name.localeCompare(b.name, "es"),
   );
   return rows;
 }
 
+function buildShoppingBand(
+  list: ShoppingList | null,
+  forecast: DemandLine[],
+): ShoppingBandData {
+  if (list === null) {
+    return { list: null, pendingRows: [], resolvedItems: [] };
+  }
+  const demandByIngredient = new Map(forecast.map((line) => [line.ingredient_id, line]));
+  const pendingRows: PendingShoppingRow[] = list.items
+    .filter((item: ShoppingItem) => item.status === "pending")
+    .map((item: ShoppingItem) => {
+      const demand = demandByIngredient.get(item.ingredient_id);
+      return {
+        item,
+        onHand: demand?.on_hand_amount ?? null,
+        shortfall: demand?.shortfall_amount ?? null,
+      };
+    });
+  return {
+    list: {
+      id: list.id,
+      state: list.state,
+      version: list.version,
+      windowLabel: `${formatDayShort(list.from_date)} – ${formatDayMonth(list.to_date)}`,
+    },
+    pendingRows,
+    resolvedItems: list.items.filter((item: ShoppingItem) => item.status !== "pending"),
+  };
+}
+
 export default async function InventoryPage() {
   const { fromDate, toDate } = weekWindow();
-  const [data, ingredients, forecast] = await Promise.all([
+  const [data, ingredients, forecast, list] = await Promise.all([
     loadInventory(),
     loadIngredients(),
     loadForecast(fromDate, toDate),
+    loadShoppingList(),
   ]);
   if ("error" in data) {
     return (
-      <ErrorState description={data.error} title="No se pudo cargar el inventario" />
+      <ErrorState description={data.error} title="No se pudo cargar la despensa" />
     );
   }
 
@@ -156,7 +230,9 @@ export default async function InventoryPage() {
       ingredients={ingredients}
       lotOptions={lotOptions}
       rows={buildRows(data, forecast, ingredients)}
+      shopping={buildShoppingBand(list, forecast)}
       weekLabel={formatWeekRangeLong(fromDate)}
+      windowDefault={{ from: fromDate, to: toDate }}
     />
   );
 }

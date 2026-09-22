@@ -19,13 +19,21 @@ export type IngredientOption = { id: string; name: string; base_unit: string };
 export function InventoryLotForm({
   ingredients,
   onSuccess,
+  defaultIngredientId,
+  defaultQuantity,
+  submitLabel = "Añadir lote",
 }: {
   ingredients: IngredientOption[];
   onSuccess?: () => void;
+  defaultIngredientId?: string;
+  defaultQuantity?: string;
+  submitLabel?: string;
 }) {
   const router = useRouter();
-  const [ingredientId, setIngredientId] = useState(ingredients[0]?.id ?? "");
-  const [quantity, setQuantity] = useState("");
+  const [ingredientId, setIngredientId] = useState(
+    defaultIngredientId ?? ingredients[0]?.id ?? "",
+  );
+  const [quantity, setQuantity] = useState(defaultQuantity ?? "");
   const [location, setLocation] = useState<Location>("pantry");
   const [expiration, setExpiration] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -138,7 +146,7 @@ export function InventoryLotForm({
           disabled={pending || ingredients.length === 0}
           type="submit"
         >
-          {pending ? "Guardando…" : "Añadir lote"}
+          {pending ? "Guardando…" : submitLabel}
         </button>
       </div>
       {message ? (

@@ -41,17 +41,21 @@ Característica: Recorrido de producto verificado en local
     # Caso borde: cocinar exige inventario suficiente — completar sin stock
     # devolvió "insufficient inventory for unit g: missing 800" (correcto).
 
-  Escenario: Compra genera lotes y cocinar reconcilia inventario
+  Escenario: Despensa prioriza los faltantes y la compra crea lotes
     Dado el plan aprobado con faltantes proyectados
+    Cuando abro "/inventario" (sección "Despensa", "/compra" redirige aquí)
+    Entonces la zona "Por comprar" encabeza la página con los faltantes
+      autocalculados: necesarios, en casa y faltan por ingrediente
     Cuando genero la lista de compra para la ventana de la semana
-    Entonces aparecen los 3 ingredientes faltantes como pendientes
+    Entonces los faltantes pasan a ser ítems pendientes de la lista
     Cuando registro la compra de cada ítem
     Entonces cada compra crea un lote de inventario (movement "purchase")
     Cuando marco la comida como completada
     Entonces se descuentan exactamente 800 g pollo, 300 g arroz y 30 ml aceite
     Y todos los lotes quedan en 0
     # Verificado en base de datos: movements purchase +300/+30/+800 y
-    # meal_consumption -800/-300/-30.
+    # meal_consumption -800/-300/-30. Sin lista activa, el botón "Comprar"
+    # de un faltante abre el registro de lote prellenado (ingrediente + cantidad).
 
   Escenario: Responsive en móvil 375px
     Dado un viewport de 375x812
@@ -66,10 +70,11 @@ Característica: Recorrido de producto verificado en local
     Entonces soy redirigido a "/login" con returnTo
     # Verificado: POST logout → borrado de cookie → proxy 307 → /login.
 
-  Escenario: Inventario como lista por ingrediente con acciones en diálogo
+  Escenario: Despensa como lista por ingrediente con tags y acciones en diálogo
     Dado el hogar con lotes comprados y el plan aprobado
     Cuando abro "/inventario"
     Entonces veo una fila por ingrediente con Real, Proyectado, Caducidad y estado
+    Y cada fila muestra tags de estado ("Falta", "Por caducar", "Sin stock", "Con caducados")
     Y las pestañas de ubicación filtran la lista
     Cuando expando la fila de "Arroz"
     Entonces veo sus lotes, la explicación del proyectado y acciones por lote

@@ -87,8 +87,8 @@ export default async function ForecastPage({
               Calculada solo con planes aprobados. Son proyecciones: no descuentan inventario.
             </span>
           </div>
-          <Link className="btn btn-ghost" href={"/compra" as Route}>
-            Ir a la compra
+          <Link className="btn btn-ghost" href={"/inventario" as Route}>
+            Ir a la despensa
           </Link>
         </div>
         <DemandTable items={forecast.items} />

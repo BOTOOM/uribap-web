@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 export function ShoppingListCreateForm({
   defaultFrom,
   defaultTo,
+  onSuccess,
 }: {
   defaultFrom: string;
   defaultTo: string;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const [fromDate, setFromDate] = useState(defaultFrom);
@@ -34,6 +36,7 @@ export function ShoppingListCreateForm({
         throw new Error(body?.detail ?? "Ya existe una lista activa para esa ventana.");
       }
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo crear la lista.");
+      onSuccess?.();
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo crear la lista.");

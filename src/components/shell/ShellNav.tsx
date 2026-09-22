@@ -17,9 +17,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Plan semanal", href: "/plan", icon: "calendar" },
   { label: "Previsión", href: "/forecast", icon: "spark" },
   { label: "Recetas", href: "/recetas", icon: "book" },
-  { label: "Inventario", href: "/inventario", icon: "package" },
+  { label: "Despensa", href: "/inventario", icon: "package" },
   { label: "Ingredientes", href: "/ingredientes", icon: "carrot" },
-  { label: "Compra", href: "/compra", icon: "cart" },
   { label: "Preparación", href: "/preparacion", icon: "clock" },
   { label: "Hogar", href: "/settings/household" as Route, icon: "users" },
 ];
@@ -45,7 +44,7 @@ export function ShellNav({ shoppingCount = 0 }: { shoppingCount?: number }) {
               >
                 <Icon name={item.icon} />
                 {item.label}
-                {item.href === "/compra" && shoppingCount > 0 ? (
+                {item.href === "/inventario" && shoppingCount > 0 ? (
                   <span className="nav-badge">{shoppingCount}</span>
                 ) : null}
               </Link>

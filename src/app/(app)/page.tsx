@@ -315,10 +315,10 @@ export default async function DashboardPage() {
             )}
             <Link
               className="btn btn-secondary"
-              href={"/compra" as Route}
+              href={"/inventario" as Route}
               style={{ width: "100%", marginTop: 18 }}
             >
-              Revisar lista
+              Ir a la despensa
             </Link>
           </article>
 

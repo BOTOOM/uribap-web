@@ -7,6 +7,9 @@ import { useState, useTransition } from "react";
 import { InventoryAdjustmentForm, type LotOption } from "@/components/inventory/InventoryAdjustmentForm";
 import { InventoryLotForm, type IngredientOption } from "@/components/inventory/InventoryLotForm";
 import { InventoryMovementHistory } from "@/components/inventory/InventoryMovementHistory";
+import { ShoppingItemRow } from "@/components/shopping/ShoppingItemRow";
+import { ShoppingListCreateForm } from "@/components/shopping/ShoppingListCreateForm";
+import { ShoppingListTransitionBar } from "@/components/shopping/ShoppingListTransitionBar";
 import {
   Dialog,
   DialogClose,
@@ -19,6 +22,8 @@ import type { components } from "@/lib/api/generated/schema";
 import { formatQuantity } from "@/lib/format";
 
 type Location = components["schemas"]["InventoryLocation"];
+type ShoppingItem = components["schemas"]["ShoppingItemResponse"];
+type ListState = components["schemas"]["ShoppingListState"];
 
 const LOCATION_LABELS: Record<Location, string> = {
   pantry: "Despensa",
@@ -32,6 +37,12 @@ const LOCATION_ICONS: Record<Location, IconName> = {
   freezer: "snow",
 };
 
+const LIST_STATE_LABELS: Record<ListState, string> = {
+  open: "abierta",
+  completed: "completada",
+  archived: "archivada",
+};
+
 export type InventoryLotRow = {
   id: string;
   location: Location;
@@ -43,6 +54,11 @@ export type InventoryLotRow = {
   available: boolean;
 };
 
+export type InventoryTag = {
+  tone: "missing" | "expiring" | "warning" | "low";
+  label: string;
+};
+
 export type InventoryRowData = {
   ingredientId: string;
   name: string;
@@ -51,28 +67,58 @@ export type InventoryRowData = {
   real: string;
   projected: string;
   required: string | null;
+  shortage: { needed: string; onHand: string; missing: string } | null;
   expiryLabel: string | null;
-  statusTone: "missing" | "expiring" | "available";
+  statusTone: "missing" | "expiring" | "low" | "available";
   statusLabel: string;
+  tags: InventoryTag[];
   lots: InventoryLotRow[];
+};
+
+export type PendingShoppingRow = {
+  item: ShoppingItem;
+  onHand: string | null;
+  shortfall: string | null;
+};
+
+export type ShoppingBandData = {
+  list: {
+    id: string;
+    state: ListState;
+    version: number;
+    windowLabel: string;
+  } | null;
+  pendingRows: PendingShoppingRow[];
+  resolvedItems: ShoppingItem[];
 };
 
 export function InventoryView({
   rows,
   ingredients,
   lotOptions,
+  shopping,
   weekLabel,
+  windowDefault,
 }: {
   rows: InventoryRowData[];
   ingredients: IngredientOption[];
   lotOptions: LotOption[];
+  shopping: ShoppingBandData;
   weekLabel: string;
+  windowDefault: { from: string; to: string };
 }) {
   const router = useRouter();
   const [refreshing, startRefresh] = useTransition();
   const [tab, setTab] = useState<Location | "all">("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [lotDialogOpen, setLotDialogOpen] = useState(false);
+  const [lotPreset, setLotPreset] = useState<{
+    ingredientId: string;
+    name: string;
+    quantity: string;
+    unit: string;
+  } | null>(null);
+  const [listDialogOpen, setListDialogOpen] = useState(false);
   const [adjustLotId, setAdjustLotId] = useState<string | null>(null);
   const [adjustOpen, setAdjustOpen] = useState(false);
 
@@ -83,18 +129,33 @@ export function InventoryView({
   const visible =
     tab === "all" ? rows : rows.filter((row) => row.locations.includes(tab));
 
+  const shortages = rows.filter((row) => row.shortage !== null);
+  const listState = shopping.list?.state ?? null;
+  const listOpen = listState === "open";
+
   function openAdjust(lotId?: string) {
     setAdjustLotId(lotId ?? null);
     setAdjustOpen(true);
+  }
+
+  function openLotDialog(preset?: {
+    ingredientId: string;
+    name: string;
+    quantity: string;
+    unit: string;
+  }) {
+    setLotPreset(preset ?? null);
+    setLotDialogOpen(true);
   }
 
   return (
     <>
       <div className="page-head">
         <div>
-          <h1>Inventario real y previsto</h1>
+          <h1>Despensa</h1>
           <p>
-            Lo real solo cambia al confirmar una compra o una comida cocinada. Lo
+            Lo que falta para el plan aparece arriba como prioridad de compra.
+            Lo real solo cambia al confirmar una compra o una comida cocinada; lo
             proyectado usa el plan aprobado de {weekLabel}.
           </p>
         </div>
@@ -116,7 +177,7 @@ export function InventoryView({
           </button>
           <button
             className="btn btn-primary"
-            onClick={() => setLotDialogOpen(true)}
+            onClick={() => openLotDialog()}
             type="button"
           >
             <Icon name="plus" size={15} />
@@ -124,6 +185,140 @@ export function InventoryView({
           </button>
         </div>
       </div>
+
+      <article className="card card-flush shop-band" id="shopping-band">
+        <div className="card-title">
+          <div>
+            <h2>Por comprar</h2>
+            <span className="muted">
+              {shopping.list
+                ? `Lista ${LIST_STATE_LABELS[shopping.list.state]} · ${shopping.list.windowLabel}`
+                : `Autocalculado del plan de ${weekLabel}`}
+            </span>
+          </div>
+          {listState === "open" || listState === "completed" ? (
+            <ShoppingListTransitionBar
+              listId={shopping.list!.id}
+              state={listState}
+              version={shopping.list!.version}
+            />
+          ) : (
+            <button
+              className="btn btn-secondary"
+              onClick={() => setListDialogOpen(true)}
+              type="button"
+            >
+              <Icon name="cart" size={15} />
+              Generar lista
+            </button>
+          )}
+        </div>
+
+        {listOpen ? (
+          shopping.pendingRows.length === 0 ? (
+            <div className="empty">
+              <strong>La lista está al día.</strong>
+              <p>No quedan faltantes pendientes en esta ventana.</p>
+            </div>
+          ) : (
+            <div>
+              {shopping.pendingRows.map(({ item, onHand, shortfall }) => (
+                <ShoppingItemRow
+                  item={item}
+                  key={item.id}
+                  listId={shopping.list!.id}
+                  mutable
+                  onHand={onHand}
+                  shortfall={shortfall}
+                  version={shopping.list!.version}
+                />
+              ))}
+            </div>
+          )
+        ) : shortages.length > 0 ? (
+          <div>
+            {shortages.map((row) => (
+              <div className="shopping-item" key={row.ingredientId}>
+                <span aria-hidden="true" className="shortage-mark">
+                  <Icon name="cart" size={17} />
+                </span>
+                <div>
+                  <div className="meal-name">{row.name}</div>
+                  <div className="reason">
+                    El plan de {weekLabel} lo necesita y en casa quedan{" "}
+                    {formatQuantity(row.shortage!.onHand, row.unit)}.
+                  </div>
+                </div>
+                <div className="quantity">
+                  <span className="meta">Necesarios</span>
+                  <strong className="num" style={{ display: "block" }}>
+                    {formatQuantity(row.shortage!.needed, row.unit)}
+                  </strong>
+                </div>
+                <div className="hide-mid">
+                  <span className="meta">En casa</span>
+                  <strong className="num" style={{ display: "block" }}>
+                    {formatQuantity(row.shortage!.onHand, row.unit)}
+                  </strong>
+                </div>
+                <div className="hide-mid">
+                  <span className="meta">Faltan</span>
+                  <strong className="num" style={{ display: "block" }}>
+                    {formatQuantity(row.shortage!.missing, row.unit)}
+                  </strong>
+                </div>
+                <div className="shopping-item-actions">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() =>
+                      openLotDialog({
+                        ingredientId: row.ingredientId,
+                        name: row.name,
+                        quantity: row.shortage!.missing,
+                        unit: row.unit,
+                      })
+                    }
+                    type="button"
+                  >
+                    Comprar {formatQuantity(row.shortage!.missing, row.unit)}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty">
+            <strong>
+              {listState === "completed"
+                ? "Lista completada — todo resuelto."
+                : "Nada que comprar — la semana está cubierta."}
+            </strong>
+            <p>Los faltantes se calculan del plan aprobado.</p>
+          </div>
+        )}
+
+        {shopping.resolvedItems.length > 0 &&
+        (listOpen || listState === "completed") ? (
+          <details className="shop-resolved">
+            <summary>
+              {shopping.resolvedItems.length}{" "}
+              {shopping.resolvedItems.length === 1 ? "resuelto" : "resueltos"}{" "}
+              en esta lista
+            </summary>
+            {shopping.resolvedItems.map((item) => (
+              <ShoppingItemRow
+                item={item}
+                key={item.id}
+                listId={shopping.list!.id}
+                mutable={listOpen}
+                onHand={null}
+                shortfall={null}
+                version={shopping.list!.version}
+              />
+            ))}
+          </details>
+        ) : null}
+      </article>
 
       {presentLocations.length > 0 ? (
         <div aria-label="Filtrar por ubicación" className="tabs" role="tablist" style={{ marginBottom: 18 }}>
@@ -143,7 +338,6 @@ export function InventoryView({
               key={location}
               onClick={() => setTab(location)}
               role="tab"
-              type="button"
             >
               {LOCATION_LABELS[location]}
             </button>
@@ -157,7 +351,7 @@ export function InventoryView({
             <span className="recipe-glyph">
               <Icon name="package" />
             </span>
-            <strong>El inventario está vacío.</strong>
+            <strong>La despensa está vacía.</strong>
             <p>
               Registra la primera compra o añade un lote a mano: cada movimiento
               queda en el ledger y las proyecciones nunca alteran el saldo real.
@@ -169,7 +363,7 @@ export function InventoryView({
             ) : (
               <button
                 className="btn btn-primary"
-                onClick={() => setLotDialogOpen(true)}
+                onClick={() => openLotDialog()}
                 type="button"
               >
                 Registrar el primer lote
@@ -202,6 +396,15 @@ export function InventoryView({
                           : "Sin lotes"}
                       </span>
                       <div className="meal-name">{row.name}</div>
+                      {row.tags.length > 0 ? (
+                        <span className="inventory-tags">
+                          {row.tags.map((tag) => (
+                            <span className={`status ${tag.tone}`} key={tag.label}>
+                              {tag.label}
+                            </span>
+                          ))}
+                        </span>
+                      ) : null}
                     </div>
                     <div>
                       <span className="meta">Real</span>
@@ -305,22 +508,60 @@ export function InventoryView({
         )}
       </article>
 
-      <Dialog onOpenChange={setLotDialogOpen} open={lotDialogOpen}>
+      <Dialog
+        onOpenChange={(open) => {
+          setLotDialogOpen(open);
+          if (!open) setLotPreset(null);
+        }}
+        open={lotDialogOpen}
+      >
         <DialogContent aria-describedby="lot-dialog-desc">
           <div className="dialog-head">
-            <DialogTitle>Registrar lote</DialogTitle>
+            <DialogTitle>
+              {lotPreset ? `Comprar ${lotPreset.name}` : "Registrar lote"}
+            </DialogTitle>
             <DialogClose aria-label="Cerrar" className="icon-btn">
               <Icon name="close" size={16} />
             </DialogClose>
           </div>
           <div className="dialog-body">
             <DialogDescription className="muted" id="lot-dialog-desc">
-              Añade existencias reales al inventario: suma al saldo y queda en el
-              ledger.
+              {lotPreset
+                ? `Registra la compra: suma ${formatQuantity(lotPreset.quantity, lotPreset.unit)} al saldo real y cubre el faltante del plan.`
+                : "Añade existencias reales al inventario: suma al saldo y queda en el ledger."}
             </DialogDescription>
             <InventoryLotForm
+              defaultIngredientId={lotPreset?.ingredientId}
+              defaultQuantity={lotPreset?.quantity}
               ingredients={ingredients}
-              onSuccess={() => setLotDialogOpen(false)}
+              key={lotPreset?.ingredientId ?? "blank"}
+              onSuccess={() => {
+                setLotDialogOpen(false);
+                setLotPreset(null);
+              }}
+              submitLabel={lotPreset ? "Registrar compra" : "Añadir lote"}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={setListDialogOpen} open={listDialogOpen}>
+        <DialogContent aria-describedby="list-dialog-desc">
+          <div className="dialog-head">
+            <DialogTitle>Generar lista de compra</DialogTitle>
+            <DialogClose aria-label="Cerrar" className="icon-btn">
+              <Icon name="close" size={16} />
+            </DialogClose>
+          </div>
+          <div className="dialog-body">
+            <DialogDescription className="muted" id="list-dialog-desc">
+              La lista se calcula del plan aprobado para la ventana elegida: solo
+              aparecen los ingredientes que faltan en casa.
+            </DialogDescription>
+            <ShoppingListCreateForm
+              defaultFrom={windowDefault.from}
+              defaultTo={windowDefault.to}
+              onSuccess={() => setListDialogOpen(false)}
             />
           </div>
         </DialogContent>

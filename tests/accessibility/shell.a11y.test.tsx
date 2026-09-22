@@ -38,7 +38,7 @@ describe("shell accessibility contract", () => {
       screen.getByRole("link", { name: "Resumen" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      screen.getByRole("link", { name: /compra/i }),
+      screen.getByRole("link", { name: /despensa/i }),
     ).toHaveTextContent("2");
   });
 });
