@@ -60,21 +60,25 @@ export function ShoppingListTransitionBar({
   }
 
   return (
-    <div className="foundation-actions" role="group" aria-label="Acciones de la lista">
-      {ACTIONS_BY_STATE[state].map(({ action, label }) => (
+    <div aria-label="Acciones de la lista" className="planner-actions" role="group" style={{ marginLeft: 0 }}>
+      {ACTIONS_BY_STATE[state].map(({ action, label }, index) => (
         <button
-          key={action}
-          className="status status-ready"
+          className={index === 0 ? "btn btn-secondary" : "btn btn-ghost"}
           disabled={pending !== null}
+          key={action}
           onClick={() => transition(action)}
           type="button"
         >
           {pending === action ? "Aplicando…" : label}
         </button>
       ))}
-      {message ? <p role="status">{message}</p> : null}
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar lista actualizada
         </button>
       ) : null}

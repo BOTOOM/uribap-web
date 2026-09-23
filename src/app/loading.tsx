@@ -1,8 +1,14 @@
 export default function Loading() {
   return (
-    <main className="foundation-shell" aria-busy="true" aria-live="polite">
-      <p className="eyebrow">Uribap</p>
-      <p className="lede">Cargando el espacio del hogar…</p>
+    <main aria-busy="true" aria-live="polite" className="auth-shell">
+      <section className="card auth-card">
+        <span
+          aria-hidden="true"
+          className="skeleton"
+          style={{ width: 44, height: 44, borderRadius: 14 }}
+        />
+        <p className="muted">Cargando el espacio del hogar…</p>
+      </section>
     </main>
   );
 }

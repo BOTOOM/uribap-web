@@ -46,7 +46,7 @@ describe("preparation task flows", () => {
 
   it("sends expected_version and idempotency key on complete", async () => {
     render(<PreparationTaskActions task={PENDING_TASK} />);
-    fireEvent.click(screen.getByRole("button", { name: "Completar" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Completar/ }));
     expect(fetch).toHaveBeenCalledWith(
       "/api/preparation-tasks/task-1/complete",
       expect.objectContaining({
@@ -86,7 +86,7 @@ describe("preparation task flows", () => {
       }),
     );
     render(<PreparationTaskActions task={PENDING_TASK} />);
-    fireEvent.click(screen.getByRole("button", { name: "Completar" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Completar/ }));
     await waitFor(() =>
       expect(
         screen.getByRole("button", { name: "Recargar tareas actualizadas" }),

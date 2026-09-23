@@ -8,16 +8,21 @@ const viewports = [
 ];
 
 for (const viewport of viewports) {
-  test(`foundation shell is responsive at ${viewport.width}px`, async ({ page }) => {
+  test(`public auth shell is responsive at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await page.goto("/");
+    await page.goto("/login");
 
     await expect(page).toHaveTitle(/Uribap/);
-    const navigationName = viewport.width <= 700 ? /móvil/i : /principal/i;
-    await expect(page.getByRole("navigation", { name: navigationName })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Lo que vamos");
+    await expect(
+      page.getByRole("heading", { name: "Entra para cuidar el plan de casa." }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Entrar con ZITADEL" }),
+    ).toBeVisible();
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
     expect(overflow).toBe(false);
   });
 }

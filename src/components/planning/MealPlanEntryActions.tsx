@@ -42,10 +42,20 @@ export function MealPlanEntryActions({
 
   return (
     <span>
-      <button type="button" disabled={pending} onClick={remove} aria-label="Quitar del plan">
+      <button
+        aria-label="Quitar del plan"
+        className="btn btn-ghost"
+        disabled={pending}
+        onClick={remove}
+        type="button"
+      >
         {pending ? "Quitando…" : "Quitar"}
       </button>
-      {message ? <span role="status">{message}</span> : null}
+      {message ? (
+        <span className="form-status" role="status">
+          {message}
+        </span>
+      ) : null}
     </span>
   );
 }

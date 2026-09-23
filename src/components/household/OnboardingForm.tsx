@@ -40,25 +40,58 @@ export function OnboardingForm() {
   if (pending) return <LoadingState label="Creando tu hogar…" />;
   return (
     <div>
-      <form className="foundation-actions" onSubmit={submit}>
-        <label>
-          Nombre del hogar
-          <input required minLength={1} maxLength={120} value={name} onChange={(event) => setName(event.target.value)} />
-        </label>
-        <label>
-          Idioma
-          <select value={locale} onChange={(event) => setLocale(event.target.value)}>
-            <option value="es">Español</option>
-            <option value="en">English</option>
-          </select>
-        </label>
-        <label>
-          Zona horaria
-          <input required value={timezone} onChange={(event) => setTimezone(event.target.value)} />
-        </label>
-        <button className="status status-ready" type="submit">Crear hogar</button>
+      <form className="form" onSubmit={submit}>
+        <div className="field">
+          <label className="field-label" htmlFor="onboarding-name">
+            Nombre del hogar
+          </label>
+          <input
+            className="input"
+            id="onboarding-name"
+            maxLength={120}
+            minLength={1}
+            placeholder="Casa de los García"
+            required
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+        <div className="form-row">
+          <div className="field">
+            <label className="field-label" htmlFor="onboarding-locale">
+              Idioma
+            </label>
+            <select
+              className="select"
+              id="onboarding-locale"
+              value={locale}
+              onChange={(event) => setLocale(event.target.value)}
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="onboarding-timezone">
+              Zona horaria
+            </label>
+            <input
+              className="input"
+              id="onboarding-timezone"
+              placeholder="Europe/Madrid"
+              required
+              value={timezone}
+              onChange={(event) => setTimezone(event.target.value)}
+            />
+          </div>
+        </div>
+        <div>
+          <button className="btn btn-primary" type="submit">
+            Crear hogar
+          </button>
+        </div>
       </form>
-      {error ? <ErrorState title="No se pudo crear el hogar" description={error} /> : null}
+      {error ? <ErrorState description={error} title="No se pudo crear el hogar" /> : null}
     </div>
   );
 }

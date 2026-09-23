@@ -38,14 +38,30 @@ export function InvitationAcceptanceForm({ initialToken }: { initialToken: strin
   if (pending) return <LoadingState label="Validando invitación…" />;
   return (
     <div>
-      <form className="foundation-actions" onSubmit={submit}>
-        <label>
-          Código de invitación
-          <input required minLength={20} value={token} onChange={(event) => setToken(event.target.value)} />
-        </label>
-        <button className="status status-ready" type="submit">Aceptar invitación</button>
+      <form className="form" onSubmit={submit}>
+        <div className="field">
+          <label className="field-label" htmlFor="invite-token">
+            Código de invitación
+          </label>
+          <input
+            className="input"
+            id="invite-token"
+            minLength={20}
+            required
+            value={token}
+            onChange={(event) => setToken(event.target.value)}
+          />
+          <span className="helper">
+            El código llega por correo — en local lo captura Mailpit.
+          </span>
+        </div>
+        <div>
+          <button className="btn btn-primary" type="submit">
+            Aceptar invitación
+          </button>
+        </div>
       </form>
-      {error ? <ErrorState title="No se pudo aceptar la invitación" description={error} /> : null}
+      {error ? <ErrorState description={error} title="No se pudo aceptar la invitación" /> : null}
     </div>
   );
 }

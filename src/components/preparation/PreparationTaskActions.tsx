@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { Icon } from "@/components/ui/Icon";
 import type { components } from "@/lib/api/generated/schema";
 
 type PreparationTask = components["schemas"]["PreparationTaskResponse"];
@@ -45,16 +46,33 @@ export function PreparationTaskActions({ task }: { task: PreparationTask }) {
   }
 
   return (
-    <span className="preparation-task-actions">
-      <button type="button" disabled={pending} onClick={() => transition("complete")}>
-        Completar
+    <span className="planner-actions" style={{ marginLeft: 0, alignItems: "center" }}>
+      <button
+        aria-label={`Completar ${task.title}`}
+        className="check"
+        disabled={pending}
+        onClick={() => transition("complete")}
+        style={{ color: "var(--muted)" }}
+        title="Marcar como hecha"
+        type="button"
+      >
+        <Icon name="check" size={18} />
       </button>
-      <button type="button" disabled={pending} onClick={() => transition("cancel")}>
+      <button
+        className="btn btn-ghost"
+        disabled={pending}
+        onClick={() => transition("cancel")}
+        type="button"
+      >
         Cancelar
       </button>
-      {message ? <p role="status">{message}</p> : null}
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar tareas actualizadas
         </button>
       ) : null}

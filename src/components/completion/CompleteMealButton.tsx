@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { toast } from "@/lib/toast";
+
 export function CompleteMealButton({
   planId,
   entryId,
@@ -31,6 +33,7 @@ export function CompleteMealButton({
         if (response.status === 409) setConflict(true);
         throw new Error(body?.detail ?? "No se pudo completar la comida.");
       }
+      toast("Comida completada — inventario descontado");
       setIdempotencyKey(crypto.randomUUID());
       router.refresh();
     } catch (error) {
@@ -42,12 +45,16 @@ export function CompleteMealButton({
 
   return (
     <span>
-      <button type="button" disabled={pending} onClick={complete}>
+      <button className="btn btn-primary" disabled={pending} onClick={complete} type="button">
         {pending ? "Completando…" : "Completar comida"}
       </button>
-      {message ? <span role="status">{message}</span> : null}
+      {message ? (
+        <span className="form-status" role="status">
+          {message}
+        </span>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar
         </button>
       ) : null}

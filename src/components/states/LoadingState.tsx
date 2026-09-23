@@ -1,3 +1,10 @@
 export function LoadingState({ label = "Cargando…" }: { label?: string }) {
-  return <div className="ui-state ui-state-loading" role="status" aria-live="polite">{label}</div>;
+  return (
+    <div aria-live="polite" className="card" role="status">
+      <div className="empty">
+        <span aria-hidden="true" className="skeleton" style={{ width: 44, height: 44, borderRadius: 14 }} />
+        <strong>{label}</strong>
+      </div>
+    </div>
+  );
 }

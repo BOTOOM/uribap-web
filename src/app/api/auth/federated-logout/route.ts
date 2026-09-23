@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 import { serverEnv } from "@/lib/config/env";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   const cookieStore = await cookies();
   const token = await getToken({ req: request, secret: serverEnv.AUTH_SECRET });
   const redirectUri = new URL("/", request.url).toString();

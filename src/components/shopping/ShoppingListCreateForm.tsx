@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 export function ShoppingListCreateForm({
   defaultFrom,
   defaultTo,
+  onSuccess,
 }: {
   defaultFrom: string;
   defaultTo: string;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const [fromDate, setFromDate] = useState(defaultFrom);
@@ -34,6 +36,7 @@ export function ShoppingListCreateForm({
         throw new Error(body?.detail ?? "Ya existe una lista activa para esa ventana.");
       }
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo crear la lista.");
+      onSuccess?.();
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo crear la lista.");
@@ -43,35 +46,47 @@ export function ShoppingListCreateForm({
   }
 
   return (
-    <form className="foundation-grid" aria-label="Crear lista de compra" onSubmit={submit}>
-      <div>
-        <label htmlFor="shopping-from">Desde</label>
-        <input
-          id="shopping-from"
-          type="date"
-          required
-          value={fromDate}
-          onChange={(event) => setFromDate(event.target.value)}
-        />
+    <form aria-label="Crear lista de compra" className="form" onSubmit={submit}>
+      <div className="form-row">
+        <div className="field">
+          <label className="field-label" htmlFor="shopping-from">
+            Desde
+          </label>
+          <input
+            className="input"
+            id="shopping-from"
+            required
+            type="date"
+            value={fromDate}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="shopping-to">
+            Hasta
+          </label>
+          <input
+            className="input"
+            id="shopping-to"
+            required
+            type="date"
+            value={toDate}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+        </div>
       </div>
       <div>
-        <label htmlFor="shopping-to">Hasta</label>
-        <input
-          id="shopping-to"
-          type="date"
-          required
-          value={toDate}
-          onChange={(event) => setToDate(event.target.value)}
-        />
-      </div>
-      <div className="foundation-actions">
-        <button type="submit" className="status status-ready" disabled={pending}>
+        <button className="btn btn-primary" disabled={pending} type="submit">
           {pending ? "Generando…" : "Generar lista"}
         </button>
       </div>
-      {message ? <p role="status">{message}</p> : null}
+      {message ? (
+        <p className="form-status" role="status">
+          {message}
+        </p>
+      ) : null}
       {conflict ? (
-        <button type="button" onClick={() => router.refresh()}>
+        <button className="btn btn-secondary" type="button" onClick={() => router.refresh()}>
           Recargar lista activa
         </button>
       ) : null}

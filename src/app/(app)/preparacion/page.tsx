@@ -1,8 +1,10 @@
 import { ErrorState } from "@/components/states/ErrorState";
 import { ManualTaskForm } from "@/components/preparation/ManualTaskForm";
 import { PreparationTaskActions } from "@/components/preparation/PreparationTaskActions";
+import { Icon } from "@/components/ui/Icon";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
+import { formatDueLabel, formatDayLong, formatQuantity, relativeDay } from "@/lib/format";
 
 type Task = components["schemas"]["PreparationTaskResponse"];
 type TaskPage = components["schemas"]["PreparationTaskPage"];
@@ -25,17 +27,20 @@ const TYPE_LABELS: Record<TaskType, string> = {
   manual: "manual",
 };
 
+const TYPE_ICONS: Record<TaskType, "snow" | "clock" | "cooking" | "package" | "check"> = {
+  defrost: "snow",
+  soak: "clock",
+  marinate: "cooking",
+  prepare_ahead: "package",
+  manual: "check",
+};
+
 const MEAL_LABELS: Record<MealType, string> = {
   breakfast: "desayuno",
   lunch: "comida",
   snack: "merienda",
   dinner: "cena",
 };
-
-function formatDue(dueAt: string): string {
-  const date = new Date(dueAt);
-  return `${date.toISOString().slice(0, 10)} ${date.toISOString().slice(11, 16)} UTC`;
-}
 
 async function loadTasks(): Promise<Array<Task & { overdue: boolean }> | { error: string }> {
   try {
@@ -59,26 +64,48 @@ async function loadIngredients(): Promise<Ingredient[]> {
   }
 }
 
-function TaskRow({ task }: { task: Task & { overdue: boolean } }) {
-  const overdue = task.overdue;
+function dayKey(isoDateTime: string): string {
+  const date = new Date(isoDateTime);
+  if (Number.isNaN(date.getTime())) return "sin-fecha";
+  return date.toISOString().slice(0, 10);
+}
+
+function TaskCard({ task }: { task: Task & { overdue: boolean } }) {
   return (
-    <li>
-      <span className="item-index">{formatDue(task.due_at)}</span>
-      <span>
-        {task.title}
-        {task.origin === "derived"
-          ? ` · ${task.recipe_name ?? "receta"}${task.meal_type ? ` · ${MEAL_LABELS[task.meal_type]}` : ""}${task.planned_date ? ` · ${task.planned_date}` : ""}`
-          : ""}
-        {task.ingredient_name ? ` · ${task.ingredient_name}` : ""}
-        {task.amount && task.unit ? ` ${task.amount} ${task.unit}` : ""}
-        {task.instruction ? ` — ${task.instruction}` : ""}
+    <div className="task">
+      <span
+        aria-hidden="true"
+        className={`task-icon${task.overdue ? " tone-warning" : ""}`}
+      >
+        <Icon name={TYPE_ICONS[task.task_type]} size={17} />
       </span>
-      <span className={`status ${overdue ? "status-missing" : task.status === "pending" ? "status-warning" : "status-ready"}`}>
-        {overdue ? "vencida" : STATUS_LABELS[task.status]}
-      </span>
-      <span className="item-index">{TYPE_LABELS[task.task_type]}</span>
-      <PreparationTaskActions task={task} />
-    </li>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span className="meal-name">{task.title}</span>
+        <span className="muted" style={{ display: "block", marginTop: 2 }}>
+          {task.origin === "derived"
+            ? `${task.recipe_name ?? "receta"}${task.meal_type ? ` · ${MEAL_LABELS[task.meal_type]}` : ""}${task.planned_date ? ` · ${relativeDay(task.planned_date)}` : ""}`
+            : "tarea manual"}
+          {task.ingredient_name ? ` · ${task.ingredient_name}` : ""}
+          {task.amount && task.unit ? ` ${formatQuantity(task.amount, task.unit)}` : ""}
+        </span>
+        {task.instruction ? (
+          <span className="muted" style={{ display: "block", marginTop: 2, fontSize: 12 }}>
+            {task.instruction}
+          </span>
+        ) : null}
+      </div>
+      <div style={{ display: "grid", gap: 6, justifyItems: "end", alignContent: "start" }}>
+        <span className="meta">{TYPE_LABELS[task.task_type]}</span>
+        <span
+          className={`status ${
+            task.overdue ? "missing" : task.status === "pending" ? "pending" : "available"
+          }`}
+        >
+          {task.overdue ? "vencida" : STATUS_LABELS[task.status]}
+        </span>
+        <PreparationTaskActions task={task} />
+      </div>
+    </div>
   );
 }
 
@@ -86,51 +113,102 @@ export default async function PreparationPage() {
   const [tasks, ingredients] = await Promise.all([loadTasks(), loadIngredients()]);
 
   if ("error" in tasks) {
-    return <ErrorState title="No se pudieron cargar las tareas" description={tasks.error} />;
+    return <ErrorState description={tasks.error} title="No se pudieron cargar las tareas" />;
   }
 
-  const pending = tasks.filter((task) => task.status === "pending");
-  const resolved = tasks.filter((task) => task.status !== "pending");
+  const pending = tasks
+    .filter((task) => task.status === "pending")
+    .sort((a, b) => a.due_at.localeCompare(b.due_at));
+  const resolved = tasks
+    .filter((task) => task.status !== "pending")
+    .sort((a, b) => b.due_at.localeCompare(a.due_at));
+
+  const groups = new Map<string, typeof pending>();
+  for (const task of pending) {
+    const key = dayKey(task.due_at);
+    groups.set(key, [...(groups.get(key) ?? []), task]);
+  }
 
   return (
-    <div className="foundation-shell">
-      <section className="foundation-hero" aria-labelledby="preparacion-title">
-        <p className="eyebrow">Uribap · preparación</p>
-        <h1 id="preparacion-title">Preparar a tiempo, sin adivinar.</h1>
-        <p className="lede">
-          Las tareas derivadas nacen al aprobar el plan: cada regla de la receta se convierte en
-          una tarea con su vencimiento exacto.
-        </p>
-      </section>
-      <section className="foundation-list" aria-labelledby="preparation-pending-title">
-        <h2 id="preparation-pending-title">Pendientes</h2>
-        {pending.length === 0 ? (
-          <p role="status">
-            No hay tareas pendientes. Las tareas aparecen al aprobar un plan con recetas que
-            definen reglas de preparación.
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Preparación</h1>
+          <p>
+            Preparar a tiempo, sin adivinar. Las tareas derivadas nacen al aprobar el plan:
+            cada regla de la receta se convierte en una tarea con su vencimiento exacto.
           </p>
+        </div>
+      </div>
+
+      <article className="card card-flush">
+        <div className="card-title">
+          <h2>Pendientes</h2>
+          <span className="meta">
+            {pending.length} tareas · {pending.filter((task) => task.overdue).length} vencidas
+          </span>
+        </div>
+        {pending.length === 0 ? (
+          <div className="empty">
+            <strong>No hay tareas pendientes.</strong>
+            <p>
+              Las tareas aparecen al aprobar un plan con recetas que definen reglas de
+              preparación, o al crear una tarea manual.
+            </p>
+          </div>
         ) : (
-          <ul>
-            {pending.map((task) => (
-              <TaskRow key={task.id} task={task} />
+          <div>
+            {[...groups.entries()].map(([day, dayTasks]) => (
+              <div className="timeline-group" key={day}>
+                <div>
+                  <span className="time-label">
+                    {day === "sin-fecha" ? "sin fecha" : relativeDay(day)}
+                  </span>
+                  <span className="muted" style={{ display: "block", fontSize: 12 }}>
+                    {day === "sin-fecha" ? "" : formatDayLong(day)}
+                  </span>
+                </div>
+                <div>
+                  {dayTasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-      </section>
+      </article>
+
       {resolved.length > 0 ? (
-        <section className="foundation-list" aria-labelledby="preparation-resolved-title">
-          <h2 id="preparation-resolved-title">Resueltas</h2>
-          <ul>
-            {resolved.map((task) => (
-              <TaskRow key={task.id} task={task} />
+        <article className="card card-flush" style={{ marginTop: 18 }}>
+          <div className="card-title">
+            <h2>Resueltas</h2>
+            <span className="meta">{resolved.length} tareas</span>
+          </div>
+          <div>
+            {resolved.slice(0, 10).map((task) => (
+              <div className="detail-row" key={task.id}>
+                <div>
+                  <span className="meal-name">{task.title}</span>
+                  <span className="muted" style={{ display: "block" }}>
+                    {formatDueLabel(task.due_at)} · {TYPE_LABELS[task.task_type]}
+                  </span>
+                </div>
+                <span className="status available">{STATUS_LABELS[task.status]}</span>
+                <span />
+              </div>
             ))}
-          </ul>
-        </section>
+          </div>
+        </article>
       ) : null}
-      <section className="foundation-list" aria-labelledby="preparation-manual-title">
-        <h2 id="preparation-manual-title">Tarea manual</h2>
+
+      <article className="card" style={{ marginTop: 18 }}>
+        <div className="card-title">
+          <h2>Tarea manual</h2>
+          <span className="meta">sin receta asociada</span>
+        </div>
         <ManualTaskForm ingredients={ingredients} />
-      </section>
-    </div>
+      </article>
+    </>
   );
 }

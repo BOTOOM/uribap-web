@@ -8,6 +8,9 @@ export const TabList = TabsPrimitive.List;
 export const TabTrigger = TabsPrimitive.Trigger;
 export const TabContent = TabsPrimitive.Content;
 
-export function StyledTabList({ className = "", ...props }: ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
-  return <TabsPrimitive.List className={`ui-tabs-list ${className}`.trim()} {...props} />;
+export function StyledTabList({
+  className = "",
+  ...props
+}: ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
+  return <TabsPrimitive.List className={`tabs ${className}`.trim()} {...props} />;
 }

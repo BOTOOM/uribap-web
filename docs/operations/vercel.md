@@ -17,7 +17,7 @@ contract a future deploy must satisfy.
 
 | Variable | Scope | Purpose | Notes |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE_URL` | browser | Public API base for direct client use | points at the API origin; default localhost |
+| `NEXT_PUBLIC_API_BASE_URL` | browser | Public API base for direct client use, the MCP URL shown in `/settings/agentes`, and the CSP `connect-src` origin | points at the API origin; **build-time**: it is inlined by `next build` (Dockerfile `ARG` — pass it as a Coolify build arg, not only runtime env) |
 | `URIBAP_API_INTERNAL_URL` | server-only | BFF route handlers' upstream | internal network URL in prod; never exposed to the browser |
 | `AUTH_SECRET` | server-only | NextAuth JWT/session encryption | ≥32 chars, generated per environment |
 | `AUTH_ZITADEL_ID` / `AUTH_ZITADEL_SECRET` | server-only | OIDC client credentials | ZITADEL app credentials; secret storage |
@@ -28,6 +28,9 @@ Rules:
 
 - Only `NEXT_PUBLIC_*` vars reach the browser bundle. `serverEnv` values are
   consumed exclusively by Server Components and `/api/*` BFF route handlers.
+- `URIBAP_API_INTERNAL_URL` is runtime-only and may point at internal service
+  DNS (e.g. `http://uribap-api:8000/api/v1` on the Coolify network) while
+  `NEXT_PUBLIC_API_BASE_URL` stays the public origin.
 - `.env.example` documents the full list with placeholders — real values live
   in Vercel's environment variable storage (and local `.env.local`, git-ignored).
 - The BFF derives the active household from `/me`; no internal household or

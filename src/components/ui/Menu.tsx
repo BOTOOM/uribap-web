@@ -7,6 +7,13 @@ export const Menu = DropdownMenuPrimitive.Root;
 export const MenuTrigger = DropdownMenuPrimitive.Trigger;
 export const MenuItem = DropdownMenuPrimitive.Item;
 
-export function MenuContent({ className = "", ...props }: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>) {
-  return <DropdownMenuPrimitive.Portal><DropdownMenuPrimitive.Content className={`ui-menu-content ${className}`.trim()} {...props} /></DropdownMenuPrimitive.Portal>;
+export function MenuContent({
+  className = "",
+  ...props
+}: ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>) {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content className={`menu-content ${className}`.trim()} {...props} />
+    </DropdownMenuPrimitive.Portal>
+  );
 }
