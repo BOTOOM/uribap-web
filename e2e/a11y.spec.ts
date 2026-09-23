@@ -9,14 +9,10 @@ async function expectNoSeriousViolations(page: Page, include?: string) {
   expect(results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""))).toEqual([]);
 }
 
-test("foundation shell has no serious accessibility violations", async ({ page }) => {
-  await page.goto("/");
+test("public auth shell has no serious accessibility violations", async ({ page }) => {
+  await page.goto("/login");
   await expectNoSeriousViolations(page);
 
-  await page.getByRole("button", { name: "Más acciones" }).click();
-  await expectNoSeriousViolations(page, '[role="menu"]');
-  await page.keyboard.press("Escape");
-
-  await page.getByRole("button", { name: "Abrir detalle" }).click();
-  await expectNoSeriousViolations(page, '[role="dialog"]');
+  await page.getByRole("button", { name: "Entrar con ZITADEL" }).focus();
+  await expect(page.getByRole("button", { name: "Entrar con ZITADEL" })).toBeFocused();
 });

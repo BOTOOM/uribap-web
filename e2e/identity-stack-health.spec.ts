@@ -9,7 +9,7 @@ test("local Web and API health boundaries are available", async ({ request }) =>
   expect(web.ok()).toBe(true);
   expect(await web.json()).toMatchObject({ status: "ok", service: "uribap-web" });
 
-  const api = await request.get("http://localhost:8010/api/v1/health/live");
+  const api = await request.get("http://127.0.0.1:8010/api/v1/health/live");
   expect(api.ok()).toBe(true);
   expect((await api.json()).status).toBe("ok");
 });
