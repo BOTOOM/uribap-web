@@ -1,3 +1,5 @@
+import type { ComponentType } from "react";
+
 import { UribapBrand } from "@/components/uribap-brand";
 
 type Props = {
@@ -7,6 +9,4 @@ type Props = {
   width?: number;
 };
 
-export function Logo({}: Props) {
-  return <UribapBrand compact />;
-}
+export const Logo: ComponentType<Props> = () => <UribapBrand compact />;

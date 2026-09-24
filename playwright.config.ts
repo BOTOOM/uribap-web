@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
@@ -12,8 +14,12 @@ export default defineConfig({
   },
   webServer: {
     command: "pnpm dev",
-    url: "http://127.0.0.1:3000",
+    url: "http://127.0.0.1:3000/api/health",
     reuseExistingServer: !process.env.CI,
+    env: {
+      AUTH_SECRET: process.env.AUTH_SECRET ?? randomBytes(32).toString("base64url"),
+      AUTH_TRUST_HOST: "true",
+    },
   },
   projects: [
     {

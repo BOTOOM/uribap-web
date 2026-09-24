@@ -27,6 +27,7 @@ describe("Auth.js ZITADEL configuration", () => {
       expect.objectContaining({
         client: { token_endpoint_auth_method: "client_secret_basic" },
         checks: ["pkce", "state", "nonce"],
+        authorization: { params: expect.objectContaining({ ui_locales: "es" }) },
       }),
     );
   });

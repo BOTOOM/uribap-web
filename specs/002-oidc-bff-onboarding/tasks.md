@@ -191,3 +191,7 @@ MVP is Phase 1 + Phase 2 + User Story 1 (T001–T025): secure local ZITADEL logi
 - [x] T064 Document exact shared-instance/per-app setup, the unchanged Vercel callback, required runtime variables, dedicated login PAT, email template ownership and upgrade responsibility in existing `identity/README.md` and `docs/operations/vercel.md`.
 - [ ] T065 Build both surfaces and run desktop/mobile, keyboard, reduced-motion, local OIDC/profile/refresh/logout and applicable provider-flow acceptance. Record PASS/FAIL/NOT RUN in the existing quickstart/convergence artifacts; never test against production or real SMTP.
 - [ ] T066 Review the complete security/UI/build diff and publish the Web PR with API dependency and manual deployment steps. Do not mark broader historical gaps closed without evidence.
+- [x] T067 Ensure Playwright's protected Proxy test server has an ephemeral Auth.js session secret when the parent CI environment lacks one and waits on the public health route; verify public E2E specs with no inherited `AUTH_SECRET`.
+- [x] T068 Guard failed concurrent Auth.js session GET/POST cookie cleanup so it cannot erase a session renewed by a parallel response; retain explicit signout/logout clearing without single-flight claims.
+- [x] T069 Use the current API `/me` response, not stale session memberships, as the onboarding redirect authority; preserve 401 redirect and non-401 error propagation.
+- [x] T070 Request Spanish UI via OIDC `ui_locales=es` while retaining the provider language chooser.

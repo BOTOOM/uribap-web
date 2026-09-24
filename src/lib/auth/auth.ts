@@ -1,10 +1,12 @@
 import NextAuth from "next-auth";
 import Zitadel from "next-auth/providers/zitadel";
+import type { NextRequest } from "next/server";
 
 import { jwtCallback, sessionCallback } from "@/lib/auth/callbacks";
+import { preserveConcurrentSession } from "@/lib/auth/session-response";
 import { serverEnv } from "@/lib/config/env";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   trustHost: serverEnv.AUTH_TRUST_HOST === "true",
   secret: serverEnv.AUTH_SECRET || undefined,
   session: { strategy: "jwt" },
@@ -18,6 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       authorization: {
         params: {
           scope: "openid profile email offline_access",
+          ui_locales: "es",
         },
       },
     }),
@@ -31,3 +34,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/auth-error",
   },
 });
+
+export const { auth, signIn, signOut } = nextAuth;
+
+const guardSessionResponse = (handler: (request: NextRequest) => Promise<Response>) =>
+  async (request: NextRequest) => preserveConcurrentSession(request, await handler(request));
+
+export const handlers = {
+  GET: guardSessionResponse(nextAuth.handlers.GET),
+  POST: guardSessionResponse(nextAuth.handlers.POST),
+};
