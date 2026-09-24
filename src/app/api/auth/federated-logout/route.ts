@@ -75,8 +75,12 @@ export async function POST(request: Request) {
     secret: serverEnv.AUTH_SECRET,
     secureCookie: secure,
   });
-  const logoutTimestamp = Date.now();
-  const logoutMarker = signLogoutEpoch(logoutTimestamp, serverEnv.AUTH_SECRET);
+  const logoutTimestamp = Math.floor(Date.now() / 1000) * 1000;
+  const logoutMarker = signLogoutEpoch(
+    logoutTimestamp,
+    serverEnv.AUTH_SECRET,
+    typeof token?.authSessionEpoch === "string" ? token.authSessionEpoch : undefined,
+  );
   if (!logoutMarker) {
     return NextResponse.json(
       { code: "identity_provider_unavailable", detail: "No se pudo proteger el cierre de sesión." },

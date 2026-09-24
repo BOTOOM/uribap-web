@@ -4,7 +4,10 @@ import type { Account, Profile, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
 import type { components } from "@/lib/api/generated/schema";
-import { refreshSessionFingerprint } from "@/lib/auth/session-response";
+import {
+  authSessionEpochFingerprint,
+  refreshSessionFingerprint,
+} from "@/lib/auth/session-response";
 import { serverEnv } from "@/lib/config/env";
 import type { HouseholdMembership } from "@/types/next-auth";
 
@@ -124,6 +127,7 @@ export async function jwtCallback({
     token.refreshToken = account.refresh_token ?? undefined;
     token.idToken = account.id_token ?? undefined;
     token.accessTokenExpires = account.expires_at ? account.expires_at * 1000 : undefined;
+    token.authSessionEpoch = randomUUID();
     token.refreshSessionEpoch = randomUUID();
     token.authenticatedAt = authenticatedAtFromIdToken(account.id_token);
     token.error = undefined;
@@ -163,11 +167,13 @@ export async function jwtCallback({
 }
 
 export function sessionCallback({ session, token }: { session: Session; token: JWT }) {
+  const authSecret = process.env.AUTH_SECRET || serverEnv.AUTH_SECRET;
   session.authenticatedAt = typeof token.authenticatedAt === "number" ? token.authenticatedAt : 0;
+  session.authSessionFingerprint = authSessionEpochFingerprint(token.authSessionEpoch, authSecret);
   session.refreshSessionFingerprint = refreshSessionFingerprint(
     token.accessToken,
     token.refreshToken,
-    process.env.AUTH_SECRET || serverEnv.AUTH_SECRET,
+    authSecret,
   );
   if (token.error === "RefreshAccessTokenError") {
     session.error = "RefreshAccessTokenError";

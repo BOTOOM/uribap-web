@@ -3,10 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   LOGOUT_EPOCH_COOKIE,
+  authSessionEpochFingerprint,
+  logoutMarkerBlocksSession,
   preserveConcurrentSession,
   protectedCookieName,
   readLogoutEpoch,
   signLogoutEpoch,
+  stripPrivateSessionMetadata,
 } from "@/lib/auth/session-response";
 
 const mocks = vi.hoisted(() => ({
@@ -98,6 +101,39 @@ describe("session marker signatures", () => {
     ).toBeUndefined();
     expect(readLogoutEpoch(undefined, secret)).toBeUndefined();
   });
+
+  it("removes epoch and token-generation fingerprints from public Auth.js sessions", async () => {
+    const sessionResponse = response(
+      {
+        user: { id: "user-1" },
+        authenticatedAt: 1_700_000_000_000,
+        authSessionFingerprint: "private-auth-generation",
+        refreshFailureFingerprint: "private-refresh-failure",
+        refreshSessionFingerprint: "private-refresh-generation",
+      },
+      ["__Secure-authjs.session-token=fresh; Path=/; Secure; HttpOnly; SameSite=Lax"],
+    );
+
+    const publicResponse = await stripPrivateSessionMetadata(sessionResponse);
+    const body = await publicResponse.text();
+
+    expect(body).toBe('{"user":{"id":"user-1"}}');
+    expect(body).not.toContain("private-");
+    expect(publicResponse.headers.getSetCookie()).toEqual(sessionResponse.headers.getSetCookie());
+  });
+
+  it("distinguishes a same-second reauthentication from the session logged out", () => {
+    const secret = "synthetic-auth-secret-for-session-marker-tests-0123456789";
+    const logoutAt = Math.floor(Date.now() / 1000) * 1000;
+    const oldEpoch = "session-before-logout";
+    const newEpoch = "session-after-logout";
+    const marker = signLogoutEpoch(logoutAt, secret, oldEpoch);
+
+    expect(marker).toBeDefined();
+    expect(logoutMarkerBlocksSession(marker, oldEpoch, logoutAt, secret)).toBe(true);
+    expect(logoutMarkerBlocksSession(marker, newEpoch, logoutAt, secret)).toBe(false);
+    expect(logoutMarkerBlocksSession(marker, newEpoch, logoutAt - 1000, secret)).toBe(true);
+  });
 });
 
 describe("concurrent Auth.js session responses", () => {
@@ -158,6 +194,37 @@ describe("concurrent Auth.js session responses", () => {
     expect(marker).toContain("Secure");
     expect(marker).toContain("Path=/");
     expect(await guarded.clone().json()).toMatchObject({ error: "RefreshAccessTokenError" });
+  });
+
+  it("clears the logout fence for a new account generation in the same second", async () => {
+    const secret = "synthetic-auth-secret-for-session-marker-tests-0123456789";
+    vi.stubEnv("AUTH_SECRET", secret);
+    const logoutAt = Math.floor(Date.now() / 1000) * 1000;
+    const oldEpoch = "session-before-logout";
+    const newEpoch = "session-after-logout";
+    const marker = signLogoutEpoch(logoutAt, secret, oldEpoch);
+    if (!marker) throw new Error("Expected a signed logout marker.");
+    const request = sessionRequest(
+      "GET",
+      "/api/auth/session",
+      `${staleCookie}; __Secure-uribap-auth-logout-before=${marker}`,
+    );
+
+    const guarded = await preserveConcurrentSession(
+      request,
+      response(
+        {
+          user: { id: "user-1" },
+          authenticatedAt: logoutAt,
+          authSessionFingerprint: authSessionEpochFingerprint(newEpoch, secret),
+        },
+        ["__Secure-authjs.session-token.0=fresh; Path=/; Secure; HttpOnly; SameSite=Lax"],
+      ),
+    );
+
+    expect(guarded.headers.getSetCookie()).toContain(
+      "__Secure-uribap-auth-logout-before=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+    );
   });
 
   it("clears an old refresh marker only when a fresh session generation is returned", async () => {

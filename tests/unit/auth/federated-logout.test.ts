@@ -113,7 +113,7 @@ describe("federated logout", () => {
     }
     expect(deletedCookies.some((cookie) => cookie.startsWith("unrelated="))).toBe(false);
     const marker = deletedCookies.find((cookie) => cookie.startsWith("__Secure-uribap-auth-logout-before="));
-    expect(marker).toMatch(/=\d+\.[A-Za-z0-9_-]{43};/);
+    expect(marker).toMatch(/=\d+\.(?:none|[A-Za-z0-9_-]{43})\.[A-Za-z0-9_-]{43};/);
     expect(marker).toMatch(/(?:^|;)\s*Path=\//i);
     expect(marker).toMatch(/(?:^|;)\s*HttpOnly(?:;|$)/i);
     expect(marker).toMatch(/(?:^|;)\s*Secure(?:;|$)/i);

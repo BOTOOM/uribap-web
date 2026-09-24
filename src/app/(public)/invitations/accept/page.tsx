@@ -13,7 +13,9 @@ export default async function InvitationAcceptPage({
   searchParams: Promise<{ token?: string }>;
 }) {
   const session = await auth();
-  if (!session) redirect("/login?returnTo=/invitations/accept" as Route);
+  if (!session || session.error === "RefreshAccessTokenError" || !session.user.id) {
+    redirect("/login?returnTo=/invitations/accept" as Route);
+  }
   const { token } = await searchParams;
   return (
     <main className="auth-shell">

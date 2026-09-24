@@ -13,6 +13,11 @@ export function protectedCookieName(name: string, secure: boolean): string {
   return `${secure ? "__Secure-" : ""}${name}`;
 }
 
+export function authSessionEpochFingerprint(epoch: string | undefined, secret: string): string | undefined {
+  if (!epoch || secret.length < 32) return undefined;
+  return createHmac("sha256", secret).update("auth-session-epoch:").update(epoch).digest("base64url");
+}
+
 export function refreshSessionFingerprint(
   accessToken: string | undefined,
   refreshToken: string | undefined,
@@ -39,8 +44,13 @@ export function expiredCookieHeader(name: string, secure: boolean): string {
   return `${name}=; Path=/; Max-Age=0;${secure ? " Secure;" : ""} HttpOnly; SameSite=Lax`;
 }
 
-export function logoutEpochCookieHeader(timestamp: number, secret: string, secure: boolean): string | undefined {
-  const marker = signLogoutEpoch(timestamp, secret);
+export function logoutEpochCookieHeader(
+  timestamp: number,
+  secret: string,
+  secure: boolean,
+  authSessionEpoch?: string,
+): string | undefined {
+  const marker = signLogoutEpoch(timestamp, secret, authSessionEpoch);
   if (!marker) return undefined;
   const name = protectedCookieName(LOGOUT_EPOCH_COOKIE, secure);
   return `${name}=${marker}; Path=/; Max-Age=${AUTH_SESSION_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
@@ -54,18 +64,26 @@ export function refreshFailureCookieHeader(
   return `${name}=${fingerprint}; Path=/; Max-Age=${AUTH_SESSION_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
 }
 
-export function signLogoutEpoch(timestamp: number, secret: string): string | undefined {
+type LogoutFence = { timestamp: number; sessionFingerprint: string };
+
+export function signLogoutEpoch(
+  timestamp: number,
+  secret: string,
+  authSessionEpoch?: string,
+): string | undefined {
   if (!Number.isSafeInteger(timestamp) || timestamp <= 0 || secret.length < 32) return undefined;
   const value = String(timestamp);
+  const sessionFingerprint = authSessionEpochFingerprint(authSessionEpoch, secret) ?? "none";
+  const payload = `${value}.${sessionFingerprint}`;
   const signature = createHmac("sha256", secret)
-    .update(`${LOGOUT_EPOCH_COOKIE}:${value}`)
+    .update(`${LOGOUT_EPOCH_COOKIE}:${payload}`)
     .digest("base64url");
-  return `${value}.${signature}`;
+  return `${payload}.${signature}`;
 }
 
-export function readLogoutEpoch(marker: string | undefined, secret: string): number | undefined {
+function readLogoutFence(marker: string | undefined, secret: string): LogoutFence | undefined {
   if (!marker || secret.length < 32) return undefined;
-  const match = marker.match(/^(\d{1,16})\.([A-Za-z0-9_-]{43})$/);
+  const match = marker.match(/^(\d{1,16})\.([A-Za-z0-9_-]{43}|none)\.([A-Za-z0-9_-]{43})$/);
   if (!match) return undefined;
   const timestamp = Number(match[1]);
   if (
@@ -76,11 +94,50 @@ export function readLogoutEpoch(marker: string | undefined, secret: string): num
   ) {
     return undefined;
   }
-  const expected = Buffer.from(signLogoutEpoch(timestamp, secret)!.split(".")[1], "base64url");
-  const actual = Buffer.from(match[2], "base64url");
+  const payload = `${match[1]}.${match[2]}`;
+  const expected = Buffer.from(
+    createHmac("sha256", secret).update(`${LOGOUT_EPOCH_COOKIE}:${payload}`).digest("base64url"),
+    "base64url",
+  );
+  const actual = Buffer.from(match[3], "base64url");
   return actual.length === expected.length && timingSafeEqual(actual, expected)
-    ? timestamp
+    ? { timestamp, sessionFingerprint: match[2] }
     : undefined;
+}
+
+export function readLogoutEpoch(marker: string | undefined, secret: string): number | undefined {
+  return readLogoutFence(marker, secret)?.timestamp;
+}
+
+export function logoutMarkerBlocksSession(
+  marker: string | undefined,
+  authSessionEpoch: string | undefined,
+  authenticatedAt: number | undefined,
+  secret: string,
+): boolean {
+  return logoutMarkerBlocksSessionFingerprint(
+    marker,
+    authSessionEpochFingerprint(authSessionEpoch, secret),
+    authenticatedAt,
+    secret,
+  );
+}
+
+export function logoutMarkerBlocksSessionFingerprint(
+  marker: string | undefined,
+  sessionFingerprint: string | undefined,
+  authenticatedAt: number | undefined,
+  secret: string,
+): boolean {
+  const fence = readLogoutFence(marker, secret);
+  if (!fence) return false;
+  if (fence.sessionFingerprint !== "none" && fence.sessionFingerprint === sessionFingerprint) {
+    return true;
+  }
+  if (fence.sessionFingerprint === "none" && !sessionFingerprint) {
+    return typeof authenticatedAt !== "number" || authenticatedAt <= fence.timestamp;
+  }
+  return typeof authenticatedAt !== "number" || authenticatedAt < fence.timestamp;
 }
 
 export async function refreshFailureMatchesRequest(
@@ -113,7 +170,12 @@ export async function sessionPredatesLogoutMarker(
   if (logoutAt === undefined) return false;
   try {
     const token = await getToken({ req: request, secret, secureCookie: secure });
-    return typeof token?.authenticatedAt !== "number" || token.authenticatedAt <= logoutAt;
+    return logoutMarkerBlocksSession(
+      marker,
+      token?.authSessionEpoch,
+      token?.authenticatedAt,
+      secret,
+    );
   } catch {
     return true;
   }
@@ -123,7 +185,12 @@ export async function stripPrivateSessionMetadata(response: Response): Promise<R
   const parsed: unknown = await response.clone().json().catch(() => null);
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return response;
   const payload = parsed as Record<string, unknown>;
-  const privateFields = ["authenticatedAt", "refreshFailureFingerprint", "refreshSessionFingerprint"];
+  const privateFields = [
+    "authenticatedAt",
+    "authSessionFingerprint",
+    "refreshFailureFingerprint",
+    "refreshSessionFingerprint",
+  ];
   if (!privateFields.some((field) => field in payload)) return response;
   for (const field of privateFields) delete payload[field];
   const headers = new Headers(response.headers);
@@ -149,6 +216,7 @@ export async function preserveConcurrentSession(request: Request, response: Resp
     user?: unknown;
     error?: unknown;
     authenticatedAt?: unknown;
+    authSessionFingerprint?: unknown;
     refreshFailureFingerprint?: unknown;
     refreshSessionFingerprint?: unknown;
   } | null;
@@ -181,11 +249,14 @@ export async function preserveConcurrentSession(request: Request, response: Resp
   const refreshFailureMarker = protectedCookieValue(cookieHeader, refreshFailureName);
   const logoutEpochMarker = protectedCookieValue(cookieHeader, logoutEpochName);
   const authSecret = process.env.AUTH_SECRET ?? "";
-  const logoutEpoch = readLogoutEpoch(logoutEpochMarker, authSecret);
-  const authenticatedAt = payload?.authenticatedAt;
-  const sessionPrecedesLogout =
-    logoutEpoch !== undefined &&
-    (typeof authenticatedAt !== "number" || authenticatedAt <= logoutEpoch);
+  const sessionPrecedesLogout = logoutMarkerBlocksSessionFingerprint(
+    logoutEpochMarker,
+    typeof payload?.authSessionFingerprint === "string"
+      ? payload.authSessionFingerprint
+      : undefined,
+    typeof payload?.authenticatedAt === "number" ? payload.authenticatedAt : undefined,
+    authSecret,
+  );
   if (payload?.user) {
     const refreshedSession =
       typeof payload.refreshSessionFingerprint === "string" &&
@@ -193,7 +264,7 @@ export async function preserveConcurrentSession(request: Request, response: Resp
     if (refreshFailureMarker && refreshedSession) {
       headers.append("set-cookie", expiredCookieHeader(refreshFailureName, secure));
     }
-    if (logoutEpochMarker && logoutEpoch !== undefined && !sessionPrecedesLogout) {
+    if (logoutEpochMarker && !sessionPrecedesLogout) {
       headers.append("set-cookie", expiredCookieHeader(logoutEpochName, secure));
     }
     if (headers.getSetCookie().length === 0) return response;

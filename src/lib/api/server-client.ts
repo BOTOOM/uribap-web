@@ -1,6 +1,11 @@
 import { getToken } from "next-auth/jwt";
 import { cookies, headers } from "next/headers";
+import { NextRequest } from "next/server";
 
+import {
+  refreshFailureMatchesRequest,
+  sessionPredatesLogoutMarker,
+} from "@/lib/auth/session-response";
 import { serverEnv } from "@/lib/config/env";
 
 export class ApiRequestError extends Error {
@@ -28,16 +33,20 @@ async function getServerAccessToken() {
       : process.env.NODE_ENV === "production"
         ? "https"
         : "http";
-  const request = new Request(`${scheme}://uribap.local`, {
+  const request = new NextRequest(`${scheme}://uribap.local`, {
     headers: { cookie: cookieHeader },
   });
-  const token = await getToken({
-    req: request,
-    secret: serverEnv.AUTH_SECRET,
-    secureCookie: scheme === "https",
-  });
+  const secret = process.env.AUTH_SECRET || serverEnv.AUTH_SECRET;
+  if (
+    (await refreshFailureMatchesRequest(request, secret)) ||
+    (await sessionPredatesLogoutMarker(request, secret))
+  ) {
+    return null;
+  }
+  const token = await getToken({ req: request, secret, secureCookie: scheme === "https" });
   const expiration = token?.accessTokenExpires;
-  return typeof token?.accessToken === "string" &&
+  return token?.error !== "RefreshAccessTokenError" &&
+    typeof token?.accessToken === "string" &&
     token.accessToken &&
     typeof expiration === "number" &&
     Number.isFinite(expiration) &&

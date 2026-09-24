@@ -16,6 +16,7 @@ declare module "next-auth" {
       activeHouseholdId?: string;
     } & DefaultSession["user"];
     authenticatedAt?: number;
+    authSessionFingerprint?: string;
     error?: string;
     refreshFailureFingerprint?: string;
     refreshSessionFingerprint?: string;
@@ -32,6 +33,7 @@ declare module "next-auth/jwt" {
     emailVerified?: boolean;
     memberships?: HouseholdMembership[];
     authenticatedAt?: number;
+    authSessionEpoch?: string;
     refreshSessionEpoch?: string;
     error?: string;
     refreshFailureFingerprint?: string;

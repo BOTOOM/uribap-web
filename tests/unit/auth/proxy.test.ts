@@ -9,6 +9,10 @@ vi.mock("@/lib/auth/auth", () => ({ handlers: { GET: sessionGet } }));
 vi.mock("next-auth/jwt", () => ({ getToken: getTokenMock }));
 
 import proxy from "@/proxy";
+import {
+  authSessionEpochFingerprint,
+  signLogoutEpoch,
+} from "@/lib/auth/session-response";
 
 const AUTH_SECRET = "synthetic-auth-secret-for-refresh-tests-0123456789";
 
@@ -106,21 +110,25 @@ describe("route protection proxy", () => {
   });
 
   it("rejects refreshes from before logout and accepts a newly authenticated session", async () => {
-    const logoutAt = Date.now() - 10_000;
-    const logoutSignature = createHmac("sha256", AUTH_SECRET)
-      .update(`uribap-auth-logout-before:${logoutAt}`)
-      .digest("base64url");
-    const logoutMarker = `${logoutAt}.${logoutSignature}`;
+    const logoutAt = Math.floor(Date.now() / 1000) * 1000;
+    const oldEpoch = "session-before-logout";
+    const newEpoch = "session-after-logout";
+    const logoutMarker = signLogoutEpoch(logoutAt, AUTH_SECRET, oldEpoch);
+    if (!logoutMarker) throw new Error("Expected a signed logout marker.");
+    getTokenMock
+      .mockResolvedValueOnce({ authSessionEpoch: oldEpoch, authenticatedAt: logoutAt })
+      .mockResolvedValueOnce({ authSessionEpoch: newEpoch, authenticatedAt: logoutAt });
     const request = () =>
       new NextRequest("https://uribap.example.test/plan", {
         headers: { cookie: `__Secure-uribap-auth-logout-before=${logoutMarker}` },
       });
     sessionGet.mockResolvedValueOnce(
-      sessionResponse({ user: { id: "old-user" }, authenticatedAt: logoutAt - 1 }),
-    );
-    sessionGet.mockResolvedValueOnce(
       sessionResponse(
-        { user: { id: "new-user" }, authenticatedAt: logoutAt + 1 },
+        {
+          user: { id: "new-user" },
+          authenticatedAt: logoutAt,
+          authSessionFingerprint: authSessionEpochFingerprint(newEpoch, AUTH_SECRET),
+        },
         ["__Secure-uribap-auth-logout-before=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax"],
       ),
     );

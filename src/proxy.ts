@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { handlers } from "@/lib/auth/auth";
 import {
   LOGOUT_EPOCH_COOKIE,
+  logoutMarkerBlocksSessionFingerprint,
   protectedCookieName,
-  readLogoutEpoch,
   refreshFailureMatchesRequest,
+  sessionPredatesLogoutMarker,
 } from "@/lib/auth/session-response";
 import { serverEnv } from "@/lib/config/env";
 
@@ -22,11 +23,10 @@ export default async function proxy(request: NextRequest) {
   const secure = request.nextUrl.protocol === "https:";
   const logoutMarkerName = protectedCookieName(LOGOUT_EPOCH_COOKIE, secure);
   const authSecret = process.env.AUTH_SECRET || serverEnv.AUTH_SECRET;
-  const logoutEpoch = readLogoutEpoch(
-    request.cookies.get(logoutMarkerName)?.value,
-    authSecret,
-  );
-  if (await refreshFailureMatchesRequest(request, authSecret)) {
+  const logoutMarker = request.cookies.get(logoutMarkerName)?.value;
+  const blockedByRefresh = await refreshFailureMatchesRequest(request, authSecret);
+  const blockedByLogout = await sessionPredatesLogoutMarker(request, authSecret);
+  if (blockedByRefresh || blockedByLogout) {
     const response = pathname.startsWith("/api/")
       ? NextResponse.json(
           { code: "unauthorized", detail: "Inicia sesión para continuar." },
@@ -55,10 +55,16 @@ export default async function proxy(request: NextRequest) {
         user?: unknown;
         error?: unknown;
         authenticatedAt?: unknown;
+        authSessionFingerprint?: unknown;
       } | null;
-      const loggedOutSession =
-        logoutEpoch !== undefined &&
-        (typeof session?.authenticatedAt !== "number" || session.authenticatedAt <= logoutEpoch);
+      const loggedOutSession = logoutMarkerBlocksSessionFingerprint(
+        logoutMarker,
+        typeof session?.authSessionFingerprint === "string"
+          ? session.authSessionFingerprint
+          : undefined,
+        typeof session?.authenticatedAt === "number" ? session.authenticatedAt : undefined,
+        authSecret,
+      );
       const failedRefresh = session?.error === "RefreshAccessTokenError";
 
       if (!sessionResponse.ok) {

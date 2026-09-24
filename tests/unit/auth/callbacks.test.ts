@@ -95,6 +95,7 @@ describe("Auth.js callbacks", () => {
     expect(token.error).toBeUndefined();
     expect(token.refreshFailureFingerprint).toBeUndefined();
     expect(token.authenticatedAt).toBe(authenticatedAt * 1000);
+    expect(token.authSessionEpoch).toEqual(expect.any(String));
     expect(token.refreshSessionEpoch).toEqual(expect.any(String));
   });
 
@@ -119,6 +120,7 @@ describe("Auth.js callbacks", () => {
         accessToken: "old.access.token",
         refreshToken: "refresh-token",
         accessTokenExpires: 0,
+        authSessionEpoch: "auth-session-epoch",
         refreshSessionEpoch: "old-refresh-session-epoch",
         authenticatedAt: 1_700_000_000_000,
       },
@@ -127,6 +129,7 @@ describe("Auth.js callbacks", () => {
     expect(token.accessToken).toBe("new.access.token");
     expect(token.internalUserId).toBe("user-1");
     expect(token.authenticatedAt).toBe(1_700_000_000_000);
+    expect(token.authSessionEpoch).toBe("auth-session-epoch");
     expect(token.refreshSessionEpoch).not.toBe("old-refresh-session-epoch");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -144,6 +147,7 @@ describe("Auth.js callbacks", () => {
 
     if (!token) throw new Error("Expected API session provisioning to return a JWT.");
     expect(token.authenticatedAt).toBe(authenticatedAt * 1000);
+    expect(token.authSessionEpoch).toEqual(expect.any(String));
     expect(token.refreshSessionEpoch).toEqual(expect.any(String));
   });
 
