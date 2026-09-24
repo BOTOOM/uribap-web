@@ -13,6 +13,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: serverEnv.AUTH_ZITADEL_ID,
       clientSecret: serverEnv.AUTH_ZITADEL_SECRET,
       issuer: serverEnv.AUTH_ZITADEL_ISSUER,
+      client: { token_endpoint_auth_method: "client_secret_basic" },
+      checks: ["pkce", "state", "nonce"],
       authorization: {
         params: {
           scope: "openid profile email offline_access",

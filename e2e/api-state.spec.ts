@@ -14,6 +14,6 @@ test("login sanitizes an unsafe returnTo parameter", async ({ page }) => {
 
   await expect(page).toHaveTitle(/Uribap/);
   await expect(
-    page.getByRole("button", { name: "Entrar con ZITADEL" }),
+    page.getByRole("button", { name: "Entrar a Uribap" }),
   ).toBeVisible();
 });

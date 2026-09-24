@@ -1,9 +1,6 @@
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import { signIn } from "@/lib/auth/auth";
-
-function safeReturnTo(value: string | undefined) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/plan";
-}
+import { safeReturnTo } from "@/lib/auth/safe-return-to";
 
 export default async function LoginPage({
   searchParams,
@@ -23,8 +20,7 @@ export default async function LoginPage({
           Entra para cuidar el plan de casa.
         </h1>
         <p className="muted" style={{ textAlign: "center" }}>
-          Tu identidad se gestiona con ZITADEL. Uribap nunca muestra tus tokens en el
-          navegador.
+          Tu plan de comidas, la despensa y las tareas del hogar, en un mismo lugar.
         </p>
         <form
           action={async () => {
@@ -34,11 +30,11 @@ export default async function LoginPage({
           style={{ marginTop: 18 }}
         >
           <button className="btn btn-primary" style={{ width: "100%" }} type="submit">
-            Entrar con ZITADEL
+            Entrar a Uribap
           </button>
         </form>
         <p className="helper" style={{ marginTop: 16, textAlign: "center" }}>
-          En local también puedes registrar una cuenta nueva desde la pantalla de ZITADEL.
+          Continuarás al acceso seguro de Uribap para iniciar sesión o recuperar tu cuenta.
         </p>
       </section>
     </main>

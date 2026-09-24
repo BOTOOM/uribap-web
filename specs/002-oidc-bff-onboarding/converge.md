@@ -24,3 +24,9 @@ The feature remains `Ready for implementation`/in progress and must not be consi
 ## Follow-up resolution
 
 - T057 was resolved after the initial convergence report: the Next.js route guard now uses `src/proxy.ts`, the deprecated `src/middleware.ts` was removed, and the production build no longer emits the middleware warning.
+
+## Deployment Readiness and Dedicated Login Amendment — evidence on 2026-09-24
+
+T060–T064 are implemented and their focused regression/static/build evidence is recorded in `quickstart.md`. The complete upstream Login V2 image builds from the pinned source with a presentation-only overlay and documented per-project deployment boundary. The `/uribap/` local health route returns 200; desktop/mobile captures cover 375, 768, 1024, and 1440 pixels, with no overflow and zero axe violations. Refresh, session cookie chunking, proxy propagation, logout CSRF/cookie clearing, safe return paths, and public session token exclusion have synthetic unit coverage.
+
+T065 remains open: the actual local Web OIDC application was not created/configured, so authorization-code + PKCE, verified profile via UserInfo, real refresh/logout, and password reset/verification/MFA were not exercised. The ZITADEL console local Admin API attempt to assign the dedicated service role returned 401; no app or service PAT was issued. No production endpoint, global identity settings, or external SMTP was used. T066 remains with the lead for full diff review/PR; historical feature tasks are unchanged and remain in progress.

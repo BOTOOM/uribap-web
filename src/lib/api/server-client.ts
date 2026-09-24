@@ -17,14 +17,33 @@ async function getServerAccessToken() {
   const cookieStore = await cookies();
   const requestHeaders = await headers();
   const cookieHeader = cookieStore.toString();
-  const request = new Request("http://uribap.local", {
-    headers: {
-      cookie: cookieHeader,
-      "x-forwarded-proto": requestHeaders.get("x-forwarded-proto") ?? "http",
-    },
+  const forwardedProtocol = requestHeaders
+    .get("x-forwarded-proto")
+    ?.split(",", 1)[0]
+    ?.trim()
+    .toLowerCase();
+  const scheme =
+    forwardedProtocol === "http" || forwardedProtocol === "https"
+      ? forwardedProtocol
+      : process.env.NODE_ENV === "production"
+        ? "https"
+        : "http";
+  const request = new Request(`${scheme}://uribap.local`, {
+    headers: { cookie: cookieHeader },
   });
-  const token = await getToken({ req: request, secret: serverEnv.AUTH_SECRET });
-  return typeof token?.accessToken === "string" ? token.accessToken : null;
+  const token = await getToken({
+    req: request,
+    secret: serverEnv.AUTH_SECRET,
+    secureCookie: scheme === "https",
+  });
+  const expiration = token?.accessTokenExpires;
+  return typeof token?.accessToken === "string" &&
+    token.accessToken &&
+    typeof expiration === "number" &&
+    Number.isFinite(expiration) &&
+    expiration > Date.now()
+    ? token.accessToken
+    : null;
 }
 
 export async function serverApiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

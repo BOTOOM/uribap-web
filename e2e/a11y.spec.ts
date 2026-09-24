@@ -13,6 +13,6 @@ test("public auth shell has no serious accessibility violations", async ({ page 
   await page.goto("/login");
   await expectNoSeriousViolations(page);
 
-  await page.getByRole("button", { name: "Entrar con ZITADEL" }).focus();
-  await expect(page.getByRole("button", { name: "Entrar con ZITADEL" })).toBeFocused();
+  await page.getByRole("button", { name: "Entrar a Uribap" }).focus();
+  await expect(page.getByRole("button", { name: "Entrar a Uribap" })).toBeFocused();
 });

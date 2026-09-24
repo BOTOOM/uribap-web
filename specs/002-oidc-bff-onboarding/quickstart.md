@@ -103,3 +103,26 @@ docker compose -p uribap-identity -f compose.identity.yml down
 ```
 
 This preserves local volumes. A full volume reset requires explicit approval and is never part of the automated skill.
+
+## Deployment Readiness and Dedicated Login Amendment — observed validation on 2026-09-24
+
+| Gate | Result | Evidence |
+|---|---|---|
+| `pnpm exec vitest run tests/unit/auth` | PASS | 41 passed: provider Basic/PKCE checks, API profile DTO/verification, token rotation/failure, HTTPS chunked cookie, Proxy renewal, origin-checked logout, safe return paths |
+| `node --test identity/login/*.test.mjs` | PASS | 2 passed: exact upstream seam patch and fail-closed drift guard preserve login flow files |
+| `pnpm lint` / `pnpm typecheck` / `pnpm api:check` | PASS | generated API schema unchanged |
+| `pnpm test` | PASS | 117 passed across 28 files |
+| `pnpm build` | PASS | Next.js 16.3.3 production build completed using synthetic/local env overrides |
+| `pnpm test:e2e` | PASS / SKIP | 8 passed, 9 explicit identity-gated skips because no local Web test client credentials were provided to the runner |
+| `pnpm test:a11y` | PASS | 1 passed |
+| `pnpm audit --audit-level=high` | PASS | no known vulnerabilities |
+| `pnpm licenses:check` | PASS | 14 license families; reviewed transitive LGPL libvips exception only |
+| `pnpm performance:check` | PASS | client chunk 935,379 / 2,000,000 bytes |
+| Custom Login V2 Docker build | PASS | complete upstream workspace/proto/client at commit `02d07e951b0b6ff8d5fa5e74b65209a8e9efddfe`; Node 24 multiarch digest pinned |
+| Local custom `/uribap/healthy` | PASS | 200; custom container healthy on `uribap-identity` network |
+| Login V2 responsive/axe | PASS | screenshots `/tmp/uribap-custom-login-{375,768,1024,1440}.png`; no overflow at all four widths; mobile/desktop axe had 0 violations; reduced motion active; keyboard reached visible skip link |
+| Local authorization-code/PKCE, API profile, refresh/logout, MFA/reset/email | NOT RUN | the local OIDC Web app was not provisioned; a local console `POST /admin/v1/members` attempt returned 401, so no dedicated local service PAT or client app was issued/configured. No production issuer or SMTP was contacted. |
+
+`docker compose -f identity/login/compose.coolify.yml config --quiet` passed with a synthetic variable. The local ZITADEL/Mailpit stack remained healthy. For visual testing only, a second local Login V2 container read the canonical bootstrap login PAT from its volume read-only; it was not used for administration. A separate synthetic `Uribap Login Readiness` project and unprivileged `IAM_LOGIN_CLIENT` service account were created locally, but the account has no role/PAT and no OIDC application was saved. No shared-instance branding, default Login V2 route, or other project configuration was changed.
+
+The local Web dev server remains on port 3000 with synthetic Auth.js values. The local test database container `uribap-auth-tests-db` remains on loopback port 55433. Full live identity acceptance remains open; the passing image, mocks, and browser screenshots do not imply a PKCE/profile/refresh/logout pass.

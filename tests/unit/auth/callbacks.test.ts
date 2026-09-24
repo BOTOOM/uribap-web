@@ -14,11 +14,13 @@ const account = {
   token_type: "Bearer",
 } as Account;
 
-function apiUserResponse() {
+function apiUserResponse(emailVerified = false) {
   return new Response(
     JSON.stringify({
       id: "user-1",
-      emailVerified: true,
+      email: "api@example.test",
+      email_verified: emailVerified,
+      display_name: "API Person",
       memberships: [
         { household_id: "house-1", household_name: "Casa", role: "owner", status: "active" },
       ],
@@ -57,16 +59,28 @@ describe("Auth.js callbacks", () => {
   it("provisions the API user on the initial provider callback", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(apiUserResponse()));
     const token = await jwtCallback({
-      token: {},
+      token: { email: "provider@example.test", name: "Provider Person" },
       account,
       profile: { sub: "subject", email_verified: true },
     });
+    if (!token) throw new Error("Expected API session provisioning to return a JWT.");
     expect(token.internalUserId).toBe("user-1");
+    expect(token.email).toBe("api@example.test");
+    expect(token.name).toBe("API Person");
+    expect(token.emailVerified).toBe(false);
     expect(token.memberships?.[0].householdId).toBe("house-1");
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("/me"),
       expect.objectContaining({ headers: { Authorization: "Bearer header.payload.signature" } }),
     );
+  });
+
+  it("invalidates an initial provider callback without an access token", async () => {
+    const result = await jwtCallback({
+      token: {},
+      account: { ...account, access_token: undefined },
+    });
+    expect(result).toBeNull();
   });
 
   it("refreshes an expired access token and reprovisions the API user", async () => {
@@ -84,6 +98,7 @@ describe("Auth.js callbacks", () => {
         accessTokenExpires: 0,
       },
     });
+    if (!token) throw new Error("Expected refreshed access token.");
     expect(token.accessToken).toBe("new.access.token");
     expect(token.internalUserId).toBe("user-1");
     expect(fetchMock).toHaveBeenCalledTimes(2);
