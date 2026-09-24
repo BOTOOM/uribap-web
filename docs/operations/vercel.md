@@ -48,9 +48,11 @@ Rules:
 ## Shared ZITADEL and Uribap Login V2
 
 The branded Login V2 presentation is a separate Coolify Git Compose resource from the Web repository at
-`identity/login/compose.coolify.yml`, built with the repository root as context and
-`identity/login/Dockerfile`. Its labels own the `zitadel.edwardiaz.dev/uribap` path; do not assign
-the service a whole-host domain in Coolify.
+`compose.login.coolify.yml`. Set Coolify **Base Directory** to `/` and **Docker Compose Location** to
+`/compose.login.coolify.yml`; the Docker build context is the repository root (`.`), with Dockerfile
+`identity/login/Dockerfile`. The nested `identity/login/compose.coolify.yml` is only a local
+compatibility include wrapper and is not the Coolify entrypoint. Its labels own the
+`zitadel.edwardiaz.dev/uribap` path; do not assign the service a whole-host domain in Coolify.
 
 Configure `URIBAP_LOGIN_PAT` as a runtime secret on this service only. It must belong to the
 dedicated `IAM_LOGIN_CLIENT` service user, never an administrator. The OAuth client secret remains

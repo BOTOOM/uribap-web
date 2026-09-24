@@ -22,9 +22,11 @@ session and are never placed in localStorage, client props, or readable cookies.
 ## Production custom Login V2
 
 The custom presentation is a separate Coolify Git Compose resource built from the Web repository with
-`identity/login/compose.coolify.yml`. Create the Compose resource with the repository root as its
-build context; the Dockerfile is `identity/login/Dockerfile`. Do not assign a Coolify domain to this
-service: its labels route only `Path(`/uribap`)` and `PathPrefix(`/uribap/`)` on the existing
+`compose.login.coolify.yml`. Set Coolify **Base Directory** to `/` and **Docker Compose Location** to
+`/compose.login.coolify.yml`; the Docker build context is the repository root (`.`), and the Dockerfile
+is `identity/login/Dockerfile`. `identity/login/compose.coolify.yml` is only a local compatibility
+include wrapper and is not the Coolify entrypoint. Do not assign a Coolify domain to this service:
+its labels route only `Path(`/uribap`)` and `PathPrefix(`/uribap/`)` on the existing
 `zitadel.edwardiaz.dev` host.
 
 Set `URIBAP_LOGIN_PAT` only in this service's Coolify runtime secrets. It must be a PAT for the
