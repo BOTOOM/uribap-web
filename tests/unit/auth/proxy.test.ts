@@ -1,11 +1,20 @@
+import { createHmac } from "node:crypto";
+
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { sessionGet } = vi.hoisted(() => ({ sessionGet: vi.fn() }));
+const { sessionGet, getTokenMock } = vi.hoisted(() => ({ sessionGet: vi.fn(), getTokenMock: vi.fn() }));
 
 vi.mock("@/lib/auth/auth", () => ({ handlers: { GET: sessionGet } }));
+vi.mock("next-auth/jwt", () => ({ getToken: getTokenMock }));
 
 import proxy from "@/proxy";
+
+const AUTH_SECRET = "synthetic-auth-secret-for-refresh-tests-0123456789";
+
+function hmac(value: string): string {
+  return createHmac("sha256", AUTH_SECRET).update("refresh-state:").update(value).digest("base64url");
+}
 
 function sessionResponse(
   session: unknown,
@@ -19,6 +28,8 @@ function sessionResponse(
 
 describe("route protection proxy", () => {
   beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv("AUTH_SECRET", "synthetic-auth-secret-for-refresh-tests-0123456789");
     vi.resetAllMocks();
   });
 
@@ -73,6 +84,56 @@ describe("route protection proxy", () => {
       code: "unauthorized",
       detail: "Inicia sesión para continuar.",
     });
+  });
+
+  it("blocks a cookie generation after its refresh token was rejected without calling the provider again", async () => {
+    const accessToken = "synthetic-expired-access-token";
+    const refreshToken = "synthetic-rejected-refresh-token";
+    const fingerprint = hmac(`${accessToken}\u0000${refreshToken}`);
+    getTokenMock.mockResolvedValue({ accessToken, refreshToken });
+
+    const response = await proxy(
+      new NextRequest("https://uribap.example.test/plan", {
+        headers: {
+          cookie: `authjs.session-token=encrypted; __Secure-uribap-refresh-failure=${fingerprint}`,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(307);
+    expect(new URL(response.headers.get("Location") ?? "").pathname).toBe("/login");
+    expect(sessionGet).not.toHaveBeenCalled();
+  });
+
+  it("rejects refreshes from before logout and accepts a newly authenticated session", async () => {
+    const logoutAt = Date.now() - 10_000;
+    const logoutSignature = createHmac("sha256", AUTH_SECRET)
+      .update(`uribap-auth-logout-before:${logoutAt}`)
+      .digest("base64url");
+    const logoutMarker = `${logoutAt}.${logoutSignature}`;
+    const request = () =>
+      new NextRequest("https://uribap.example.test/plan", {
+        headers: { cookie: `__Secure-uribap-auth-logout-before=${logoutMarker}` },
+      });
+    sessionGet.mockResolvedValueOnce(
+      sessionResponse({ user: { id: "old-user" }, authenticatedAt: logoutAt - 1 }),
+    );
+    sessionGet.mockResolvedValueOnce(
+      sessionResponse(
+        { user: { id: "new-user" }, authenticatedAt: logoutAt + 1 },
+        ["__Secure-uribap-auth-logout-before=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax"],
+      ),
+    );
+
+    const oldSession = await proxy(request());
+    const newSession = await proxy(request());
+
+    expect(oldSession.status).toBe(307);
+    expect(new URL(oldSession.headers.get("Location") ?? "").pathname).toBe("/login");
+    expect(newSession.headers.get("x-middleware-next")).toBe("1");
+    expect(newSession.headers.getSetCookie()).toContain(
+      "__Secure-uribap-auth-logout-before=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+    );
   });
 
   it("bypasses public health and Auth.js endpoints", async () => {

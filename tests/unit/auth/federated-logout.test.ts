@@ -17,10 +17,20 @@ const COOKIE_NAMES = [
   "authjs.session-token.0",
   "authjs.callback-url",
   "__Secure-authjs.callback-url",
+  "authjs.state",
+  "__Secure-authjs.state",
+  "authjs.pkce.code_verifier",
+  "__Secure-authjs.pkce.code_verifier",
+  "authjs.nonce",
+  "__Secure-authjs.nonce",
+  "authjs.csrf-token",
+  "__Secure-authjs.csrf-token",
+  "__Secure-uribap-refresh-failure",
+  "uribap-refresh-failure",
 ];
 
-async function loadLogoutRoute() {
-  vi.stubEnv("AUTH_URL", APP_ORIGIN);
+async function loadLogoutRoute(authUrl: string | null = APP_ORIGIN) {
+  vi.stubEnv("AUTH_URL", authUrl ?? "");
   vi.stubEnv("AUTH_SECRET", "synthetic-auth-secret-for-logout-test-012345");
   vi.stubEnv("AUTH_ZITADEL_ISSUER", "https://issuer.example.test");
   vi.resetModules();
@@ -38,6 +48,7 @@ function cookieStore() {
 
 describe("federated logout", () => {
   beforeEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     cookiesMock.mockResolvedValue(cookieStore());
     getTokenMock.mockResolvedValue({ idToken: "synthetic-id-token" });
@@ -90,7 +101,7 @@ describe("federated logout", () => {
     expect(options.req.headers.get("authorization")).toBeNull();
 
     const deletedCookies = response.headers.getSetCookie();
-    expect(deletedCookies).toHaveLength(COOKIE_NAMES.length);
+    expect(deletedCookies.filter((cookie) => COOKIE_NAMES.some((name) => cookie.startsWith(`${name}=`)))).toHaveLength(COOKIE_NAMES.length);
     for (const name of COOKIE_NAMES) {
       const header = deletedCookies.find((cookie) => cookie.startsWith(`${name}=`));
       expect(header).toBeDefined();
@@ -101,5 +112,44 @@ describe("federated logout", () => {
       expect(/(?:^|;)\s*Secure(?:;|$)/i.test(header ?? "")).toBe(name.startsWith("__Secure-"));
     }
     expect(deletedCookies.some((cookie) => cookie.startsWith("unrelated="))).toBe(false);
+    const marker = deletedCookies.find((cookie) => cookie.startsWith("__Secure-uribap-auth-logout-before="));
+    expect(marker).toMatch(/=\d+\.[A-Za-z0-9_-]{43};/);
+    expect(marker).toMatch(/(?:^|;)\s*Path=\//i);
+    expect(marker).toMatch(/(?:^|;)\s*HttpOnly(?:;|$)/i);
+    expect(marker).toMatch(/(?:^|;)\s*Secure(?:;|$)/i);
+    expect(marker).toMatch(/(?:^|;)\s*SameSite=Lax(?:;|$)/i);
+    expect(marker).toMatch(/(?:^|;)\s*Max-Age=2592000(?:;|$)/i);
+  });
+
+  it("rejects a same-origin POST when production has no canonical host configured", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_URL", "");
+    const { POST } = await loadLogoutRoute(null);
+    const response = await POST(
+      new Request("https://attacker.example.test/api/auth/federated-logout", {
+        method: "POST",
+        headers: { Origin: "https://attacker.example.test" },
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(cookiesMock).not.toHaveBeenCalled();
+    expect(getTokenMock).not.toHaveBeenCalled();
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+  });
+
+  it("rejects an insecure canonical origin in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { POST } = await loadLogoutRoute("http://uribap.example.test");
+    const response = await POST(
+      new Request("http://uribap.example.test/api/auth/federated-logout", {
+        method: "POST",
+        headers: { Origin: "http://uribap.example.test" },
+      }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(cookiesMock).not.toHaveBeenCalled();
+    expect(getTokenMock).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,14 @@
+import { cookies } from "next/headers";
+
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import { signIn } from "@/lib/auth/auth";
+import {
+  LOGOUT_EPOCH_COOKIE,
+  protectedCookieName,
+  readLogoutEpoch,
+} from "@/lib/auth/session-response";
 import { safeReturnTo } from "@/lib/auth/safe-return-to";
+import { serverEnv } from "@/lib/config/env";
 
 export default async function LoginPage({
   searchParams,
@@ -9,6 +17,12 @@ export default async function LoginPage({
 }) {
   const { returnTo } = await searchParams;
   const destination = safeReturnTo(returnTo);
+  const deploymentOrigin =
+    serverEnv.AUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  const secure = new URL(deploymentOrigin).protocol === "https:";
+  const logoutMarker = (await cookies()).get(protectedCookieName(LOGOUT_EPOCH_COOKIE, secure))?.value;
+  const reauthenticate = readLogoutEpoch(logoutMarker, serverEnv.AUTH_SECRET) !== undefined;
   return (
     <main className="auth-shell">
       <section aria-labelledby="login-title" className="card auth-card">
@@ -25,7 +39,11 @@ export default async function LoginPage({
         <form
           action={async () => {
             "use server";
-            await signIn("zitadel", { redirectTo: destination });
+            await signIn(
+              "zitadel",
+              { redirectTo: destination },
+              reauthenticate ? { prompt: "login", max_age: "0" } : undefined,
+            );
           }}
           style={{ marginTop: 18 }}
         >

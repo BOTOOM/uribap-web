@@ -131,9 +131,9 @@ describe("Auth.js token refresh", () => {
     vi.stubGlobal("fetch", fetchMock);
     const { jwtCallback } = await loadCallbacks();
 
-    await expect(jwtCallback({ token: { ...expiredToken, refreshToken: undefined } })).resolves.toBe(
-      null,
-    );
+    await expect(jwtCallback({ token: { ...expiredToken, refreshToken: undefined } })).resolves.toMatchObject({
+      error: "RefreshAccessTokenError",
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -146,7 +146,9 @@ describe("Auth.js token refresh", () => {
     vi.stubGlobal("fetch", fetchMock);
     const { jwtCallback } = await loadCallbacks();
 
-    await expect(jwtCallback({ token: { ...expiredToken } })).resolves.toBeNull();
+    await expect(jwtCallback({ token: { ...expiredToken } })).resolves.toMatchObject({
+      error: "RefreshAccessTokenError",
+    });
   });
 
   it.each([
@@ -164,7 +166,9 @@ describe("Auth.js token refresh", () => {
     vi.stubGlobal("fetch", fetchMock);
     const { jwtCallback } = await loadCallbacks();
 
-    await expect(jwtCallback({ token: { ...expiredToken } })).resolves.toBeNull();
+    await expect(jwtCallback({ token: { ...expiredToken } })).resolves.toMatchObject({
+      error: "RefreshAccessTokenError",
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

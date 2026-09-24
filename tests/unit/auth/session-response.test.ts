@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { preserveConcurrentSession } from "@/lib/auth/session-response";
+import {
+  LOGOUT_EPOCH_COOKIE,
+  preserveConcurrentSession,
+  protectedCookieName,
+  readLogoutEpoch,
+  signLogoutEpoch,
+} from "@/lib/auth/session-response";
 
 const mocks = vi.hoisted(() => ({
   nextAuth: vi.fn(),
@@ -76,6 +82,24 @@ function initialJar(): Map<string, string> {
   ]);
 }
 
+describe("session marker signatures", () => {
+  const secret = "synthetic-auth-secret-for-session-marker-tests-0123456789";
+
+  it("rejects tampered, future, expired and malformed logout markers", () => {
+    const timestamp = Date.now() - 1000;
+    const marker = signLogoutEpoch(timestamp, secret);
+
+    expect(marker).toBeDefined();
+    expect(readLogoutEpoch(marker, secret)).toBe(timestamp);
+    expect(readLogoutEpoch(`${timestamp}.${"A".repeat(43)}`, secret)).toBeUndefined();
+    expect(readLogoutEpoch(signLogoutEpoch(Date.now() + 120_000, secret), secret)).toBeUndefined();
+    expect(
+      readLogoutEpoch(signLogoutEpoch(Date.now() - 31 * 24 * 60 * 60 * 1000, secret), secret),
+    ).toBeUndefined();
+    expect(readLogoutEpoch(undefined, secret)).toBeUndefined();
+  });
+});
+
 describe("concurrent Auth.js session responses", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -114,6 +138,64 @@ describe("concurrent Auth.js session responses", () => {
       expect(jar.get("__Secure-authjs.session-token.1")).toBe("fresh-1");
       expect(jar.get("authjs.csrf-token")).toBe("rotated-csrf");
     }
+  });
+
+  it("keeps a rejected refresh out of the Auth.js session cookie and records a retry marker", async () => {
+    const fingerprint = "A".repeat(43);
+    const guarded = await preserveConcurrentSession(
+      sessionRequest(),
+      response(
+        { user: { id: "" }, error: "RefreshAccessTokenError", refreshFailureFingerprint: fingerprint },
+        ["__Secure-authjs.session-token.0=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax"],
+      ),
+    );
+
+    const cookies = guarded.headers.getSetCookie();
+    expect(cookies.some((cookie) => /authjs\.session-token/.test(cookie))).toBe(false);
+    const marker = cookies.find((cookie) => cookie.startsWith("__Secure-uribap-refresh-failure="));
+    expect(marker).toContain(`=${fingerprint};`);
+    expect(marker).toContain("HttpOnly");
+    expect(marker).toContain("Secure");
+    expect(marker).toContain("Path=/");
+    expect(await guarded.clone().json()).toMatchObject({ error: "RefreshAccessTokenError" });
+  });
+
+  it("clears an old refresh marker only when a fresh session generation is returned", async () => {
+    const previous = "A".repeat(43);
+    const current = "B".repeat(43);
+    const request = sessionRequest(
+      "GET",
+      "/api/auth/session",
+      `${staleCookie}; __Secure-uribap-refresh-failure=${previous}`,
+    );
+    const guarded = await preserveConcurrentSession(
+      request,
+      response(
+        { user: { id: "user-1" }, refreshSessionFingerprint: current },
+        ["__Secure-authjs.session-token.0=fresh; Path=/; Secure; HttpOnly; SameSite=Lax"],
+      ),
+    );
+
+    expect(guarded.headers.getSetCookie()).toContain(
+      "__Secure-uribap-refresh-failure=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+    );
+  });
+
+  it("does not return a pre-logout session from the public Auth.js session handler", async () => {
+    const secret = "synthetic-auth-secret-for-session-marker-tests-0123456789";
+    vi.stubEnv("AUTH_SECRET", secret);
+    const logoutAt = Date.now() - 1000;
+    const marker = signLogoutEpoch(logoutAt, secret);
+    if (!marker) throw new Error("Expected a signed test marker.");
+    const { handlers } = await import("@/lib/auth/auth");
+    mocks.get.mockResolvedValueOnce(successfulSessionResponse());
+
+    const result = await handlers.GET(
+      sessionRequest("GET", "/api/auth/session", `${staleCookie}; ${protectedCookieName(LOGOUT_EPOCH_COOKIE, true)}=${marker}`),
+    );
+
+    expect(await result.json()).toMatchObject({ user: null, error: "SessionInvalidated" });
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 
   it("guards both exported handlers for failed session reads but leaves signout clears intact", async () => {

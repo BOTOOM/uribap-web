@@ -1,7 +1,10 @@
+import { randomUUID } from "node:crypto";
+
 import type { Account, Profile, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
 import type { components } from "@/lib/api/generated/schema";
+import { refreshSessionFingerprint } from "@/lib/auth/session-response";
 import { serverEnv } from "@/lib/config/env";
 import type { HouseholdMembership } from "@/types/next-auth";
 
@@ -28,6 +31,22 @@ async function provisionApiSession(token: JWT): Promise<JWT> {
     return token;
   }
   return token;
+}
+
+function authenticatedAtFromIdToken(idToken: unknown): number {
+  if (typeof idToken !== "string") return 0;
+  const payload = idToken.split(".")[1];
+  if (!payload) return 0;
+  try {
+    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      auth_time?: unknown;
+    };
+    if (typeof claims.auth_time !== "number" || !Number.isSafeInteger(claims.auth_time)) return 0;
+    const authenticatedAt = claims.auth_time * 1000;
+    return authenticatedAt > 0 && authenticatedAt <= Date.now() + 60_000 ? authenticatedAt : 0;
+  } catch {
+    return 0;
+  }
 }
 
 async function refreshAccessToken(token: JWT): Promise<JWT | null> {
@@ -105,9 +124,14 @@ export async function jwtCallback({
     token.refreshToken = account.refresh_token ?? undefined;
     token.idToken = account.id_token ?? undefined;
     token.accessTokenExpires = account.expires_at ? account.expires_at * 1000 : undefined;
+    token.refreshSessionEpoch = randomUUID();
+    token.authenticatedAt = authenticatedAtFromIdToken(account.id_token);
+    token.error = undefined;
+    token.refreshFailureFingerprint = undefined;
     token.emailVerified = false;
     return provisionApiSession(token);
   }
+  if (token.error === "RefreshAccessTokenError") return token;
   if (
     typeof token.accessToken === "string" &&
     token.accessToken &&
@@ -117,10 +141,50 @@ export async function jwtCallback({
   ) {
     return token;
   }
-  return refreshAccessToken(token);
+  const refreshed = await refreshAccessToken(token);
+  if (refreshed) {
+    return {
+      ...refreshed,
+      refreshSessionEpoch: randomUUID(),
+      error: undefined,
+      refreshFailureFingerprint: undefined,
+    };
+  }
+  const authSecret = process.env.AUTH_SECRET || serverEnv.AUTH_SECRET;
+  return {
+    ...token,
+    error: "RefreshAccessTokenError",
+    refreshFailureFingerprint: refreshSessionFingerprint(
+      token.accessToken,
+      token.refreshToken,
+      authSecret,
+    ),
+  };
 }
 
 export function sessionCallback({ session, token }: { session: Session; token: JWT }) {
+  session.authenticatedAt = typeof token.authenticatedAt === "number" ? token.authenticatedAt : 0;
+  session.refreshSessionFingerprint = refreshSessionFingerprint(
+    token.accessToken,
+    token.refreshToken,
+    process.env.AUTH_SECRET || serverEnv.AUTH_SECRET,
+  );
+  if (token.error === "RefreshAccessTokenError") {
+    session.error = "RefreshAccessTokenError";
+    session.refreshFailureFingerprint = token.refreshFailureFingerprint;
+    session.user = {
+      ...session.user,
+      id: "",
+      name: null,
+      email: null,
+      image: null,
+      emailVerified: false,
+      memberships: [],
+    };
+    return session;
+  }
+  session.error = undefined;
+  session.refreshFailureFingerprint = undefined;
   session.user = {
     ...session.user,
     id: token.internalUserId ?? "",

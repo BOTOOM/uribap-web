@@ -20,7 +20,7 @@ contract a future deploy must satisfy.
 | `NEXT_PUBLIC_API_BASE_URL` | browser | Public API base for direct client use, the MCP URL shown in `/settings/agentes`, and the CSP `connect-src` origin | Production: `https://uribap-api.edwardiaz.dev/api/v1`; **build-time**: it is inlined by `next build` (Dockerfile `ARG` — pass it as a Coolify build arg, not only runtime env) |
 | `URIBAP_API_INTERNAL_URL` | server-only | BFF route handlers' upstream | Production: `https://uribap-api.edwardiaz.dev/api/v1`; never exposed to the browser |
 | `AUTH_SECRET` | server-only | NextAuth JWT/session encryption | ≥32 chars, generated per environment |
-| `AUTH_URL` | server-only | Canonical application origin for same-origin federated logout | Production: `https://uribap.edwardiaz.dev` |
+| `AUTH_URL` | server-only | Canonical application origin for same-origin federated logout | Set the exact HTTPS origin in Production and Preview; Production: `https://uribap.edwardiaz.dev`. Self-hosted production must configure it explicitly. |
 | `AUTH_ZITADEL_ID` / `AUTH_ZITADEL_SECRET` | server-only | OIDC client credentials | ZITADEL app credentials; secret storage |
 | `AUTH_ZITADEL_ISSUER` | server-only | OIDC issuer URL | Production: `https://zitadel.edwardiaz.dev` |
 | `AUTH_TRUST_HOST` | server-only | Trust `X-Forwarded-Host` | `true` behind Vercel/proxy |
@@ -29,6 +29,10 @@ Rules:
 
 - Only `NEXT_PUBLIC_*` vars reach the browser bundle. `serverEnv` values are
   consumed exclusively by Server Components and `/api/*` BFF route handlers.
+- `AUTH_URL` must be the canonical origin for this deployment. Production
+  federated logout refuses to trust `Host`/`X-Forwarded-Host` as a fallback;
+  when `AUTH_URL` is absent, only Vercel's deployment-provided `VERCEL_URL` is
+  accepted.
 - `URIBAP_API_INTERNAL_URL` is runtime-only and may point at internal service
   DNS (e.g. `http://uribap-api:8000/api/v1` on the Coolify network) while
   `NEXT_PUBLIC_API_BASE_URL` stays the public origin.
@@ -39,9 +43,11 @@ Rules:
 
 ## Preview vs. production
 
-- Preview deployments: same env contract, pointing at a staging API and a
-  preview ZITADEL client if needed. `AUTH_TRUST_HOST=true` is required because
-  Vercel serves previews behind its proxy.
+- Preview deployments: use the same env contract, pointing at a staging API
+  and a preview ZITADEL client. Set `AUTH_URL` to that deployment's canonical
+  HTTPS origin and register its callback in the preview client. Keep
+  `AUTH_TRUST_HOST=true` behind Vercel's proxy; logout still validates the
+  configured canonical origin and never trusts a request `Host` as fallback.
 - Production: `URIBAP_API_INTERNAL_URL` should reach the API over the private
   path when available; otherwise the public API origin with TLS.
 
