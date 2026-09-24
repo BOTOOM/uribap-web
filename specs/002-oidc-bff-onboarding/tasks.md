@@ -181,3 +181,13 @@ MVP is Phase 1 + Phase 2 + User Story 1 (T001–T025): secure local ZITADEL logi
 - [x] T057 [P] Migrate the Next.js 16 route guard from `src/middleware.ts` to `src/proxy.ts`, update the feature plan, and remove the build deprecation warning. (Plan/runtime hygiene; partial)
 - [ ] T058 Run `/uribap-web-testing` and `/uribap-local-identity-testing` with all required audit, accessibility, responsive, performance, Docker, Mailpit, refresh/logout, and invitation evidence in `specs/002-oidc-bff-onboarding/quickstart.md`. (SC-003, SC-006, SC-007, SC-009; partial)
 - [ ] T059 Re-run read-only Spec Kit analysis and update `specs/002-oidc-bff-onboarding/analyze.md` and `converge.md`; only then mark this feature converged. (Constitution workflow; missing)
+
+## Deployment Readiness and Dedicated Login Amendment
+
+- [ ] T060 Write failing callback/configuration/proxy/cookie/logout regressions in `tests/unit/auth/` for FR-020–FR-022, using synthetic tokens and no production services.
+- [ ] T061 Correct `src/lib/auth/auth.ts`, `callbacks.ts`, `src/proxy.ts`, `src/lib/api/server-client.ts` and the federated logout route; preserve the public-session token boundary and canonical API DTO.
+- [ ] T062 Implement the dedicated pinned Login V2 build/presentation overlay and Coolify routing under `identity/login/`; preserve upstream security flows and runtime-only credentials (FR-018, FR-019, FR-023).
+- [ ] T063 Refine `src/app/(public)/login/page.tsx` copy and safe destinations; update affected component/E2E assertions without replacing the established visual system.
+- [ ] T064 Document exact shared-instance/per-app setup, the unchanged Vercel callback, required runtime variables, dedicated login PAT, email template ownership and upgrade responsibility in existing `identity/README.md` and `docs/operations/vercel.md`.
+- [ ] T065 Build both surfaces and run desktop/mobile, keyboard, reduced-motion, local OIDC/profile/refresh/logout and applicable provider-flow acceptance. Record PASS/FAIL/NOT RUN in the existing quickstart/convergence artifacts; never test against production or real SMTP.
+- [ ] T066 Review the complete security/UI/build diff and publish the Web PR with API dependency and manual deployment steps. Do not mark broader historical gaps closed without evidence.

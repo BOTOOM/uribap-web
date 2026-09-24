@@ -56,3 +56,9 @@ These are planned implementation choices, not unresolved specification ambiguiti
 ## Gate decision
 
 Product code MAY begin only after this analysis artifact is committed with the feature specs. All implementation tasks remain unchecked until their tests and quickstart evidence pass.
+
+## Deployment Readiness and Dedicated Login Amendment — Pre-Implementation Review
+
+PASS for the bounded FR-018–FR-023 / T060–T066 design: a separately built, immutable upstream Login V2 presentation preserves provider security flows and leaves other projects/global settings unchanged. New UI follows existing Uribap tokens/components. Cookie renewal delegates encryption/chunk issuance to Auth.js and forwards only encrypted session cookies, with no token-bearing custom headers. Basic refresh, profile contract, secure-cookie selection, same-origin logout, safe redirect behavior and explicit verification gates are covered. No new persistence or API response contract is introduced. Existing dependency and security policies remain in force.
+
+The API profile amendment is an explicit cross-repository dependency. This is a pre-code design gate only; image build, regression tests, local OIDC/provider flows and visual evidence remain pending. The user authorized the current session models after catalog authentication failed.

@@ -31,3 +31,14 @@
 ## Notes
 
 - Requirements quality is complete; implementation status is tracked separately in `tasks.md`.
+
+## Deployment Readiness and Dedicated Login Amendment
+
+- [x] The user selected a fully customized login presentation rather than branding-only settings.
+- [x] Shared-instance and per-application boundaries are explicit; global login and branding remain unchanged.
+- [x] Upstream revision, workspace/proto dependencies, runtime credential scope and upgrade ownership are specified.
+- [x] Product visual identity and responsive/accessibility constraints are preserved.
+- [x] Basic/PKCE, strict API profile mapping, refresh persistence and cookie/logout boundaries have regression cases.
+- [x] No passwords move into the Uribap API and no production identity/SMTP is used in tests.
+- [x] The user-authorized model-catalog exception is recorded.
+- [ ] Implementation, independent builds and live local acceptance evidence are complete.
