@@ -17,17 +17,22 @@ contract a future deploy must satisfy.
 
 | Variable | Scope | Purpose | Notes |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE_URL` | browser | Public API base for direct client use, the MCP URL shown in `/settings/agentes`, and the CSP `connect-src` origin | points at the API origin; **build-time**: it is inlined by `next build` (Dockerfile `ARG` — pass it as a Coolify build arg, not only runtime env) |
-| `URIBAP_API_INTERNAL_URL` | server-only | BFF route handlers' upstream | internal network URL in prod; never exposed to the browser |
+| `NEXT_PUBLIC_API_BASE_URL` | browser | Public API base for direct client use, the MCP URL shown in `/settings/agentes`, and the CSP `connect-src` origin | Production: `https://uribap-api.edwardiaz.dev/api/v1`; **build-time**: it is inlined by `next build` (Dockerfile `ARG` — pass it as a Coolify build arg, not only runtime env) |
+| `URIBAP_API_INTERNAL_URL` | server-only | BFF route handlers' upstream | Production: `https://uribap-api.edwardiaz.dev/api/v1`; never exposed to the browser |
 | `AUTH_SECRET` | server-only | NextAuth JWT/session encryption | ≥32 chars, generated per environment |
+| `AUTH_URL` | server-only | Canonical application origin for same-origin federated logout | Set the exact HTTPS origin in Production and Preview; Production: `https://uribap.edwardiaz.dev`. Self-hosted production must configure it explicitly. |
 | `AUTH_ZITADEL_ID` / `AUTH_ZITADEL_SECRET` | server-only | OIDC client credentials | ZITADEL app credentials; secret storage |
-| `AUTH_ZITADEL_ISSUER` | server-only | OIDC issuer URL | e.g. `https://zitadel.example.com` |
+| `AUTH_ZITADEL_ISSUER` | server-only | OIDC issuer URL | Production: `https://zitadel.edwardiaz.dev` |
 | `AUTH_TRUST_HOST` | server-only | Trust `X-Forwarded-Host` | `true` behind Vercel/proxy |
 
 Rules:
 
 - Only `NEXT_PUBLIC_*` vars reach the browser bundle. `serverEnv` values are
   consumed exclusively by Server Components and `/api/*` BFF route handlers.
+- `AUTH_URL` must be the canonical origin for this deployment. Production
+  federated logout refuses to trust `Host`/`X-Forwarded-Host` as a fallback;
+  when `AUTH_URL` is absent, only Vercel's deployment-provided `VERCEL_URL` is
+  accepted.
 - `URIBAP_API_INTERNAL_URL` is runtime-only and may point at internal service
   DNS (e.g. `http://uribap-api:8000/api/v1` on the Coolify network) while
   `NEXT_PUBLIC_API_BASE_URL` stays the public origin.
@@ -38,11 +43,50 @@ Rules:
 
 ## Preview vs. production
 
-- Preview deployments: same env contract, pointing at a staging API and a
-  preview ZITADEL client if needed. `AUTH_TRUST_HOST=true` is required because
-  Vercel serves previews behind its proxy.
+- Preview deployments: use the same env contract, pointing at a staging API
+  and a preview ZITADEL client. Set `AUTH_URL` to that deployment's canonical
+  HTTPS origin and register its callback in the preview client. Keep
+  `AUTH_TRUST_HOST=true` behind Vercel's proxy; logout still validates the
+  configured canonical origin and never trusts a request `Host` as fallback.
 - Production: `URIBAP_API_INTERNAL_URL` should reach the API over the private
   path when available; otherwise the public API origin with TLS.
+
+## Shared ZITADEL and Uribap Login V2
+
+The branded Login V2 presentation is a separate Coolify Git Compose resource from the Web repository at
+`compose.login.coolify.yml`. Set Coolify **Base Directory** to `/` and **Docker Compose Location** to
+`/compose.login.coolify.yml`; the Docker build context is the repository root (`.`), with Dockerfile
+`identity/login/Dockerfile`. The nested `identity/login/compose.coolify.yml` is only a local
+compatibility include wrapper and is not the Coolify entrypoint. Its labels own the
+`zitadel.edwardiaz.dev/uribap` path; do not assign the service a whole-host domain in Coolify.
+
+Configure `URIBAP_LOGIN_PAT` as a runtime secret on this service only. It must belong to the
+dedicated `IAM_LOGIN_CLIENT` service user, never an administrator. The OAuth client secret remains
+in the main Web application's Vercel environment as `AUTH_ZITADEL_SECRET`; it is not the Login V2
+PAT. Deploy the service and verify `https://zitadel.edwardiaz.dev/uribap/healthy` before changing
+any ZITADEL setting. Then change only the **Uribap Web project's per-application** custom Login V2
+base URI to `https://zitadel.edwardiaz.dev/uribap/`. Leave the shared instance base URI, global
+branding, default `/ui/v2/login` console route, and every other project's configuration untouched.
+
+Main Web Vercel values remain:
+
+- `AUTH_ZITADEL_ISSUER=https://zitadel.edwardiaz.dev`
+- `AUTH_URL=https://uribap.edwardiaz.dev`
+- callback: `https://uribap.edwardiaz.dev/api/auth/callback/zitadel`
+- `NEXT_PUBLIC_API_BASE_URL` and `URIBAP_API_INTERNAL_URL`:
+  `https://uribap-api.edwardiaz.dev/api/v1`
+
+The Login V2 image is built from the complete upstream ZITADEL v4.16.0 workspace at commit
+`02d07e951b0b6ff8d5fa5e74b65209a8e9efddfe`, including the frozen pnpm lockfile and client/proto
+generation. Review upgrades as a complete
+workspace and preserve its license; do not copy only `apps/login` or install unpinned client/proto
+packages. No build-time identity credentials are used.
+
+ZITADEL identity-email text is organization-scoped under **Organization Settings → Message Texts**;
+appearance is a separate **Branding** setting. Project/client configuration remains separate from
+the shared issuer and other projects. Uribap API mail content is separately constructed as
+`text/plain` from API template data; Brevo is only the SMTP transport and `EMAIL_DELIVERY_ENABLED`
+remains `false`. This custom login adds no email-template editor or delivery feature.
 
 ## Health
 

@@ -18,7 +18,7 @@ test.describe("local ZITADEL identity", () => {
     });
 
     await page.goto("http://localhost:3000/login?returnTo=/onboarding");
-    await page.getByRole("button", { name: "Entrar con ZITADEL" }).click();
+    await page.getByRole("button", { name: "Entrar a Uribap" }).click();
     await page.waitForURL(/localhost:8080/);
     const loginName = page.locator('input[name="loginName"]');
     if (await loginName.count()) {

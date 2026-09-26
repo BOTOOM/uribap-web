@@ -130,4 +130,17 @@ As a household owner or administrator, I want to see members, create invitations
 - The API remains authoritative for user, membership, household, role, invitation, and tenant decisions.
 - The first onboarding path creates a household; joining by invitation is supported in the same feature but does not require household discovery or social graph behavior.
 - Spanish-neutral copy, accessible semantic states, and no food/product imagery remain in force.
-- Product routes for recipes, inventory, meal planning, shopping, preparation, and forecasting remain placeholders until their own specs are implemented.
+- Product routes for recipes, inventory, meal planning, shopping, preparation, and forecasting are governed by their own feature specifications.
+
+## Deployment Readiness and Dedicated Login Amendment
+
+Clarifications: the user chose a fully customized Uribap login, not merely organization colors, while keeping one shared ZITADEL for other products. Reuse the maintained Login V2 authentication flows in an independently built presentation service; do not create a password-handling endpoint in the Uribap API or replace other applications' login. Uribap Web remains on Vercel and the additional Login V2 presentation service runs on Coolify under the existing identity origin at `/uribap/`.
+
+- **FR-018**: Uribap MUST provide its own login presentation using the existing product identity, typography, logo, and responsive behavior. Password, verification, recovery, registration, account-selection and required MFA flows MUST retain the provider's policy enforcement and supported controls.
+- **FR-019**: The customized login MUST be selected only for the Uribap application. The shared issuer, discovery, API, default console login, and other projects' appearance MUST remain unchanged. No global branding or global Login V2 base URI change is part of deployment.
+- **FR-020**: The Web MUST use confidential-client Basic authentication consistently for code exchange and refresh, explicitly retain PKCE/state/nonce checks, consume the API's `email_verified` contract, and invalidate failed refreshes without exposing token material.
+- **FR-021**: HTTPS session cookies, including chunked cookies, MUST be read correctly. A refreshed session MUST reach both the browser and the downstream server request before authenticated API calls; no plaintext provider token may be transported in browser-visible headers or session JSON.
+- **FR-022**: Federated logout MUST require a same-origin POST, use a GET redirect to the provider, and clear all local session-cookie chunks. Rejected cross-origin requests MUST not clear sessions.
+- **FR-023**: The customized Login V2 build MUST use one immutable upstream source revision for login, client, proto, and dependency lockfiles, with no build-time production credentials. The runtime MUST use a dedicated login-client credential and preserve provider security behavior.
+
+Acceptance includes real local PKCE login through the customized service and callback to Uribap; valid API profile verification; persisted refresh across HTTPS-shaped cookie tests; failed refresh denial; logout and chunk removal; mobile/desktop keyboard and overflow checks; reset/verification/MFA flow checks against disposable local identity only. Other applications retain the default login. Unavailable live scenarios must remain explicitly unverified rather than being inferred from a successful build.

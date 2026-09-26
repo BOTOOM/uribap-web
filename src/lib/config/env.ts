@@ -10,6 +10,7 @@ export const publicEnv = publicEnvironmentSchema.parse({
 
 export const serverEnv = {
   AUTH_SECRET: process.env.AUTH_SECRET ?? "",
+  AUTH_URL: process.env.AUTH_URL ?? "",
   AUTH_ZITADEL_ID: process.env.AUTH_ZITADEL_ID ?? "",
   AUTH_ZITADEL_SECRET: process.env.AUTH_ZITADEL_SECRET ?? "",
   AUTH_ZITADEL_ISSUER: process.env.AUTH_ZITADEL_ISSUER ?? "http://localhost:8080",

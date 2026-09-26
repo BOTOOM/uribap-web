@@ -3,6 +3,8 @@ import type { Route } from "next";
 
 import { OnboardingForm } from "@/components/household/OnboardingForm";
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
+import type { components } from "@/lib/api/generated/schema";
+import { ApiRequestError, serverApiFetch } from "@/lib/api/server-client";
 import { auth } from "@/lib/auth/auth";
 
 
@@ -10,7 +12,18 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
   const session = await auth();
   if (!session) redirect("/login?returnTo=/onboarding" as Route);
-  if (session.user.memberships.length > 0) redirect("/plan" as Route);
+  let currentUser: components["schemas"]["CurrentUserResponse"];
+  try {
+    currentUser = await serverApiFetch<components["schemas"]["CurrentUserResponse"]>("/me");
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      redirect("/login?returnTo=/onboarding" as Route);
+    }
+    throw error;
+  }
+  if (currentUser.memberships.some((membership) => membership.status === "active")) {
+    redirect("/plan" as Route);
+  }
   return (
     <main className="auth-shell">
       <section aria-labelledby="onboarding-title" className="card auth-card">

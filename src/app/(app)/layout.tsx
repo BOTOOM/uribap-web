@@ -2,21 +2,26 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 
 import { AppShell } from "@/components/shell/AppShell";
+import { ApiRequestError, serverApiFetch } from "@/lib/api/server-client";
 import { auth } from "@/lib/auth/auth";
-import { serverApiFetch } from "@/lib/api/server-client";
+import type { components } from "@/lib/api/generated/schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   if (!session) redirect("/login" as Route);
+  let currentUser: components["schemas"]["CurrentUserResponse"];
   try {
-    const currentUser = await serverApiFetch<{ memberships: Array<{ status: string }> }>("/me");
-    if (currentUser.memberships.every((membership) => membership.status !== "active")) {
-      redirect("/onboarding" as Route);
+    currentUser = await serverApiFetch<components["schemas"]["CurrentUserResponse"]>("/me");
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      redirect("/login" as Route);
     }
-  } catch {
-    if (session.user.memberships.length === 0) redirect("/onboarding" as Route);
+    throw error;
+  }
+  if (!currentUser.memberships.some((membership) => membership.status === "active")) {
+    redirect("/onboarding" as Route);
   }
   return <AppShell>{children}</AppShell>;
 }

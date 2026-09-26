@@ -17,7 +17,7 @@ for (const viewport of viewports) {
       page.getByRole("heading", { name: "Entra para cuidar el plan de casa." }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Entrar con ZITADEL" }),
+      page.getByRole("button", { name: "Entrar a Uribap" }),
     ).toBeVisible();
 
     const overflow = await page.evaluate(

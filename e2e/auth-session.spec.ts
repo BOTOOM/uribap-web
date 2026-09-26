@@ -11,7 +11,7 @@ test.describe("local Auth.js session boundary", () => {
 
   test("federated logout clears the local session boundary", async ({ page, context }) => {
     await page.goto("http://localhost:3000/login?returnTo=/plan");
-    await page.getByRole("button", { name: "Entrar con ZITADEL" }).click();
+    await page.getByRole("button", { name: "Entrar a Uribap" }).click();
     await page.waitForURL(/localhost:8080/);
     const loginName = page.locator('input[name="loginName"]');
     if (await loginName.count()) {
@@ -24,9 +24,9 @@ test.describe("local Auth.js session boundary", () => {
 
     const logoutResponse = await page.request.post(
       "http://localhost:3000/api/auth/federated-logout",
-      { maxRedirects: 0 },
+      { maxRedirects: 0, headers: { Origin: "http://localhost:3000" } },
     );
-    expect([302, 303, 307]).toContain(logoutResponse.status());
+    expect(logoutResponse.status()).toBe(303);
     const cookies = await context.cookies("http://localhost:3000");
     expect(cookies.some((cookie) => /authjs\.session-token/i.test(cookie.name))).toBe(false);
   });

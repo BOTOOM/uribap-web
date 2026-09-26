@@ -25,6 +25,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: node --test identity/login/*.test.mjs
       - run: pnpm api:check
       - run: pnpm build
       - run: pnpm licenses:check

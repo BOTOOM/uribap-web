@@ -1,0 +1,324 @@
+html.uribap-identity {
+  --bg: oklch(98.7% 0.005 45);
+  --surface: oklch(100% 0 0);
+  --fg: oklch(24% 0.02 40);
+  --muted: oklch(50% 0.02 40);
+  --accent: oklch(55% 0.16 29);
+  --border: oklch(91% 0.012 40);
+  --control: oklch(96% 0.007 40);
+  --font-body: var(--font-manrope), sans-serif;
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --theme-light-background-400: var(--surface) !important;
+  --theme-light-background-500: var(--surface) !important;
+  --theme-light-background-600: var(--bg) !important;
+  --theme-light-primary-400: color-mix(in oklch, var(--accent) 88%, var(--surface)) !important;
+  --theme-light-primary-500: var(--accent) !important;
+  --theme-light-primary-600: oklch(48% 0.15 29) !important;
+  --theme-light-primary-contrast-500: #ffffff !important;
+  --theme-light-primary-contrast-600: #ffffff !important;
+  --theme-light-text-500: var(--fg) !important;
+  --theme-light-text-secondary-500: var(--muted) !important;
+  --theme-light-link-500: var(--accent) !important;
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body) !important;
+}
+
+html.uribap-identity.dark {
+  --bg: #201c1a;
+  --surface: #2b2522;
+  --fg: #f5efea;
+  --muted: #bfb3aa;
+  --accent: #e5947f;
+  --border: #51443c;
+  --control: #342c28;
+  --theme-dark-background-400: var(--surface) !important;
+  --theme-dark-background-500: var(--surface) !important;
+  --theme-dark-background-600: var(--bg) !important;
+  --theme-dark-primary-400: color-mix(in oklch, var(--accent) 88%, var(--surface)) !important;
+  --theme-dark-primary-500: var(--accent) !important;
+  --theme-dark-primary-600: #efa48f !important;
+  --theme-dark-primary-contrast-500: #201c1a !important;
+  --theme-dark-primary-contrast-600: #201c1a !important;
+  --theme-dark-text-500: var(--fg) !important;
+  --theme-dark-text-secondary-500: var(--muted) !important;
+  --theme-dark-link-500: var(--accent) !important;
+  color-scheme: dark;
+}
+
+html.uribap-identity,
+html.uribap-identity * {
+  box-sizing: border-box;
+}
+
+html.uribap-identity body {
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html.uribap-identity :is(button, input, select, textarea) {
+  font: inherit;
+  caret-color: var(--accent);
+}
+
+html.uribap-identity :is(button, a, [role="button"]) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+html.uribap-identity :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+html.uribap-identity ::selection {
+  background: color-mix(in oklch, var(--accent) 22%, transparent);
+  color: var(--fg);
+}
+
+.uribap-skip {
+  position: fixed;
+  z-index: 100;
+  top: -64px;
+  left: 20px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--fg);
+  color: var(--surface);
+  font-weight: 700;
+}
+
+.uribap-skip:focus-visible {
+  top: 12px;
+}
+
+.uribap-login-header {
+  width: min(1120px, 100%);
+  min-height: 104px;
+  margin: 0 auto;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.uribap-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--fg);
+}
+
+.uribap-brand-mark {
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+.uribap-brand-shell {
+  fill: var(--accent);
+}
+
+.uribap-brand-home {
+  fill: var(--surface);
+}
+
+.uribap-brand-table {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.uribap-brand-wordmark {
+  font: 600 30px/1 var(--font-display);
+  letter-spacing: -0.035em;
+}
+
+.uribap-brand-wordmark span {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.uribap-brand-compact .uribap-brand-mark {
+  width: 40px;
+  height: 40px;
+}
+
+.uribap-login-grid {
+  width: min(1120px, 100%);
+  min-height: calc(100dvh - 104px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px) 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 96px);
+}
+
+.uribap-login-intro {
+  max-width: 520px;
+}
+
+.uribap-login-intro h2 {
+  max-width: 12ch;
+  margin: 0 0 24px;
+  color: var(--fg);
+  font: 500 clamp(40px, 5.2vw, 64px) / 1.05 var(--font-display);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.uribap-login-intro p {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--muted);
+  font: 400 17px/1.7 var(--font-body);
+  text-wrap: pretty;
+}
+
+.uribap-login-note {
+  display: inline-block;
+  margin-top: 34px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.uribap-login-form {
+  min-width: 0;
+  width: 100%;
+}
+
+.uribap-login-form > * {
+  min-width: 0;
+}
+
+.uribap-login-form .uribap-card {
+  width: 100%;
+  padding: clamp(24px, 3vw, 32px);
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 16px 42px color-mix(in oklch, var(--fg) 8%, transparent);
+  color: var(--fg);
+}
+
+.uribap-login-form .uribap-card h1,
+.uribap-login-form .uribap-card .ztdl-h1 {
+  margin: 0 0 22px;
+  color: var(--fg);
+  font: 600 32px/1.12 var(--font-display);
+  letter-spacing: -0.025em;
+  text-align: left;
+  text-wrap: balance;
+}
+
+.uribap-login-form .uribap-card :is(p, label, .ztdl-p) {
+  color: var(--muted);
+  font-family: var(--font-body);
+}
+
+.uribap-login-form .uribap-card :is(input:not([type="checkbox"]), select, textarea) {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--control);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+
+.uribap-login-form .uribap-card form button[type="submit"] {
+  min-height: 46px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  transition: background-color 140ms ease-out, box-shadow 140ms ease-out;
+}
+
+.uribap-login-form .uribap-card form button[type="submit"]:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 86%, var(--fg));
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--accent) 20%, transparent);
+}
+
+.uribap-identity.dark .uribap-login-form .uribap-card form button[type="submit"] {
+  color: #201c1a;
+}
+
+.uribap-login-form .uribap-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.uribap-login-form .uribap-card a {
+  color: var(--accent);
+  text-underline-offset: 0.2em;
+}
+
+.uribap-login-tools {
+  width: min(100%, 440px);
+  margin: 16px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.uribap-login-tools button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.uribap-login-loading {
+  width: 100%;
+  min-height: 160px;
+}
+
+@media (max-width: 760px) {
+  .uribap-login-header {
+    min-height: 76px;
+    padding: 20px;
+  }
+
+  .uribap-login-grid {
+    min-height: calc(100dvh - 76px);
+    padding: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .uribap-login-intro {
+    display: none;
+  }
+
+  .uribap-login-form .uribap-card h1,
+  .uribap-login-form .uribap-card .ztdl-h1 {
+    font-size: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.uribap-identity *,
+  html.uribap-identity *::before,
+  html.uribap-identity *::after {
+    scroll-behavior: auto;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+
+  html.uribap-identity .skeleton {
+    background-image: none;
+    animation: none;
+  }
+}

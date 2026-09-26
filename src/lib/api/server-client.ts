@@ -1,6 +1,11 @@
 import { getToken } from "next-auth/jwt";
 import { cookies, headers } from "next/headers";
+import { NextRequest } from "next/server";
 
+import {
+  refreshFailureMatchesRequest,
+  sessionPredatesLogoutMarker,
+} from "@/lib/auth/session-response";
 import { serverEnv } from "@/lib/config/env";
 
 export class ApiRequestError extends Error {
@@ -17,14 +22,37 @@ async function getServerAccessToken() {
   const cookieStore = await cookies();
   const requestHeaders = await headers();
   const cookieHeader = cookieStore.toString();
-  const request = new Request("http://uribap.local", {
-    headers: {
-      cookie: cookieHeader,
-      "x-forwarded-proto": requestHeaders.get("x-forwarded-proto") ?? "http",
-    },
+  const forwardedProtocol = requestHeaders
+    .get("x-forwarded-proto")
+    ?.split(",", 1)[0]
+    ?.trim()
+    .toLowerCase();
+  const scheme =
+    forwardedProtocol === "http" || forwardedProtocol === "https"
+      ? forwardedProtocol
+      : process.env.NODE_ENV === "production"
+        ? "https"
+        : "http";
+  const request = new NextRequest(`${scheme}://uribap.local`, {
+    headers: { cookie: cookieHeader },
   });
-  const token = await getToken({ req: request, secret: serverEnv.AUTH_SECRET });
-  return typeof token?.accessToken === "string" ? token.accessToken : null;
+  const secret = process.env.AUTH_SECRET || serverEnv.AUTH_SECRET;
+  if (
+    (await refreshFailureMatchesRequest(request, secret)) ||
+    (await sessionPredatesLogoutMarker(request, secret))
+  ) {
+    return null;
+  }
+  const token = await getToken({ req: request, secret, secureCookie: scheme === "https" });
+  const expiration = token?.accessTokenExpires;
+  return token?.error !== "RefreshAccessTokenError" &&
+    typeof token?.accessToken === "string" &&
+    token.accessToken &&
+    typeof expiration === "number" &&
+    Number.isFinite(expiration) &&
+    expiration > Date.now()
+    ? token.accessToken
+    : null;
 }
 
 export async function serverApiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
