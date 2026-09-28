@@ -18,17 +18,15 @@ async function staticStylesAndScripts(directory: string): Promise<string[]> {
 test("serves built Next CSS and JavaScript assets from the standalone server", async ({ request }) => {
   test.skip(!process.env.CI, "Standalone static asset packaging is verified in CI after the production build");
   const staticAssets = await staticStylesAndScripts(join(".next", "static"));
-  const cssAsset = staticAssets.find((asset) => extname(asset) === ".css");
-  const jsAsset = staticAssets.find((asset) => extname(asset) === ".js");
-
-  expect(cssAsset).toBeDefined();
-  expect(jsAsset).toBeDefined();
-  for (const asset of [cssAsset, jsAsset]) {
-    if (!asset) continue;
+  expect(staticAssets.some((asset) => extname(asset) === ".css")).toBe(true);
+  expect(staticAssets.some((asset) => extname(asset) === ".js")).toBe(true);
+  const failed: string[] = [];
+  for (const asset of staticAssets) {
     const route = `/_next/${relative(".next", asset).split(sep).join("/")}`;
     const response = await request.get(route);
-    expect(response.status(), route).toBe(200);
+    if (response.status() !== 200) failed.push(`${route}:${response.status()}`);
   }
+  expect(failed).toEqual([]);
 });
 
 const viewports = [
