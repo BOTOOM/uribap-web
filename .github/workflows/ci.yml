@@ -28,6 +28,8 @@ jobs:
       - run: node --test identity/login/*.test.mjs
       - run: pnpm api:check
       - run: pnpm build
+        env:
+          URIBAP_NEXT_OUTPUT_MODE: standalone
       - run: pnpm licenses:check
       - run: pnpm performance:check
       - run: pnpm exec playwright install --with-deps chromium

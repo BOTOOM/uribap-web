@@ -7,11 +7,12 @@ contract a future deploy must satisfy.
 ## Build
 
 - Vercel auto-detects Next.js; `pnpm` is the package manager (pinned via
-  `packageManager` in `package.json`). No `vercel.json` is required —
-  `next.config.ts` owns output mode (`standalone`), security headers, and
-  typed routes.
-- The repository `Dockerfile` stays as the container fallback (standalone
-  output, non-root `node` user); both paths run the same build.
+  `packageManager` in `package.json`). No `vercel.json` is required. Vercel
+  uses Next.js's default output so its build adapter can process the standard
+  output-file-tracing manifest.
+- The Dockerfile remains a container fallback and opts into standalone output
+  with `URIBAP_NEXT_OUTPUT_MODE=standalone`; GitHub Actions sets the same mode
+  for production-server E2E. Do not set that variable in the Vercel project.
 
 ## Environment contract
 

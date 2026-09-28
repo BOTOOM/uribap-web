@@ -13,7 +13,8 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8010/api/v1
-ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL \
+    URIBAP_NEXT_OUTPUT_MODE=standalone
 RUN pnpm build
 
 FROM node:24-alpine AS runner
