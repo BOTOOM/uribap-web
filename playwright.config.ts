@@ -2,6 +2,13 @@ import { randomBytes } from "node:crypto";
 
 import { defineConfig, devices } from "@playwright/test";
 
+const standaloneServerCommand = [
+  "mkdir -p .next/standalone/.next/static .next/standalone/public",
+  "cp -R .next/static/. .next/standalone/.next/static/",
+  "cp -R public/. .next/standalone/public/",
+  "node .next/standalone/server.js",
+].join(" && ");
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -13,7 +20,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm dev",
+    command: process.env.CI ? standaloneServerCommand : "pnpm dev",
     url: "http://127.0.0.1:3000/api/health",
     reuseExistingServer: !process.env.CI,
     env: {
