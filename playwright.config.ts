@@ -13,7 +13,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm dev",
+    command: process.env.CI ? "node .next/standalone/server.js" : "pnpm dev",
     url: "http://127.0.0.1:3000/api/health",
     reuseExistingServer: !process.env.CI,
     env: {
