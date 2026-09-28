@@ -53,9 +53,9 @@ test("serves built Next CSS and JavaScript assets", async ({ page }) => {
 
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Entra para cuidar el plan de casa." })).toBeVisible();
-  await page.waitForLoadState("networkidle");
-
-  expect(loadedTypes).toEqual(new Set(["css", "js"]));
+  await expect
+    .poll(() => Array.from(loadedTypes).sort())
+    .toEqual(["css", "js"]);
   expect(failedAssets).toEqual([]);
 });
 
