@@ -27,9 +27,16 @@ jobs:
       - run: pnpm test
       - run: node --test identity/login/*.test.mjs
       - run: pnpm api:check
-      - run: pnpm build
+      - name: Build default Next.js output for Vercel
+        run: pnpm build
+      - name: Verify Vercel output-file-tracing manifest
+        run: test -f .next/next-server.js.nft.json
       - run: pnpm licenses:check
       - run: pnpm performance:check
+      - name: Build standalone output for Playwright CI
+        run: pnpm build
+        env:
+          URIBAP_NEXT_OUTPUT_MODE: standalone
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - run: pnpm test:a11y

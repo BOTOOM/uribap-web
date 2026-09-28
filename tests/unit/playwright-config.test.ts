@@ -29,3 +29,19 @@ describe("Playwright web server mode", () => {
     30_000,
   );
 });
+
+describe("Next build output mode", () => {
+  it("uses default output on Vercel and standalone when explicitly requested", async () => {
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("URIBAP_NEXT_OUTPUT_MODE", "");
+    vi.resetModules();
+    const vercelConfig = (await import("../../next.config")).default;
+    expect(vercelConfig.output).toBeUndefined();
+
+    vi.stubEnv("VERCEL", "");
+    vi.stubEnv("URIBAP_NEXT_OUTPUT_MODE", "standalone");
+    vi.resetModules();
+    const containerConfig = (await import("../../next.config")).default;
+    expect(containerConfig.output).toBe("standalone");
+  });
+});

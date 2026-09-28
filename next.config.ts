@@ -31,7 +31,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.env.URIBAP_NEXT_OUTPUT_MODE === "standalone" ? "standalone" : undefined,
   reactStrictMode: true,
   typedRoutes: true,
   allowedDevOrigins: ["127.0.0.1"],
