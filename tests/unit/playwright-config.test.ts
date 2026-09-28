@@ -6,19 +6,26 @@ afterEach(() => {
 });
 
 describe("Playwright web server mode", () => {
-  it("uses the standalone production server in CI", async () => {
-    vi.stubEnv("CI", "true");
+  it(
+    "packages static assets and uses standalone only in CI",
+    async () => {
+      vi.stubEnv("CI", "true");
+      vi.resetModules();
+      const ciConfig = (await import("../../playwright.config")).default;
+      expect(ciConfig.webServer).toMatchObject({
+        command: [
+          "mkdir -p .next/standalone/.next/static .next/standalone/public",
+          "cp -R .next/static/. .next/standalone/.next/static/",
+          "cp -R public/. .next/standalone/public/",
+          "node .next/standalone/server.js",
+        ].join(" && "),
+      });
 
-    const config = (await import("../../playwright.config")).default;
-
-    expect(config.webServer).toMatchObject({ command: "node .next/standalone/server.js" });
-  });
-
-  it("keeps Next dev for local browser tests", async () => {
-    vi.stubEnv("CI", "");
-
-    const config = (await import("../../playwright.config")).default;
-
-    expect(config.webServer).toMatchObject({ command: "pnpm dev" });
-  });
+      vi.stubEnv("CI", "");
+      vi.resetModules();
+      const localConfig = (await import("../../playwright.config")).default;
+      expect(localConfig.webServer).toMatchObject({ command: "pnpm dev" });
+    },
+    30_000,
+  );
 });
