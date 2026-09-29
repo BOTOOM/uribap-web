@@ -113,8 +113,12 @@ describe("server API access token boundary", () => {
 
     await expect(
       InvitationAcceptPage({ searchParams: Promise.resolve({ token: "synthetic-invitation" }) }),
-    ).rejects.toThrow("/login?returnTo=/invitations/accept:redirected to login");
-    expect(redirectMock).toHaveBeenCalledWith("/login?returnTo=/invitations/accept");
+    ).rejects.toThrow(
+      "/login?returnTo=%2Finvitations%2Faccept%3Ftoken%3Dsynthetic-invitation:redirected to login",
+    );
+    expect(redirectMock).toHaveBeenCalledWith(
+      "/login?returnTo=%2Finvitations%2Faccept%3Ftoken%3Dsynthetic-invitation",
+    );
   });
 
   it("rejects a request without an encrypted session cookie", async () => {

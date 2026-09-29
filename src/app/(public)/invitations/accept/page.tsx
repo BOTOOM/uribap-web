@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { InvitationAcceptanceForm } from "@/components/household/InvitationAcceptanceForm";
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import { auth } from "@/lib/auth/auth";
+import { invitationLoginRedirect } from "@/lib/auth/invitation-return-to";
 
 
 export const dynamic = "force-dynamic";
@@ -12,11 +13,11 @@ export default async function InvitationAcceptPage({
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
+  const { token } = await searchParams;
   const session = await auth();
   if (!session || session.error === "RefreshAccessTokenError" || !session.user.id) {
-    redirect("/login?returnTo=/invitations/accept" as Route);
+    redirect(invitationLoginRedirect(token) as Route);
   }
-  const { token } = await searchParams;
   return (
     <main className="auth-shell">
       <section aria-labelledby="invitation-title" className="card auth-card">

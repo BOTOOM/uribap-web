@@ -52,7 +52,7 @@ export function InvitationAcceptanceForm({ initialToken }: { initialToken: strin
             onChange={(event) => setToken(event.target.value)}
           />
           <span className="helper">
-            El código llega por correo — en local lo captura Mailpit.
+            El código llega en el correo de invitación.
           </span>
         </div>
         <div>

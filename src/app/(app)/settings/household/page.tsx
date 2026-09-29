@@ -140,7 +140,7 @@ export default async function HouseholdSettingsPage() {
           <div>
             <h2>Actividad del hogar</h2>
             <span className="muted">
-              Registro de eventos y avisos de correo capturados localmente.
+              Registro de eventos y estado de las notificaciones.
             </span>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 
 import { OnboardingForm } from "@/components/household/OnboardingForm";
+import { PendingInvitations } from "@/components/household/PendingInvitations";
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import type { components } from "@/lib/api/generated/schema";
 import { ApiRequestError, serverApiFetch } from "@/lib/api/server-client";
@@ -24,6 +25,11 @@ export default async function OnboardingPage() {
   if (currentUser.memberships.some((membership) => membership.status === "active")) {
     redirect("/plan" as Route);
   }
+  const pendingInvitations = await serverApiFetch<
+    components["schemas"]["PendingInvitationPage"]
+  >("/me/invitations")
+    .then((page) => page.items)
+    .catch(() => []);
   return (
     <main className="auth-shell">
       <section aria-labelledby="onboarding-title" className="card auth-card">
@@ -41,6 +47,12 @@ export default async function OnboardingPage() {
         <p className="muted">
           Define el nombre, idioma y zona horaria que usarán las decisiones compartidas.
         </p>
+        {pendingInvitations.length > 0 ? (
+          <>
+            <PendingInvitations items={pendingInvitations} />
+            <h2 className="divider">¿Prefieres crear tu propio hogar?</h2>
+          </>
+        ) : null}
         <OnboardingForm />
       </section>
     </main>
