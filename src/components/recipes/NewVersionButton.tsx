@@ -8,12 +8,8 @@ import { toast } from "@/lib/toast";
 
 export function NewVersionButton({
   recipeId,
-  baseServings,
-  prepMinutes,
 }: {
   recipeId: string;
-  baseServings: number;
-  prepMinutes: number;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -23,13 +19,10 @@ export function NewVersionButton({
     setPending(true);
     setMessage(null);
     try {
-      const response = await fetch(`/api/recipes/${recipeId}/versions`, {
+      const response = await fetch(`/api/recipes/${recipeId}/revisions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          base_servings: baseServings,
-          prep_minutes: prepMinutes,
-        }),
+        body: JSON.stringify({ publish: false }),
       });
       const body = (await response.json().catch(() => null)) as { detail?: string } | null;
       if (!response.ok) throw new Error(body?.detail ?? "No se pudo crear la versión.");
