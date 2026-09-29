@@ -1,7 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+const { refreshMock, toastMock } = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+}));
+vi.mock("@/lib/toast", () => ({ toast: toastMock }));
 
 import { RecipeEditDialog } from "@/components/recipes/RecipeEditDialog";
 
@@ -30,6 +38,8 @@ function requestBody(index = 0) {
 
 describe("RecipeEditDialog", () => {
   beforeEach(() => {
+    refreshMock.mockReset();
+    toastMock.mockReset();
     fetchMock.mockReset().mockResolvedValue({
       ok: true,
       status: 200,
@@ -115,6 +125,36 @@ describe("RecipeEditDialog", () => {
       prep_minutes: 45,
       publish: true,
     });
+  });
+
+  it("refreshes saved metadata and keeps the dialog open when revision creation fails", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        json: async () => ({ detail: "conflicto" }),
+      });
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Editar" }));
+    fireEvent.change(screen.getByLabelText("Nombre"), {
+      target: { value: "Lentejas nuevas" },
+    });
+    fireEvent.change(screen.getByLabelText("Raciones base"), {
+      target: { value: "4" },
+    });
+    submitDialog();
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Se guardaron el nombre y la descripción");
+    expect(alert).toHaveTextContent("conflicto");
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
   it("renders API errors as an alert", async () => {

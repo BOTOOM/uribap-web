@@ -69,9 +69,11 @@ export function RecipeEditDialog({
 
     setPending(true);
     setMessage(null);
+    let metadataSaved = false;
     try {
       if (Object.keys(metadata).length > 0) {
         await submitRequest(`/api/recipes/${recipeId}`, "PATCH", metadata);
+        metadataSaved = true;
       }
       if (revisionChanged) {
         const revision: components["schemas"]["RecipeRevision"] = {
@@ -89,7 +91,16 @@ export function RecipeEditDialog({
       router.refresh();
       setOpen(false);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "No se pudo actualizar la receta.");
+      const detail =
+        error instanceof Error ? error.message : "No se pudo actualizar la receta.";
+      if (metadataSaved) {
+        router.refresh();
+        setMessage(
+          `Se guardaron el nombre y la descripción, pero no se pudo crear la nueva versión: ${detail}`,
+        );
+      } else {
+        setMessage(detail);
+      }
     } finally {
       setPending(false);
     }
