@@ -196,7 +196,7 @@ export function RecipeEditDialog({
                 </div>
                 {latestState === "published" ? (
                   <p className="inline-note">
-                    Cambiar raciones o tiempo crea la versión N+1 y conserva el historial.
+                    Cambiar raciones o tiempo publica una nueva versión con los mismos ingredientes y conserva el historial.
                   </p>
                 ) : null}
                 {message ? (

@@ -140,7 +140,7 @@ export default async function RecipeDetailPage({
         </div>
         <div
           className="planner-actions"
-          style={{ flexWrap: "wrap", justifyContent: "flex-end", marginLeft: 0 }}
+          style={{ flexWrap: "wrap", marginLeft: 0 }}
         >
           {!archived &&
           version &&
