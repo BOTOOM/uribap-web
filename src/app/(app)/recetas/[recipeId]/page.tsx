@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { RecipeArchiveButton } from "@/components/recipes/RecipeArchiveButton";
+import { RecipeEditDialog } from "@/components/recipes/RecipeEditDialog";
 import { RecipeFavoriteButton } from "@/components/recipes/RecipeFavoriteButton";
 import { PublishVersionButton } from "@/components/recipes/PublishVersionButton";
 import { NewVersionButton } from "@/components/recipes/NewVersionButton";
@@ -21,6 +23,7 @@ type Recipe = {
   description: string | null;
   latest_version: number | null;
   latest_state: string | null;
+  archived_at: string | null;
 };
 
 type VersionDetail = {
@@ -107,7 +110,8 @@ export default async function RecipeDetailPage({
   ]);
   const demandByIngredient = new Map(forecast.map((line) => [line.ingredient_id, line]));
 
-  const editable = recipe.latest_state === "draft" && version !== null;
+  const archived = recipe.archived_at !== null;
+  const editable = !archived && recipe.latest_state === "draft" && version !== null;
   const initialLines: VersionLine[] =
     version?.ingredients.map((line) => ({
       ingredient_id: line.ingredient_id,
@@ -118,6 +122,13 @@ export default async function RecipeDetailPage({
 
   return (
     <>
+      {archived ? (
+        <div className="inline-note" role="status" style={{ marginBottom: 16 }}>
+          <span className="status neutral">
+            Receta archivada: no aparece en el planificador
+          </span>
+        </div>
+      ) : null}
       <div className="page-head">
         <div>
           <Link className="btn btn-ghost" href="/recetas" style={{ marginBottom: 8 }}>
@@ -127,35 +138,50 @@ export default async function RecipeDetailPage({
           <h1>{recipe.name}</h1>
           <p>{recipe.description ?? "Sin descripción todavía."}</p>
         </div>
-        <div className="planner-actions" style={{ marginLeft: 0 }}>
-          {recipe.latest_state === "draft" && recipe.latest_version ? (
+        <div
+          className="planner-actions"
+          style={{ flexWrap: "wrap", marginLeft: 0 }}
+        >
+          {!archived &&
+          version &&
+          (recipe.latest_state === "draft" || recipe.latest_state === "published") ? (
+            <RecipeEditDialog
+              baseServings={version.base_servings}
+              description={recipe.description}
+              latestState={recipe.latest_state}
+              name={recipe.name}
+              prepMinutes={version.prep_minutes}
+              recipeId={recipe.id}
+            />
+          ) : null}
+          {!archived && recipe.latest_state === "draft" && recipe.latest_version ? (
             <PublishVersionButton
               recipeId={recipe.id}
               versionNumber={recipe.latest_version}
             />
           ) : null}
-          {recipe.latest_state === "published" && version ? (
-            <NewVersionButton
-              baseServings={version.base_servings}
-              prepMinutes={version.prep_minutes}
-              recipeId={recipe.id}
-            />
+          {!archived && recipe.latest_state === "published" && version ? (
+            <NewVersionButton recipeId={recipe.id} />
           ) : null}
+          <RecipeArchiveButton archived={archived} recipeId={recipe.id} />
           <RecipeFavoriteButton recipeId={recipe.id} />
         </div>
       </div>
       <article className="card" style={{ maxWidth: 560 }}>
         <div className="card-title">
           <h2>Versión {version?.version_number ?? recipe.latest_version ?? "—"}</h2>
-          <span className="status available">
-            {STATE_LABELS[recipe.latest_state ?? "draft"] ?? "borrador"}
+          <span className={`status ${archived ? "neutral" : "available"}`}>
+            {archived
+              ? "archivada"
+              : STATE_LABELS[recipe.latest_state ?? "draft"] ?? "borrador"}
           </span>
         </div>
         <p className="muted">
           {version?.base_servings ?? "—"} raciones base
           {version?.prep_minutes ? ` · ${version.prep_minutes} min de preparación` : ""}.
-          Las versiones publicadas alimentan el planificador semanal y la previsión de
-          demanda.
+          {archived
+            ? "Las comidas planificadas conservan su historial."
+            : "Las versiones publicadas alimentan el planificador semanal y la previsión de demanda."}
         </p>
       </article>
       <article className="card" style={{ maxWidth: 640 }}>
@@ -163,7 +189,7 @@ export default async function RecipeDetailPage({
           <h2>Ingredientes</h2>
           {editable ? <span className="meta">editable en borrador</span> : null}
         </div>
-        {editable && recipe.latest_version ? (
+        {!archived && editable && recipe.latest_version ? (
           <RecipeIngredientsEditor
             ingredients={ingredients}
             initialLines={initialLines}

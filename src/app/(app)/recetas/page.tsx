@@ -11,18 +11,17 @@ type Recipe = {
   description: string | null;
   latest_version: number | null;
   latest_state: string | null;
+  archived_at: string | null;
 };
 
 const STATE_LABELS: Record<string, string> = {
   draft: "borrador",
   published: "publicada",
-  archived: "archivada",
 };
 
 const STATE_TONES: Record<string, string> = {
   draft: "pending",
   published: "available",
-  archived: "neutral",
 };
 
 const FILTERS: { value: string; label: string }[] = [
@@ -32,9 +31,13 @@ const FILTERS: { value: string; label: string }[] = [
   { value: "archived", label: "Archivadas" },
 ];
 
-async function loadRecipes(query: string): Promise<Recipe[] | { error: string }> {
+async function loadRecipes(
+  query: string,
+  archived: boolean,
+): Promise<Recipe[] | { error: string }> {
   try {
     const params = new URLSearchParams();
+    if (archived) params.set("archived", "true");
     if (query) params.set("query", query);
     const data = await serverHouseholdFetch<{ items: Recipe[] }>(
       `/recipes?${params.toString()}`,
@@ -51,13 +54,20 @@ export default async function RecipesPage({
   searchParams: Promise<{ query?: string; estado?: string }>;
 }) {
   const { query = "", estado = "" } = await searchParams;
-  const data = await loadRecipes(query);
+  const data = await loadRecipes(query, estado === "archived");
   if ("error" in data) {
     return (
       <ErrorState description={data.error} title="No se pudieron cargar las recetas" />
     );
   }
-  const filtered = estado ? data.filter((r) => r.latest_state === estado) : data;
+  const filtered =
+    estado === "archived"
+      ? data.filter((recipe) => recipe.archived_at !== null)
+      : data.filter(
+          (recipe) =>
+            recipe.archived_at === null &&
+            (!estado || recipe.latest_state === estado),
+        );
   const [featured, ...rest] = filtered;
 
   function filterHref(value: string): Route {
@@ -66,6 +76,16 @@ export default async function RecipesPage({
     if (value) params.set("estado", value);
     const qs = params.toString();
     return (qs ? `/recetas?${qs}` : "/recetas") as Route;
+  }
+
+  function statusLabel(recipe: Recipe) {
+    if (recipe.archived_at !== null) return "archivada";
+    return STATE_LABELS[recipe.latest_state ?? "draft"] ?? "borrador";
+  }
+
+  function statusTone(recipe: Recipe) {
+    if (recipe.archived_at !== null) return "neutral";
+    return STATE_TONES[recipe.latest_state ?? "draft"] ?? "pending";
   }
 
   return (
@@ -140,8 +160,8 @@ export default async function RecipesPage({
                 <span className="recipe-glyph">
                   <Icon name="book" size={17} />
                 </span>
-                <span className={`status ${STATE_TONES[featured.latest_state ?? "draft"] ?? "pending"}`}>
-                  {STATE_LABELS[featured.latest_state ?? "draft"] ?? "borrador"}
+                <span className={`status ${statusTone(featured)}`}>
+                  {statusLabel(featured)}
                 </span>
               </div>
               <h2 className="recipe-name">{featured.name}</h2>
@@ -160,8 +180,8 @@ export default async function RecipesPage({
                 <span className="recipe-glyph">
                   <Icon name="book" size={17} />
                 </span>
-                <span className={`status ${STATE_TONES[recipe.latest_state ?? "draft"] ?? "pending"}`}>
-                  {STATE_LABELS[recipe.latest_state ?? "draft"] ?? "borrador"}
+                <span className={`status ${statusTone(recipe)}`}>
+                  {statusLabel(recipe)}
                 </span>
               </div>
               <h2 className="recipe-name recipe-title-action">{recipe.name}</h2>
