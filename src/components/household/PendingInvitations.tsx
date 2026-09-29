@@ -52,7 +52,7 @@ export function PendingInvitations({ items }: { items: PendingInvitation[] }) {
     <section aria-labelledby="pending-invitations-title" className="form">
       <h2 id="pending-invitations-title">Invitaciones pendientes</h2>
       {items.map((invitation) => (
-        <article className="settings-row" key={invitation.id}>
+        <article className="settings-row" key={invitation.id} style={{ flexWrap: "wrap" }}>
           <div style={{ minWidth: 0 }}>
             <h3 className="meal-name">Te invitaron a {invitation.household_name}</h3>
             <p className="meta">
