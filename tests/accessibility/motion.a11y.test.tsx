@@ -12,11 +12,18 @@ const ENTRY = {
   servings: 2,
   notes: null,
   recipeName: "Arroz con pollo",
+  outcome: null,
   completed: false,
 };
 
 describe("planner motion contract", () => {
   it("keeps content available without depending on animation", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        Response.json({ detail: "No se pudo cargar el detalle." }, { status: 500 }),
+      ),
+    );
     render(
       <PlanBoard
         entries={[ENTRY]}
