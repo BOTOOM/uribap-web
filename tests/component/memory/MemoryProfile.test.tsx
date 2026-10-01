@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const navigationMocks = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -15,6 +15,7 @@ import { MemoryProfile } from "@/components/memory/MemoryProfile";
 type Memory = components["schemas"]["MemoryResponse"];
 type Profile = components["schemas"]["HouseholdMemoryProfile"];
 type Member = components["schemas"]["MemberResponse"];
+const fetchMock = vi.fn();
 
 function memory(
   id: string,
@@ -79,6 +80,17 @@ const profile: Profile = {
 };
 
 describe("MemoryProfile", () => {
+  beforeEach(() => {
+    navigationMocks.refresh.mockReset();
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it("renders the heading, exact introduction, household memory, and linked diner", () => {
     render(<MemoryProfile profile={profile} members={[linkedMember, availableMember]} />);
 
@@ -112,5 +124,27 @@ describe("MemoryProfile", () => {
     expect(screen.getByLabelText("Nombre de la persona")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Agregar recuerdo" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Agregar persona" })).toBeInTheDocument();
+  });
+
+  it("keeps the archive confirmation in the profile status after refresh", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      json: async () => null,
+    });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const view = render(<MemoryProfile profile={profile} members={[linkedMember, availableMember]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Archivar persona" }));
+    await waitFor(() => expect(screen.getByText("Persona archivada.")).toBeInTheDocument());
+
+    view.rerender(
+      <MemoryProfile
+        members={[linkedMember, availableMember]}
+        profile={{ ...profile, diners: [] }}
+      />,
+    );
+    expect(screen.getByText("Persona archivada.")).toBeInTheDocument();
+    expect(navigationMocks.refresh).toHaveBeenCalled();
   });
 });

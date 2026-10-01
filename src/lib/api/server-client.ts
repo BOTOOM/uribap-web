@@ -13,6 +13,7 @@ export class ApiRequestError extends Error {
     public readonly status: number,
     public readonly code: string,
     public readonly detail: string,
+    public readonly responseDetail: unknown = detail,
   ) {
     super(detail);
   }
@@ -75,13 +76,17 @@ export async function serverApiFetch<T>(path: string, init: RequestInit = {}): P
     return (await response.json()) as T;
   }
   const problem = (await response.json().catch(() => null)) as {
-    code?: string;
-    detail?: string;
+    code?: unknown;
+    detail?: unknown;
   } | null;
+  const detail = typeof problem?.detail === "string"
+    ? problem.detail
+    : "No se pudo completar la solicitud.";
   throw new ApiRequestError(
     response.status,
-    problem?.code ?? `http_${response.status}`,
-    problem?.detail ?? "No se pudo completar la solicitud.",
+    typeof problem?.code === "string" ? problem.code : `http_${response.status}`,
+    detail,
+    problem?.detail,
   );
 }
 

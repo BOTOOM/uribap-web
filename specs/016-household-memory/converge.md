@@ -59,3 +59,24 @@
 - Preview URL: `http://localhost:3000/dev-preview/memory`
 
 The existing `pnpm dev` server remains running on port 3000. The preview fixture remains uncommitted.
+
+## Review follow-up
+
+**Date**: 2026-10-02
+**Branch**: `devin/1790823174-household-memory`
+**Base**: local merge of Web PR #152, `9bf274b1923825b98c89828aad5597d8e5778a50`
+
+- The member loader now requests `limit=100`, the API-supported maximum. No cursor loop or loader test was added because the pinned API endpoint has no cursor parameter and the private Server Component loader is not directly testable without extracting unrelated infrastructure.
+- Archive success is announced from a persistent profile-owned status region, with `DinerCard` notifying `MemoryProfile` before `router.refresh()`.
+- Diner BFF routes preserve upstream `code` and structured `detail`; add and rename forms distinguish `invalid_member_link`, duplicate/display-name validation, and global-only errors.
+- The gated browser journey now creates a diner, adds a restriction and a like, asserts their order, and archives the diner.
+
+### Verification
+
+- `pnpm lint` — passed.
+- `pnpm typecheck` — passed.
+- `pnpm test` — passed: 228 tests across 45 files. The first run exposed a duplicate-text assertion in the new rename regression; the assertion was narrowed to the global status region and the full suite was rerun successfully.
+- `pnpm build` — passed with all 25 static pages generated.
+- `git diff --check` — passed.
+- `pnpm api:check` was not run: the API C OpenAPI file and the Web contract snapshot were byte-for-byte identical, so no generated contract synchronization was needed.
+- The gated `RUN_MEMORY_E2E=1` browser test was not run because no authenticated local stack was available; no full Compose, ZITADEL, or Mailpit services were started.

@@ -25,7 +25,7 @@ async function loadMemoryPage(): Promise<MemoryPageData | { error: string }> {
     const [profile, members] = await Promise.all([
       serverHouseholdFetch<components["schemas"]["HouseholdMemoryProfile"]>("/memory/profile"),
       serverApiFetch<components["schemas"]["MemberPage"]>(
-        `/households/${membership.household_id}/members`,
+        `/households/${membership.household_id}/members?limit=100`,
       ),
     ]);
     return { profile, members: members.items };

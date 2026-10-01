@@ -92,6 +92,110 @@ describe("AddDinerForm", () => {
     });
     expect(navigationMocks.refresh).toHaveBeenCalled();
   });
+
+  it("marks an invalid member link on the account selector and refreshes", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => ({
+        code: "invalid_member_link",
+        detail: "The linked user must be an active member of this household.",
+      }),
+    });
+    render(<AddDinerForm members={[member()]} />);
+
+    fireEvent.change(screen.getByLabelText("Nombre de la persona"), {
+      target: { value: "Pareja" },
+    });
+    fireEvent.change(screen.getByLabelText("Cuenta del hogar (opcional)"), {
+      target: { value: "user-edwar" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar persona" }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Cuenta del hogar (opcional)")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      ),
+    );
+    expect(screen.getByLabelText("Nombre de la persona")).not.toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(navigationMocks.refresh).toHaveBeenCalled();
+  });
+
+  it("maps duplicate display-name conflicts to the name field", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      json: async () => ({
+        code: "conflict",
+        detail: "An active diner with this name already exists in the household.",
+      }),
+    });
+    render(<AddDinerForm members={[member()]} />);
+
+    fireEvent.change(screen.getByLabelText("Nombre de la persona"), {
+      target: { value: "Pareja" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar persona" }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Nombre de la persona")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      ),
+    );
+    expect(screen.getByLabelText("Cuenta del hogar (opcional)")).not.toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+  });
+
+  it("maps display-name validation details and leaves unrelated 422 errors global-only", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => ({
+        code: "validation_error",
+        detail: [{ loc: ["body", "display_name"], msg: "Display name is invalid." }],
+      }),
+    });
+    render(<AddDinerForm members={[member()]} />);
+
+    fireEvent.change(screen.getByLabelText("Nombre de la persona"), {
+      target: { value: "Pareja" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar persona" }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Nombre de la persona")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      ),
+    );
+
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => ({
+        code: "validation_error",
+        detail: "The request contains invalid fields.",
+      }),
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar persona" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "The request contains invalid fields.",
+      ),
+    );
+    expect(screen.getByLabelText("Nombre de la persona")).not.toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+  });
 });
 
 describe("DinerCard", () => {
@@ -150,15 +254,15 @@ describe("DinerCard", () => {
   });
 
   it.each([
-    [403, "No tienes permiso para editar esta persona."],
-    [404, "Esta persona ya no está disponible."],
-    [409, "Esta persona cambió en otro lugar."],
-    [422, "El nombre debe tener entre 1 y 80 caracteres."],
-  ])("announces diner update status %s", async (status, detail) => {
+    [403, "No tienes permiso para editar esta persona.", {}],
+    [404, "Esta persona ya no está disponible.", {}],
+    [409, "Esta persona cambió en otro lugar.", {}],
+    [422, "Display name is invalid.", { code: "display_name_invalid" }],
+  ])("announces diner update status %s", async (status, detail, metadata) => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status,
-      json: async () => ({ detail }),
+      json: async () => ({ ...metadata, detail }),
     });
     render(<DinerCard profile={profile()} />);
 
@@ -169,5 +273,59 @@ describe("DinerCard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Guardar nombre" }));
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(detail));
+  });
+
+  it("marks duplicate display-name conflicts on the rename field", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 409,
+      json: async () => ({
+        code: "conflict",
+        detail: "An active diner with this name already exists in the household.",
+      }),
+    });
+    render(<DinerCard profile={profile()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar nombre de Pareja" }));
+    fireEvent.change(screen.getByLabelText("Nombre de la persona"), {
+      target: { value: "Mi pareja" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar nombre" }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Nombre de la persona")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      ),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(/already exists/i);
+  });
+
+  it("keeps unrelated validation errors in the global status", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => ({
+        code: "validation_error",
+        detail: "The request contains invalid fields.",
+      }),
+    });
+    render(<DinerCard profile={profile()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar nombre de Pareja" }));
+    fireEvent.change(screen.getByLabelText("Nombre de la persona"), {
+      target: { value: "Mi pareja" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar nombre" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "The request contains invalid fields.",
+      ),
+    );
+    expect(screen.getByLabelText("Nombre de la persona")).not.toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
   });
 });

@@ -2,6 +2,21 @@ import { NextResponse } from "next/server";
 
 import { serverHouseholdFetch } from "@/lib/api/server-client";
 
+function problemResponse(error: unknown, fallback: string) {
+  const status = error instanceof Error && "status" in error ? Number(error.status) : 500;
+  const code =
+    error instanceof Error && "code" in error && typeof error.code === "string"
+      ? error.code
+      : null;
+  const detail =
+    error instanceof Error && "responseDetail" in error && error.responseDetail !== undefined
+      ? error.responseDetail
+      : error instanceof Error
+        ? error.message
+        : fallback;
+  return NextResponse.json({ ...(code ? { code } : {}), detail }, { status });
+}
+
 export async function POST(request: Request) {
   try {
     const idempotencyKey = request.headers.get("Idempotency-Key") || crypto.randomUUID();
@@ -12,8 +27,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(diner, { status: 201 });
   } catch (error) {
-    const status = error instanceof Error && "status" in error ? Number(error.status) : 500;
-    const detail = error instanceof Error ? error.message : "No se pudo agregar a la persona.";
-    return NextResponse.json({ detail }, { status });
+    return problemResponse(error, "No se pudo agregar a la persona.");
   }
 }

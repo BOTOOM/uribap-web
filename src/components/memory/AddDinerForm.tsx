@@ -4,9 +4,13 @@ import { useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/generated/schema";
+import {
+  dinerErrorField,
+  dinerErrorMessage,
+  type DinerApiResult,
+} from "@/components/memory/diner-errors";
 
 type Member = components["schemas"]["MemberResponse"];
-type ApiResult = { detail?: string } | null;
 
 export function AddDinerForm({ members }: { members: Member[] }) {
   const router = useRouter();
@@ -17,12 +21,14 @@ export function AddDinerForm({ members }: { members: Member[] }) {
   const [message, setMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [memberError, setMemberError] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = displayName.trim();
     setMessage(null);
     setNameError(null);
+    setMemberError(null);
     if (name.length < 1 || name.length > 80) {
       const detail = "El nombre debe tener entre 1 y 80 caracteres.";
       setNameError(detail);
@@ -44,11 +50,15 @@ export function AddDinerForm({ members }: { members: Member[] }) {
           member_user_id: memberUserId || null,
         }),
       });
-      const result = (await response.json().catch(() => null)) as ApiResult;
+      const result = (await response.json().catch(() => null)) as DinerApiResult;
       if (!response.ok) {
-        if (response.status === 404 || response.status === 409) router.refresh();
-        const detail = result?.detail ?? "No se pudo agregar a la persona.";
-        if (response.status === 422) setNameError(detail);
+        const field = dinerErrorField(response.status, result);
+        if (response.status === 404 || response.status === 409 || field === "member") {
+          router.refresh();
+        }
+        const detail = dinerErrorMessage(result, "No se pudo agregar a la persona.");
+        if (field === "name") setNameError(detail);
+        if (field === "member") setMemberError(detail);
         setMessage(detail);
         setIsError(true);
         return;
@@ -85,7 +95,10 @@ export function AddDinerForm({ members }: { members: Member[] }) {
             minLength={1}
             required
             value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
+            onChange={(event) => {
+              setDisplayName(event.target.value);
+              setNameError(null);
+            }}
           />
           {nameError ? (
             <span className="field-error" id={`${id}-name-error`}>
@@ -98,10 +111,15 @@ export function AddDinerForm({ members }: { members: Member[] }) {
             Cuenta del hogar (opcional)
           </label>
           <select
+            aria-describedby={memberError ? `${id}-member-error` : undefined}
+            aria-invalid={memberError ? true : undefined}
             className="select"
             id={`${id}-member`}
             value={memberUserId}
-            onChange={(event) => setMemberUserId(event.target.value)}
+            onChange={(event) => {
+              setMemberUserId(event.target.value);
+              setMemberError(null);
+            }}
           >
             <option value="">Sin vincular una cuenta</option>
             {members.map((member) => (
@@ -110,6 +128,11 @@ export function AddDinerForm({ members }: { members: Member[] }) {
               </option>
             ))}
           </select>
+          {memberError ? (
+            <span className="field-error" id={`${id}-member-error`}>
+              {memberError}
+            </span>
+          ) : null}
         </div>
         <div className="memory-form-actions">
           <button className="btn btn-primary" disabled={pending} type="submit">

@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import type { components } from "@/lib/api/generated/schema";
 import { AddDinerForm } from "@/components/memory/AddDinerForm";
 import { DinerCard } from "@/components/memory/DinerCard";
@@ -14,6 +18,7 @@ export function MemoryProfile({
   profile: Profile;
   members: Member[];
 }) {
+  const [archiveMessage, setArchiveMessage] = useState<string | null>(null);
   const availableMembers = selectUnlinkedActiveMembers(members, profile.diners);
   const memoryCount =
     profile.household.length +
@@ -35,7 +40,9 @@ export function MemoryProfile({
 
   return (
     <div className="memory-settings">
-      <p aria-live="polite" className="sr-only" role="status"></p>
+      <p aria-live="polite" className="sr-only" role="status">
+        {archiveMessage}
+      </p>
       <div className="page-head memory-page-head">
         <div>
           <h1>Memoria del hogar</h1>
@@ -62,6 +69,7 @@ export function MemoryProfile({
             <DinerCard
               key={dinerProfile.diner.id}
               linkedMemberName={linkedMemberName}
+              onArchived={() => setArchiveMessage("Persona archivada.")}
               profile={dinerProfile}
             />
           );

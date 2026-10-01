@@ -150,4 +150,22 @@ describe("household memory BFF routes", () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ detail: "La memoria cambió en otro lugar." });
   });
+
+  it("preserves diner problem codes and structured details", async () => {
+    const detail = [{ loc: ["body", "display_name"], msg: "Display name is invalid." }];
+    mocks.serverHouseholdFetch.mockRejectedValue(
+      Object.assign(new Error("Display name is invalid."), {
+        status: 422,
+        code: "validation_error",
+        responseDetail: detail,
+      }),
+    );
+
+    const response = await createDiner(
+      request("POST", "/api/diners", { display_name: "Pareja" }, "diner-key"),
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ code: "validation_error", detail });
+  });
 });

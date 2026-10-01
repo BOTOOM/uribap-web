@@ -5,16 +5,22 @@ import { useRouter } from "next/navigation";
 
 import type { components } from "@/lib/api/generated/schema";
 import { MemoryCard } from "@/components/memory/MemoryCard";
+import {
+  dinerErrorField,
+  dinerErrorMessage,
+  type DinerApiResult,
+} from "@/components/memory/diner-errors";
 
 type DinerProfile = components["schemas"]["DinerMemoryProfile"];
-type ApiResult = { detail?: string } | null;
 
 export function DinerCard({
   profile,
   linkedMemberName,
+  onArchived,
 }: {
   profile: DinerProfile;
   linkedMemberName?: string | null;
+  onArchived?: () => void;
 }) {
   const router = useRouter();
   const id = useId();
@@ -49,14 +55,15 @@ export function DinerCard({
           expected_version: diner.version,
         }),
       });
-      const result = (await response.json().catch(() => null)) as ApiResult;
+      const result = (await response.json().catch(() => null)) as DinerApiResult;
       if (!response.ok) {
-        if (response.status === 404 || response.status === 409) {
+        const field = dinerErrorField(response.status, result);
+        if (response.status === 404 || (response.status === 409 && field !== "name")) {
           setEditing(false);
           router.refresh();
         }
-        const detail = result?.detail ?? "No se pudo actualizar a la persona.";
-        if (response.status === 422) setNameError(detail);
+        const detail = dinerErrorMessage(result, "No se pudo actualizar a la persona.");
+        if (field === "name") setNameError(detail);
         setMessage(detail);
         setIsError(true);
         return;
@@ -84,15 +91,14 @@ export function DinerCard({
     setMessage(null);
     try {
       const response = await fetch(`/api/diners/${diner.id}`, { method: "DELETE" });
-      const result = (await response.json().catch(() => null)) as ApiResult;
+      const result = (await response.json().catch(() => null)) as DinerApiResult;
       if (!response.ok) {
         if (response.status === 404 || response.status === 409) router.refresh();
-        setMessage(result?.detail ?? "No se pudo archivar a la persona.");
+        setMessage(dinerErrorMessage(result, "No se pudo archivar a la persona."));
         setIsError(true);
         return;
       }
-      setMessage("Persona archivada.");
-      setIsError(false);
+      onArchived?.();
       router.refresh();
     } catch (error) {
       setMessage(

@@ -20,6 +20,37 @@ test.describe("household memory settings", () => {
     await page.getByRole("button", { name: `Olvidar recuerdo: ${content}` }).click();
     await expect(page.getByText(content)).toHaveCount(0);
 
+    const dinerName = `E2E diner ${Date.now()}`;
+    await page.getByLabel("Nombre de la persona").fill(dinerName);
+    await page.getByRole("button", { name: "Agregar persona" }).click();
+    const dinerCard = page.locator("article.memory-diner-card").filter({ hasText: dinerName });
+    await expect(dinerCard.getByRole("heading", { name: dinerName })).toBeVisible();
+
+    await dinerCard.getByLabel("Tipo de recuerdo nuevo").selectOption("restriction");
+    await dinerCard.getByLabel("Recuerdo nuevo").fill("E2E sin nueces");
+    await dinerCard.getByRole("button", { name: "Agregar recuerdo" }).click();
+    await expect(dinerCard.getByText("E2E sin nueces")).toBeVisible();
+
+    await dinerCard.getByLabel("Tipo de recuerdo nuevo").selectOption("like");
+    await dinerCard.getByLabel("Recuerdo nuevo").fill("E2E le gusta el arroz");
+    await dinerCard.getByRole("button", { name: "Agregar recuerdo" }).click();
+    await expect(dinerCard.getByText("E2E le gusta el arroz")).toBeVisible();
+
+    const restrictionHeading = dinerCard.getByRole("heading", { name: "Restricción" });
+    const likeHeading = dinerCard.getByRole("heading", { name: "Le gusta" });
+    await expect(restrictionHeading).toBeVisible();
+    await expect(likeHeading).toBeVisible();
+    const restrictionBox = await restrictionHeading.boundingBox();
+    const likeBox = await likeHeading.boundingBox();
+    expect(restrictionBox).not.toBeNull();
+    expect(likeBox).not.toBeNull();
+    expect(restrictionBox!.y).toBeLessThan(likeBox!.y);
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await dinerCard.getByRole("button", { name: "Archivar persona" }).click();
+    await expect(page.getByText("Persona archivada.")).toHaveText("Persona archivada.");
+    await expect(page.getByRole("heading", { name: dinerName })).toHaveCount(0);
+
     for (const width of [375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       expect(

@@ -148,3 +148,10 @@ Task: T005 profile/accessibility tests in tests/component/memory/MemoryProfile.t
 3. Deliver the read-only profile as the MVP and validate it independently.
 4. Add memory mutations, then diner management, with test-first coverage for each.
 5. Finish navigation, responsive styles, gated E2E, preview screenshots, all requested verification, convergence, and push.
+
+## Review follow-up
+
+- [x] T024 [US1] Request active household members with the API-supported `limit=100` cap in `src/app/(app)/settings/memoria/page.tsx`; do not add a cursor loop because the pinned API endpoint exposes no cursor parameter.
+- [x] T025 [US3] Move successful archive feedback to a persistent `role="status"` region owned by `src/components/memory/MemoryProfile.tsx` and pass an archive callback from `DinerCard`.
+- [x] T026 [US3] Preserve upstream diner problem codes/details through the BFF and map invalid member links, duplicate display names, display-name validation, and global-only errors in the add and rename forms, with component and route tests.
+- [x] T027 [P] Extend the gated `e2e/memory.spec.ts` diner journey, run the Web verification gates, converge the review fixes, and push the merged branch without staging `src/app/dev-preview/`.
