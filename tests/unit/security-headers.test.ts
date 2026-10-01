@@ -27,6 +27,8 @@ describe("security headers configuration", () => {
     expect(csp).toContain("connect-src 'self' http://localhost:8010");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    expect(csp).toContain("form-action 'self'");
+    expect(csp).toContain("base-uri 'self'");
   });
 
   it("marks document routes as non-cacheable but spares static assets", async () => {

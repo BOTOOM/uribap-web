@@ -36,7 +36,8 @@ describe("PendingInvitations", () => {
 
     expect(screen.getByText("Te invitaron a Casa compartida")).toBeInTheDocument();
     expect(screen.getByText("Rol: miembro")).toBeInTheDocument();
-    expect(screen.getByText(/Expira el/)).toBeInTheDocument();
+    const expiry = screen.getByText(/Expira el/).querySelector("time");
+    expect(expiry).toHaveAttribute("dateTime", INVITATION.expires_at);
   });
 
   it("accepts by ID and navigates to the plan", async () => {

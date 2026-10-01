@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { formatInvitationExpiry } from "@/lib/format-invitation-expiry";
 import type { components } from "@/lib/api/generated/schema";
 
 type PendingInvitation = components["schemas"]["PendingInvitationResponse"];
@@ -12,14 +13,16 @@ const ROLE_LABELS: Record<PendingInvitation["requested_role"], string> = {
   member: "miembro",
 };
 
-function formatExpiry(value: string) {
-  return new Intl.DateTimeFormat("es", { dateStyle: "medium" }).format(new Date(value));
-}
-
 export function PendingInvitations({ items }: { items: PendingInvitation[] }) {
   const router = useRouter();
+  const [hydrated, setHydrated] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setHydrated(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   async function accept(invitationId: string) {
     setPendingId(invitationId);
@@ -58,7 +61,12 @@ export function PendingInvitations({ items }: { items: PendingInvitation[] }) {
             <p className="meta">
               Rol: {ROLE_LABELS[invitation.requested_role]}
             </p>
-            <p className="meta">Expira el {formatExpiry(invitation.expires_at)}</p>
+            <p className="meta">
+              Expira el{" "}
+              <time dateTime={invitation.expires_at}>
+                {formatInvitationExpiry(invitation.expires_at, hydrated ? undefined : "UTC")}
+              </time>
+            </p>
           </div>
           <button
             className="btn btn-primary"

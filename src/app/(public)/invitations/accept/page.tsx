@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 
@@ -5,6 +6,7 @@ import { InvitationAcceptanceForm } from "@/components/household/InvitationAccep
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import { auth } from "@/lib/auth/auth";
 import { invitationLoginRedirect } from "@/lib/auth/invitation-return-to";
+import { INVITATION_TOKEN_COOKIE } from "@/lib/auth/invitation-token-cookie";
 
 
 export const dynamic = "force-dynamic";
@@ -13,7 +15,9 @@ export default async function InvitationAcceptPage({
 }: {
   searchParams: Promise<{ token?: string }>;
 }) {
-  const { token } = await searchParams;
+  const { token: searchToken } = await searchParams;
+  const cookieStore = await cookies();
+  const token = searchToken ?? cookieStore.get(INVITATION_TOKEN_COOKIE)?.value;
   const session = await auth();
   if (!session || session.error === "RefreshAccessTokenError" || !session.user.id) {
     redirect(invitationLoginRedirect(token) as Route);

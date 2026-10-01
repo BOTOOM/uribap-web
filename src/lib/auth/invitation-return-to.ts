@@ -1,6 +1,4 @@
 export function invitationLoginRedirect(token?: string) {
-  const acceptPath = token
-    ? `/invitations/accept?token=${encodeURIComponent(token)}`
-    : "/invitations/accept";
-  return `/login?returnTo=${encodeURIComponent(acceptPath)}`;
+  if (token) return `/api/invitations/hold?token=${encodeURIComponent(token)}`;
+  return `/login?returnTo=${encodeURIComponent("/invitations/accept")}`;
 }

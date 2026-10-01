@@ -7,6 +7,10 @@ describe("safeReturnTo", () => {
     expect(safeReturnTo("/inventario?tab=lots#current")).toBe("/inventario?tab=lots#current");
   });
 
+  it("allows the invitation acceptance page as a token-free return target", () => {
+    expect(safeReturnTo("/invitations/accept")).toBe("/invitations/accept");
+  });
+
   it.each([
     "//evil.example",
     "///evil.example",

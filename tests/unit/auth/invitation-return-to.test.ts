@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { invitationLoginRedirect } from "@/lib/auth/invitation-return-to";
 
 describe("invitationLoginRedirect", () => {
-  it("preserves an encoded invitation token in the login return target", () => {
+  it("holds a token before login instead of placing it in the return target", () => {
     expect(invitationLoginRedirect("code+with / chars")).toBe(
-      "/login?returnTo=%2Finvitations%2Faccept%3Ftoken%3Dcode%252Bwith%2520%252F%2520chars",
+      "/api/invitations/hold?token=code%2Bwith%20%2F%20chars",
     );
   });
 

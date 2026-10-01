@@ -24,6 +24,6 @@ describe("pinned API contract", () => {
     expect(metadata.apiRevision).toBe(
       "bed66b4de11e647a7a489a6b9f8ef08fd5e48a2c",
     );
-    expect(metadata.generatedAt).toBe("2026-07-12");
+    expect(metadata.generatedAt).toBe("2026-10-01");
   });
 });

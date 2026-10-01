@@ -1,6 +1,7 @@
 import { webcrypto } from "node:crypto";
 
 import { encode } from "next-auth/jwt";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import InvitationAcceptPage from "@/app/(public)/invitations/accept/page";
@@ -15,7 +16,10 @@ const { cookiesMock, headersMock, authMock, redirectMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth/auth", () => ({ auth: authMock }));
 vi.mock("next/headers", () => ({ cookies: cookiesMock, headers: headersMock }));
-vi.mock("next/navigation", () => ({ redirect: redirectMock }));
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
 
 const AUTH_SECRET = "synthetic-auth-secret-for-server-client-012345";
 const COOKIE_NAME = "__Secure-authjs.session-token";
@@ -51,8 +55,21 @@ async function loadServerClient() {
 describe("server API access token boundary", () => {
   beforeEach(() => {
     vi.stubGlobal("crypto", webcrypto);
-    cookiesMock.mockResolvedValue({ toString: () => cookieHeader });
+    cookieHeader = "";
+    cookiesMock.mockResolvedValue({
+      toString: () => cookieHeader,
+      get: (name: string) => {
+        const prefix = `${name}=`;
+        const pair = cookieHeader.split(/;\s*/).find((value) => value.startsWith(prefix));
+        return pair ? { name, value: pair.slice(prefix.length) } : undefined;
+      },
+    });
     headersMock.mockResolvedValue(new Headers({ "x-forwarded-proto": "https, http" }));
+    authMock.mockReset();
+    redirectMock.mockReset();
+    redirectMock.mockImplementation((target: string) => {
+      throw new Error(`${target}:redirected to login`);
+    });
   });
 
   it("reads a real encrypted HTTPS chunked cookie and injects its token server-side", async () => {
@@ -101,24 +118,50 @@ describe("server API access token boundary", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("redirects a refresh-failed session before showing the invitation form", async () => {
-    const redirectError = new Error("redirected to login");
+  it("stores an incoming invitation token before redirecting to login", async () => {
     authMock.mockResolvedValue({
       user: { id: "", name: null, email: null, image: null },
       error: "RefreshAccessTokenError",
-    });
-    redirectMock.mockImplementation((target: string) => {
-      throw new Error(`${target}:${redirectError.message}`);
     });
 
     await expect(
       InvitationAcceptPage({ searchParams: Promise.resolve({ token: "synthetic-invitation" }) }),
     ).rejects.toThrow(
-      "/login?returnTo=%2Finvitations%2Faccept%3Ftoken%3Dsynthetic-invitation:redirected to login",
+      "/api/invitations/hold?token=synthetic-invitation:redirected to login",
     );
     expect(redirectMock).toHaveBeenCalledWith(
-      "/login?returnTo=%2Finvitations%2Faccept%3Ftoken%3Dsynthetic-invitation",
+      "/api/invitations/hold?token=synthetic-invitation",
     );
+  });
+
+  it("uses the cookie token when the acceptance page has no query token", async () => {
+    authMock.mockResolvedValue({ user: { id: "user-1" } });
+    cookieHeader = "uribap_invitation_token=held-invitation";
+
+    const page = await InvitationAcceptPage({ searchParams: Promise.resolve({}) });
+    render(page);
+
+    expect(screen.getByLabelText("Código de invitación")).toHaveValue("held-invitation");
+  });
+
+  it("prefers the query token over the cookie token", async () => {
+    authMock.mockResolvedValue({ user: { id: "user-1" } });
+    cookieHeader = "uribap_invitation_token=held-invitation";
+
+    const page = await InvitationAcceptPage({
+      searchParams: Promise.resolve({ token: "query-invitation" }),
+    });
+    render(page);
+
+    expect(screen.getByLabelText("Código de invitación")).toHaveValue("query-invitation");
+  });
+
+  it("keeps the invitation token out of the login return target when none is available", async () => {
+    authMock.mockResolvedValue(null);
+
+    await expect(
+      InvitationAcceptPage({ searchParams: Promise.resolve({}) }),
+    ).rejects.toThrow("/login?returnTo=%2Finvitations%2Faccept:redirected to login");
   });
 
   it("rejects a request without an encrypted session cookie", async () => {

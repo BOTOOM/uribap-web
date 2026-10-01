@@ -31,3 +31,12 @@
 - [x] T013 Run all requested pnpm install, lint, typecheck, test, API contract, build, and diff checks.
 - [x] T014 Record verification and the intentionally omitted authenticated-browser/ZITADEL check in `converge.md`.
 - [x] T015 Commit and push the Web branch after the API branch SHA is available.
+
+## Phase 6: Review follow-up
+
+- [x] T016 Render pending invitations in household settings when available and ignore list-load failures.
+- [x] T017 Format invitation expiry as UTC during SSR and initial hydration, then browser-local time; use `<time>` and unit coverage.
+- [x] T018 Refresh the contract metadata generation date without changing the API revision or schema version.
+- [x] T019 Move invitation tokens out of login return URLs through an HttpOnly handoff cookie; clear it after acceptance and invalid-token responses.
+- [x] T020 Verify the handoff route, proxy bypass, return target, cookie lifecycle, and security-header invariants.
+- [x] T021 Run requested checks and record the review follow-up in `converge.md`.
