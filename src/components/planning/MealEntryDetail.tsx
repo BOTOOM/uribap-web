@@ -23,11 +23,30 @@ const MEAL_LABELS: Record<MealType, string> = {
   snack: "Snack",
 };
 
-function parseSteps(description: string | null): string[] {
-  return (description ?? "")
+export function parseRecipeDescription(
+  description: string | null,
+): { notes: string[]; steps: string[] } {
+  const lines = (description ?? "")
     .split(/\r?\n/)
-    .map((line) => line.replace(/^\s*(?:\d+[.)]|-|•)\s*/, "").trim())
+    .map((line) => line.trim())
     .filter(Boolean);
+  const stepMarker = /^\s*\d+[.)]\s+/;
+
+  if (lines.some((line) => stepMarker.test(line))) {
+    return {
+      notes: lines.filter((line) => !stepMarker.test(line)),
+      steps: lines
+        .filter((line) => stepMarker.test(line))
+        .map((line) => line.replace(stepMarker, "").trim()),
+    };
+  }
+
+  return {
+    notes: [],
+    steps: lines
+      .map((line) => line.replace(/^\s*(?:-|•)\s*/, "").trim())
+      .filter(Boolean),
+  };
 }
 
 export function MealEntryDetail({
@@ -139,7 +158,7 @@ export function MealEntryDetailView({
   const recordedCompletion =
     detail.completion?.state === "recorded" ? detail.completion : null;
   const outcome = recordedCompletion?.outcome ?? null;
-  const steps = parseSteps(detail.recipe_description);
+  const { notes: recipeNotes, steps } = parseRecipeDescription(detail.recipe_description);
   const headingId = useId();
 
   return (
@@ -219,6 +238,11 @@ export function MealEntryDetailView({
 
         <section aria-labelledby={`entry-preparation-${headingId}`}>
           <h3 id={`entry-preparation-${headingId}`}>Preparación</h3>
+          {recipeNotes.map((note, index) => (
+            <p className="entry-recipe-notes" key={`${index}-${note}`}>
+              {note}
+            </p>
+          ))}
           {steps.length >= 2 ? (
             <ol className="entry-steps">
               {steps.map((step, index) => (

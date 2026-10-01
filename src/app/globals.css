@@ -1125,6 +1125,12 @@ button.avatar {
   background: var(--surface-subtle);
 }
 
+.entry-recipe-notes {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .entry-detail-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);

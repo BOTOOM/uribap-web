@@ -104,6 +104,23 @@ describe("MealEntryDetailView", () => {
     expect(screen.getByText("Agregar las verduras.")).toBeInTheDocument();
   });
 
+  it("renders recipe notes above the numbered preparation list", () => {
+    const { container } = renderDetail({
+      recipe_description:
+        "Rinde 2 porciones.\n1. Hervir el pollo.\nEquipo: olla a presión.\n2. Añadir verduras.",
+    });
+
+    const preparation = container.querySelector('[aria-labelledby^="entry-preparation-"]');
+    expect(preparation?.querySelectorAll(".entry-recipe-notes")).toHaveLength(2);
+    expect(preparation?.querySelector(".entry-recipe-notes")?.textContent).toBe(
+      "Rinde 2 porciones.",
+    );
+    expect(preparation?.querySelector(".entry-steps")).toBeInTheDocument();
+    expect(preparation?.querySelector(".entry-recipe-notes")?.compareDocumentPosition(
+      preparation.querySelector(".entry-steps")!,
+    )).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it("removes bullet markers and blank lines from preparation steps", () => {
     const { container } = renderDetail({
       recipe_description: "  • Saltear las verduras.\n\n - Servir caliente.",
