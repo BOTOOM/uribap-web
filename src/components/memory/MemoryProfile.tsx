@@ -40,7 +40,7 @@ export function MemoryProfile({
 
   return (
     <div className="memory-settings">
-      <p aria-live="polite" className="sr-only" role="status">
+      <p aria-live="polite" className="form-status" role="status">
         {archiveMessage}
       </p>
       <div className="page-head memory-page-head">

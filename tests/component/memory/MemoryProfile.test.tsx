@@ -138,13 +138,18 @@ describe("MemoryProfile", () => {
     fireEvent.click(screen.getByRole("button", { name: "Archivar persona" }));
     await waitFor(() => expect(screen.getByText("Persona archivada.")).toBeInTheDocument());
 
+    const archiveStatus = screen.getByRole("status");
+    expect(archiveStatus).not.toHaveClass("sr-only");
+    expect(archiveStatus).toBeVisible();
+    expect(archiveStatus).toHaveTextContent("Persona archivada.");
+
     view.rerender(
       <MemoryProfile
         members={[linkedMember, availableMember]}
         profile={{ ...profile, diners: [] }}
       />,
     );
-    expect(screen.getByText("Persona archivada.")).toBeInTheDocument();
+    expect(screen.getByText("Persona archivada.")).toBeVisible();
     expect(navigationMocks.refresh).toHaveBeenCalled();
   });
 });
