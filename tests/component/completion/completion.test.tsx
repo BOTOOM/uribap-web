@@ -18,7 +18,7 @@ describe("meal completion flows", () => {
 
   it("posts a completion with an empty body for planned defaults", async () => {
     render(<CompleteMealButton planId="plan-1" entryId="entry-1" />);
-    fireEvent.click(screen.getByRole("button", { name: "Completar comida" }));
+    fireEvent.click(screen.getByRole("button", { name: "Marcar como cocinada" }));
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     expect(fetch).toHaveBeenCalledWith(
       "/api/plans/plan-1/entries/entry-1/complete",
@@ -43,7 +43,7 @@ describe("meal completion flows", () => {
       }),
     );
     render(<CompleteMealButton planId="plan-1" entryId="entry-1" />);
-    fireEvent.click(screen.getByRole("button", { name: "Completar comida" }));
+    fireEvent.click(screen.getByRole("button", { name: "Marcar como cocinada" }));
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Recargar" })).toBeInTheDocument(),
     );

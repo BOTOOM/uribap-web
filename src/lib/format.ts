@@ -82,6 +82,19 @@ export function toIsoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+export function todayInTimeZone(timeZone: string): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+  } catch {
+    return toIsoDay(new Date());
+  }
+}
+
 export function addDays(isoDay: string, days: number): string {
   const date = asDate(isoDay);
   date.setUTCDate(date.getUTCDate() + days);
