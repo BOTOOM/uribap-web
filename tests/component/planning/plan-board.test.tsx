@@ -17,6 +17,7 @@ const ENTRY: BoardEntry = {
   recipeName: "Arroz con pollo",
   outcome: null,
   completed: false,
+  completionVersion: null,
 };
 
 const DETAIL: MealEntryDetail = {
@@ -131,7 +132,7 @@ describe("weekly plan board", () => {
     );
   });
 
-  it("selects today's first pending meal in meal order", () => {
+  it("selects the first pending meal by meal order when entries arrive out of order", () => {
     const completedBreakfast: BoardEntry = {
       ...ENTRY,
       id: "completed-breakfast",
@@ -163,6 +164,36 @@ describe("weekly plan board", () => {
     expect(
       screen.getByRole("button", { name: /avena/i }),
     ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("refetches meal detail when a recorded completion version changes", async () => {
+    const recordedEntry: BoardEntry = {
+      ...ENTRY,
+      outcome: "cooked",
+      completed: true,
+      completionVersion: 3,
+    };
+    const correctedEntry = { ...recordedEntry, completionVersion: 4 };
+    const fetchMock = vi.fn(async () => Response.json({ detail: DETAIL }));
+    vi.stubGlobal("fetch", fetchMock);
+    const props = {
+      entries: [recordedEntry],
+      ingredients: INGREDIENTS,
+      planId: "plan-1",
+      state: "approved" as const,
+      today: "2026-09-28",
+      version: 1,
+      versions: VERSIONS,
+      weekStart: "2026-09-28",
+    };
+    const view = render(<PlanBoard {...props} />);
+
+    expect(await screen.findByRole("heading", { name: "Arroz con pollo" })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    view.rerender(<PlanBoard {...props} entries={[correctedEntry]} />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
   it("shows weekday initials, dates, meal counts, and dots for populated days", () => {

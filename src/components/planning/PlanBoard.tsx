@@ -45,6 +45,7 @@ export type BoardEntry = {
   recipeName: string;
   outcome: "cooked" | "skipped" | null;
   completed: boolean;
+  completionVersion: number | null;
 };
 
 export function PlanBoard({
@@ -208,7 +209,7 @@ export function PlanBoard({
           entryId={selected.id}
           planId={planId}
           planState={state}
-          refreshKey={`${selected.id}:${selected.outcome ?? "pending"}`}
+          refreshKey={`${selected.id}:${selected.outcome ?? "pending"}:${selected.completionVersion ?? "none"}`}
           version={version}
         />
       ) : (

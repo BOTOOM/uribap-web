@@ -14,6 +14,7 @@ const ENTRY = {
   recipeName: "Arroz con pollo",
   outcome: null,
   completed: false,
+  completionVersion: null,
 };
 
 describe("planner motion contract", () => {

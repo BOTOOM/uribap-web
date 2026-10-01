@@ -22,10 +22,32 @@
 
 The initial lint run identified a synchronous state update in the detail-fetch effect; the component now derives its loading state from the active request key. The first component-test run exposed incorrect fixture/query expectations, which were corrected before the passing full suite. Typecheck initially read a stale ignored `.next` route validator; `pnpm exec next typegen` refreshed generated route types before the passing typecheck.
 
-The feature was not visually inspected by this agent. The lead-owned 375, 768, 1024, and 1440px review remains open below.
+The lead completed the rendered review recorded below; this agent did not repeat it.
 
-## Lead-Owned Rendered Review — Open
+## Lead-Owned Rendered Review — Completed
 
-- [ ] Lead rendered review on dev preview at 375, 768, 1024, and 1440px; record overflow, layout, and accessibility observations here.
+- [x] Lead rendered review completed on the dev preview at 375, 768, 1024, and 1440px on commit `925bd4b`.
+- Commit `5f2c558` changed only recipe-description text parsing; its behavior is covered by unit tests.
 
-Do not mark this review complete until the lead has inspected the pushed branch's local preview.
+## Review Follow-up
+
+- The initial meal selection is derived from the meal-order-sorted `byDay.get(today)` list.
+  The out-of-order regression test verifies the first unresolved meal is selected before
+  later meals in the received order.
+- Recorded completion versions now flow from the plan page into the board entry refresh
+  key. When a line correction triggers `router.refresh()`, the changed completion version
+  causes `MealEntryDetail` to request fresh detail data. The regression test verifies a
+  version change from 3 to 4 triggers a second detail request.
+- The lead's rendered review above was performed on `925bd4b`; the later parser-only
+  change in `5f2c558` is covered by unit tests. This follow-up did not repeat the visual
+  review.
+
+| Review follow-up check | Result |
+|---|---|
+| `pnpm lint` | PASS |
+| `pnpm typecheck` | PASS |
+| `pnpm test` | PASS — 190 tests across 39 files |
+| `pnpm build` | PASS |
+| `pnpm api:check` | NOT RUN — no contract files changed |
+| `pnpm audit --audit-level=high` | NOT RUN — dependency remediation remains separate in PR #154 |
+| `pnpm test:e2e` / `pnpm test:a11y` | NOT RUN in this follow-up; no gated browser workflow was requested |
