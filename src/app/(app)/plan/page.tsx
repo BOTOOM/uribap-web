@@ -189,7 +189,7 @@ export default async function PlanPage({
   );
 
   const boardEntries = plan.entries.map((entry) => {
-    const outcome = recordedByEntry.get(entry.id)?.outcome ?? null;
+    const completion = recordedByEntry.get(entry.id) ?? null;
     return {
       id: entry.id,
       plannedDate: entry.planned_date,
@@ -197,8 +197,9 @@ export default async function PlanPage({
       servings: entry.servings,
       notes: entry.notes,
       recipeName: versionNames.get(entry.recipe_version_id) ?? "Receta del hogar",
-      outcome,
-      completed: outcome !== null,
+      outcome: completion?.outcome ?? null,
+      completed: completion !== null,
+      completionVersion: completion?.version ?? null,
     };
   });
   const completedCount = boardEntries.filter((entry) => entry.completed).length;
