@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import {
+  INVITATION_TOKEN_MAX_AGE,
+  invitationTokenCookieName,
   invitationTokenCookieOptions,
-  INVITATION_TOKEN_COOKIE,
+  isInvitationToken,
 } from "@/lib/auth/invitation-token-cookie";
 
 function applyHandoffHeaders(response: NextResponse) {
@@ -13,7 +15,7 @@ function applyHandoffHeaders(response: NextResponse) {
 
 export function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token");
-  if (!token) {
+  if (!isInvitationToken(token)) {
     return applyHandoffHeaders(
       NextResponse.json(
         { code: "validation_error", detail: "La invitación no es válida." },
@@ -22,12 +24,15 @@ export function GET(request: Request) {
     );
   }
 
-  const loginUrl = new URL("/login?returnTo=/invitations/accept", request.url);
-  const response = NextResponse.redirect(loginUrl, { status: 303 });
+  const flow = crypto.randomUUID();
+  const response = NextResponse.redirect(
+    new URL(`/invitations/accept?flow=${flow}`, request.url),
+    { status: 303 },
+  );
   response.cookies.set(
-    INVITATION_TOKEN_COOKIE,
+    invitationTokenCookieName(flow),
     token,
-    invitationTokenCookieOptions(3600),
+    invitationTokenCookieOptions(INVITATION_TOKEN_MAX_AGE),
   );
   return applyHandoffHeaders(response);
 }

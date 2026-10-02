@@ -37,7 +37,7 @@ A person who opens a token link while signed out returns to that invitation afte
 
 **Acceptance Scenarios**:
 
-1. **Given** a signed-out person opens an invitation URL with a token, **When** they are redirected to login, **Then** the return target contains that token.
+1. **Given** a person opens an invitation URL with a token, **When** the link is handed off, **Then** the token moves into a flow-scoped HttpOnly cookie and the browser continues to a token-free acceptance URL; login return targets contain only the flow.
 2. **Given** onboarding loads pending invitations, **When** invitations are present, **Then** each displays the household, localized role, and expiry.
 3. **Given** a person accepts a pending invitation, **When** the request succeeds, **Then** they are sent to `/plan` and the page refreshes.
 4. **Given** acceptance fails, **When** the person tries again, **Then** an accessible error is displayed without leaving onboarding.
@@ -77,7 +77,7 @@ A signed-in person can still create a household if pending invitations cannot be
   - `existing_account`: “Invitación creada. Esta persona ya tiene cuenta: verá la invitación al entrar a Uribap.”
   - `email`: “Invitación enviada por correo.”
   - `failed`: “La invitación quedó creada, pero no se pudo enviar el correo. Pídele que entre a Uribap con este email para aceptarla.”
-- **FR-004**: The token-acceptance login redirect MUST preserve the invitation token in its return target.
+- **FR-004**: The acceptance page MUST move a valid token from its query into a flow-scoped HttpOnly cookie and redirect to `/invitations/accept?flow=<uuid>`. The cookie MUST remain available for the API's maximum 168-hour invitation lifetime. The token MUST NOT remain in the post-handoff URL, login `returnTo`, or client props. Each tab MUST receive an independent flow and cookie.
 - **FR-005**: Onboarding MUST request pending invitations and show them only when the request succeeds with items.
 - **FR-006**: Each pending invitation MUST show its household name, Spanish role label, expiry, and an acceptance action.
 - **FR-007**: Successful in-app acceptance MUST navigate to `/plan` and refresh the route; failure MUST remain visible.
@@ -89,14 +89,14 @@ A signed-in person can still create a household if pending invitations cannot be
 
 - **Delivery outcome**: The result of invitation delivery, used to select user-facing status copy.
 - **Pending household invitation**: An invitation for the signed-in person's verified email, including household, role, inviter, and expiry information.
-- **Invitation return target**: The safe internal destination used after sign-in, including the original invitation token when present.
+- **Invitation return target**: The safe internal destination used after sign-in, containing only the invitation flow identifier and never the token.
 
 ## Success Criteria
 
 ### Measurable Outcomes
 
 - **SC-001**: Each of the four delivery outcomes produces its specified Spanish message.
-- **SC-002**: A signed-out invitation link returns to the original token-bearing acceptance route after login.
+- **SC-002**: A handed-off invitation returns after login through its flow-only acceptance URL, with its token held in an HttpOnly cookie for up to 168 hours; concurrent tabs retain separate flows, and the token is absent from the return target and RSC/client-component props.
 - **SC-003**: A person can accept a displayed pending invitation with one action and is navigated to `/plan` on success.
 - **SC-004**: A pending-invitation lookup failure does not remove the household-creation form from onboarding.
 - **SC-005**: Invitation acceptance errors are exposed through an accessible alert and do not trigger success navigation.

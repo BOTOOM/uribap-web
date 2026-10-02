@@ -2,9 +2,9 @@
 
 ## Scope
 
-Consume the API's ZITADEL invitation outcomes and by-ID acceptance contract, preserve
-invitation tokens during login, and let signed-in users accept pending invitations
-during onboarding.
+Consume the API's ZITADEL invitation outcomes and by-ID acceptance contract, securely
+hand off invitation tokens through login, and let signed-in users accept pending
+invitations during onboarding.
 
 ## Verification record
 
@@ -31,11 +31,14 @@ and E2E testing are outside the requested verification scope.
   when items are returned, and treats load failures as an empty list.
 - Expiry dates use `<time dateTime>` and render in UTC for SSR and the initial client
   render, switching to the browser-local time zone after the hydration effect.
-- Invitation tokens are handed off through the HttpOnly `uribap_invitation_token`
-  cookie. The public hold route returns a 303 to the token-free login return target,
-  sets `Referrer-Policy: no-referrer` and `Cache-Control: no-store`, and clears the
-  cookie after successful acceptance or API 404/410 responses. The proxy allows this
-  handoff route without requiring a session.
+- Invitation tokens are handed off through the per-flow HttpOnly
+  `uribap_invitation_token_<flow>` cookie for the API's 168-hour maximum lifetime.
+  The public hold route validates the token, returns a 303 to a token-free acceptance
+  URL, and sets `Referrer-Policy: no-referrer` and `Cache-Control: no-store`. Login
+  return targets contain only the validated flow; client props contain only the flow
+  and whether its cookie exists. Each tab receives an independent UUID flow. Successful
+  acceptance and API 404/410 responses clear only the matching flow cookie. The proxy
+  allows the hold route without requiring a session.
 - No metadata-generation script exists in this repository. `pnpm api:generate`
   generates only the TypeScript client, so `contracts/metadata.json` and its pinned
   test were updated to `2026-10-01`; `apiRevision` and `schemaVersion` were preserved.
@@ -54,3 +57,17 @@ and E2E testing are outside the requested verification scope.
   This follows the review brief's explicit limits; the changed UI is visually
   unverified. Dependency audit remediation remains separate in PR #154 and was not
   folded into this branch.
+
+## Flow-scoped handoff follow-up
+
+- `pnpm lint` — passed.
+- `pnpm typecheck` — passed.
+- `pnpm test` — passed: 200 tests across 44 files, including flow-cookie isolation,
+  invalid-token rejection, flow-based acceptance, manual entry, and token-free page
+  props.
+- `pnpm build` — passed with Next.js 16.3.3; all 21 prerendered pages generated, and
+  the invitation acceptance page plus hold/accept routes were reported as dynamic.
+- The proxy was left unchanged: it already exempts the hold route from authentication
+  and does not reference the former shared cookie name.
+- No visual or authenticated-browser/E2E check was run; the updated UI is visually
+  unverified.

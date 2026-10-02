@@ -6,21 +6,36 @@ import { InvitationAcceptanceForm } from "@/components/household/InvitationAccep
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import { auth } from "@/lib/auth/auth";
 import { invitationLoginRedirect } from "@/lib/auth/invitation-return-to";
-import { INVITATION_TOKEN_COOKIE } from "@/lib/auth/invitation-token-cookie";
-
+import {
+  invitationTokenCookieName,
+  isInvitationFlow,
+} from "@/lib/auth/invitation-token-cookie";
 
 export const dynamic = "force-dynamic";
 export default async function InvitationAcceptPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{
+    token?: string | string[];
+    flow?: string | string[];
+  }>;
 }) {
-  const { token: searchToken } = await searchParams;
+  const { token: searchToken, flow: searchFlow } = await searchParams;
+  if (searchToken !== undefined) {
+    const token = Array.isArray(searchToken) ? searchToken.join(",") : searchToken;
+    redirect(
+      `/api/invitations/hold?token=${encodeURIComponent(token)}` as Route,
+    );
+  }
+
+  const flow = isInvitationFlow(searchFlow) ? searchFlow : null;
   const cookieStore = await cookies();
-  const token = searchToken ?? cookieStore.get(INVITATION_TOKEN_COOKIE)?.value;
+  const hasHeldInvitation = flow
+    ? cookieStore.has(invitationTokenCookieName(flow))
+    : false;
   const session = await auth();
   if (!session || session.error === "RefreshAccessTokenError" || !session.user.id) {
-    redirect(invitationLoginRedirect(token) as Route);
+    redirect(invitationLoginRedirect(flow) as Route);
   }
   return (
     <main className="auth-shell">
@@ -33,7 +48,7 @@ export default async function InvitationAcceptPage({
         <p className="muted">
           La invitación se valida en el servidor y solo puede usarse una vez.
         </p>
-        <InvitationAcceptanceForm initialToken={token ?? ""} />
+        <InvitationAcceptanceForm flow={flow} hasHeldInvitation={hasHeldInvitation} />
       </section>
     </main>
   );

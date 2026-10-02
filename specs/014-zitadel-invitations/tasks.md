@@ -37,6 +37,6 @@
 - [x] T016 Render pending invitations in household settings when available and ignore list-load failures.
 - [x] T017 Format invitation expiry as UTC during SSR and initial hydration, then browser-local time; use `<time>` and unit coverage.
 - [x] T018 Refresh the contract metadata generation date without changing the API revision or schema version.
-- [x] T019 Move invitation tokens out of login return URLs through an HttpOnly handoff cookie; clear it after acceptance and invalid-token responses.
-- [x] T020 Verify the handoff route, proxy bypass, return target, cookie lifecycle, and security-header invariants.
+- [x] T019 Move invitation tokens out of URLs and client props through per-flow HttpOnly cookies with the 168-hour lifetime; clear only the matching flow cookie after acceptance and invalid-token responses.
+- [x] T020 Verify token validation, per-tab flow isolation, proxy bypass, flow-only return targets, cookie lifecycle, and security-header invariants.
 - [x] T021 Run requested checks and record the review follow-up in `converge.md`.
