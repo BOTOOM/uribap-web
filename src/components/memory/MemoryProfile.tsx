@@ -69,7 +69,8 @@ export function MemoryProfile({
             <DinerCard
               key={dinerProfile.diner.id}
               linkedMemberName={linkedMemberName}
-              onArchived={() => setArchiveMessage("Persona archivada.")}
+              onArchiveStart={() => setArchiveMessage(null)}
+              onArchived={(dinerName) => setArchiveMessage(`Se archivó a “${dinerName}”.`)}
               profile={dinerProfile}
             />
           );

@@ -237,12 +237,21 @@ describe("DinerCard", () => {
 
   it("confirms that archived diner memories will stop being used", async () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    render(<DinerCard profile={profile()} />);
+    const onArchiveStart = vi.fn();
+    const onArchived = vi.fn();
+    render(
+      <DinerCard
+        onArchiveStart={onArchiveStart}
+        onArchived={onArchived}
+        profile={profile()}
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Archivar persona" }));
     expect(confirm).toHaveBeenCalledWith(
       expect.stringMatching(/los recuerdos dejarán de usarse/i),
     );
+    expect(onArchiveStart).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
 
     confirm.mockReturnValue(true);
@@ -251,6 +260,8 @@ describe("DinerCard", () => {
       "/api/diners/diner-1",
       expect.objectContaining({ method: "DELETE" }),
     ));
+    expect(onArchiveStart).toHaveBeenCalledTimes(1);
+    expect(onArchived).toHaveBeenCalledWith("Pareja");
   });
 
   it.each([

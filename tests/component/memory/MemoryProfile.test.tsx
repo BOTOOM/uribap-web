@@ -78,6 +78,21 @@ const profile: Profile = {
     },
   ],
 };
+const profileWithTwoDiners: Profile = {
+  ...profile,
+  diners: [
+    profile.diners[0],
+    {
+      diner: {
+        ...profile.diners[0].diner,
+        display_name: "María",
+        id: "diner-maria",
+        member_user_id: null,
+      },
+      memories: [],
+    },
+  ],
+};
 
 describe("MemoryProfile", () => {
   beforeEach(() => {
@@ -126,30 +141,88 @@ describe("MemoryProfile", () => {
     expect(screen.getByRole("button", { name: "Agregar persona" })).toBeInTheDocument();
   });
 
-  it("keeps the archive confirmation in the profile status after refresh", async () => {
+  it("clears and replaces the archive confirmation for consecutive diners", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 204,
       json: async () => null,
     });
+    let resolveSecondArchive!: (response: {
+      ok: boolean;
+      status: number;
+      json: () => Promise<null>;
+    }) => void;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSecondArchive = resolve;
+        }),
+    );
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const view = render(<MemoryProfile profile={profile} members={[linkedMember, availableMember]} />);
+    const view = render(
+      <MemoryProfile
+        profile={profileWithTwoDiners}
+        members={[linkedMember, availableMember]}
+      />,
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Archivar persona" }));
-    await waitFor(() => expect(screen.getByText("Persona archivada.")).toBeInTheDocument());
+    const archiveButtons = screen.getAllByRole("button", { name: "Archivar persona" });
+    fireEvent.click(archiveButtons[0]);
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent('Se archivó a “Pareja”.'),
+    );
 
     const archiveStatus = screen.getByRole("status");
     expect(archiveStatus).not.toHaveClass("sr-only");
     expect(archiveStatus).toBeVisible();
-    expect(archiveStatus).toHaveTextContent("Persona archivada.");
+    expect(archiveStatus).toHaveTextContent('Se archivó a “Pareja”.');
+
+    fireEvent.click(archiveButtons[1]);
+    expect(archiveStatus).toBeEmptyDOMElement();
+    resolveSecondArchive({ ok: true, status: 204, json: async () => null });
+    await waitFor(() =>
+      expect(archiveStatus).toHaveTextContent('Se archivó a “María”.'),
+    );
 
     view.rerender(
+      <MemoryProfile members={[linkedMember, availableMember]} profile={{ ...profileWithTwoDiners, diners: [] }} />,
+    );
+    expect(archiveStatus).toBeVisible();
+    expect(archiveStatus).toHaveTextContent('Se archivó a “María”.');
+    expect(navigationMocks.refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears the previous archive success when a later archive fails", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ detail: "No se pudo archivar a la persona." }),
+      });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(
       <MemoryProfile
+        profile={profileWithTwoDiners}
         members={[linkedMember, availableMember]}
-        profile={{ ...profile, diners: [] }}
       />,
     );
-    expect(screen.getByText("Persona archivada.")).toBeVisible();
-    expect(navigationMocks.refresh).toHaveBeenCalled();
+
+    const archiveButtons = screen.getAllByRole("button", { name: "Archivar persona" });
+    fireEvent.click(archiveButtons[0]);
+    await waitFor(() =>
+      expect(screen.getAllByRole("status")[0]).toHaveTextContent('Se archivó a “Pareja”.'),
+    );
+
+    fireEvent.click(archiveButtons[1]);
+    await waitFor(() => expect(screen.getAllByRole("status")).toHaveLength(2));
+    expect(screen.getAllByRole("status")[0]).toBeEmptyDOMElement();
+    expect(screen.getAllByRole("status")[1]).toHaveTextContent(
+      "No se pudo archivar a la persona.",
+    );
   });
 });

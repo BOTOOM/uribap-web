@@ -16,11 +16,13 @@ type DinerProfile = components["schemas"]["DinerMemoryProfile"];
 export function DinerCard({
   profile,
   linkedMemberName,
+  onArchiveStart,
   onArchived,
 }: {
   profile: DinerProfile;
   linkedMemberName?: string | null;
-  onArchived?: () => void;
+  onArchiveStart?: () => void;
+  onArchived?: (dinerName: string) => void;
 }) {
   const router = useRouter();
   const id = useId();
@@ -83,10 +85,11 @@ export function DinerCard({
   }
 
   async function archive() {
-      const confirmed = window.confirm(
+    const confirmed = window.confirm(
       `Al archivar a “${diner.display_name}”, los recuerdos dejarán de usarse para sugerir comidas. ¿Quieres continuar?`,
     );
     if (!confirmed) return;
+    onArchiveStart?.();
     setPending(true);
     setMessage(null);
     try {
@@ -98,7 +101,7 @@ export function DinerCard({
         setIsError(true);
         return;
       }
-      onArchived?.();
+      onArchived?.(diner.display_name);
       router.refresh();
     } catch (error) {
       setMessage(
