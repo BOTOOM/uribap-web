@@ -6,11 +6,20 @@ import { useRouter } from "next/navigation";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingState } from "@/components/states/LoadingState";
 
-export function InvitationAcceptanceForm({ initialToken }: { initialToken: string }) {
+export function InvitationAcceptanceForm({
+  flow,
+  hasHeldInvitation,
+  heldInvitationUnavailable,
+}: {
+  flow: string | null;
+  hasHeldInvitation: boolean;
+  heldInvitationUnavailable: boolean;
+}) {
   const router = useRouter();
-  const [token, setToken] = useState(initialToken);
+  const [token, setToken] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const usesHeldInvitation = hasHeldInvitation && flow !== null;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -20,7 +29,7 @@ export function InvitationAcceptanceForm({ initialToken }: { initialToken: strin
       const response = await fetch("/api/invitations/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify(usesHeldInvitation ? { flow } : { token }),
       });
       if (!response.ok) {
         const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
@@ -39,22 +48,32 @@ export function InvitationAcceptanceForm({ initialToken }: { initialToken: strin
   return (
     <div>
       <form className="form" onSubmit={submit}>
-        <div className="field">
-          <label className="field-label" htmlFor="invite-token">
-            Código de invitación
-          </label>
-          <input
-            className="input"
-            id="invite-token"
-            minLength={20}
-            required
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-          />
-          <span className="helper">
-            El código llega por correo — en local lo captura Mailpit.
-          </span>
-        </div>
+        {heldInvitationUnavailable ? (
+          <p className="form-status error" role="alert">
+            La invitación ya no está disponible; abre de nuevo el enlace del correo o pega el
+            código.
+          </p>
+        ) : null}
+        {usesHeldInvitation ? null : (
+          <div className="field">
+            <label className="field-label" htmlFor="invite-token">
+              Código de invitación
+            </label>
+            <input
+              className="input"
+              id="invite-token"
+              maxLength={256}
+              minLength={16}
+              pattern="[A-Za-z0-9_-]{16,256}"
+              required
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+            />
+            <span className="helper">
+              El código llega en el correo de invitación.
+            </span>
+          </div>
+        )}
         <div>
           <button className="btn btn-primary" type="submit">
             Aceptar invitación

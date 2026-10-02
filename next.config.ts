@@ -48,6 +48,14 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/api/invitations/hold",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      {
+        source: "/invitations/accept",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
     ];
   },
 };
