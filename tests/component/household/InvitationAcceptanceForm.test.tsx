@@ -34,7 +34,13 @@ describe("InvitationAcceptanceForm", () => {
   });
 
   it("accepts a held invitation without rendering its token input", async () => {
-    render(<InvitationAcceptanceForm flow={FLOW} hasHeldInvitation />);
+    render(
+      <InvitationAcceptanceForm
+        flow={FLOW}
+        hasHeldInvitation
+        heldInvitationUnavailable={false}
+      />,
+    );
 
     expect(screen.queryByLabelText("Código de invitación")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Aceptar invitación" }));
@@ -53,7 +59,13 @@ describe("InvitationAcceptanceForm", () => {
   });
 
   it("keeps manual token entry when there is no held invitation", async () => {
-    render(<InvitationAcceptanceForm flow={null} hasHeldInvitation={false} />);
+    render(
+      <InvitationAcceptanceForm
+        flow={null}
+        hasHeldInvitation={false}
+        heldInvitationUnavailable={false}
+      />,
+    );
 
     fireEvent.change(screen.getByLabelText("Código de invitación"), {
       target: { value: TOKEN },
@@ -69,5 +81,20 @@ describe("InvitationAcceptanceForm", () => {
         }),
       ),
     );
+  });
+
+  it("explains when a held invitation is unavailable and keeps manual entry usable", () => {
+    render(
+      <InvitationAcceptanceForm
+        flow={FLOW}
+        hasHeldInvitation={false}
+        heldInvitationUnavailable
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "La invitación ya no está disponible; abre de nuevo el enlace del correo o pega el código.",
+    );
+    expect(screen.getByLabelText("Código de invitación")).toBeEnabled();
   });
 });

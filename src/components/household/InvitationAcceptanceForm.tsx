@@ -9,9 +9,11 @@ import { LoadingState } from "@/components/states/LoadingState";
 export function InvitationAcceptanceForm({
   flow,
   hasHeldInvitation,
+  heldInvitationUnavailable,
 }: {
   flow: string | null;
   hasHeldInvitation: boolean;
+  heldInvitationUnavailable: boolean;
 }) {
   const router = useRouter();
   const [token, setToken] = useState("");
@@ -46,6 +48,12 @@ export function InvitationAcceptanceForm({
   return (
     <div>
       <form className="form" onSubmit={submit}>
+        {heldInvitationUnavailable ? (
+          <p className="form-status error" role="alert">
+            La invitación ya no está disponible; abre de nuevo el enlace del correo o pega el
+            código.
+          </p>
+        ) : null}
         {usesHeldInvitation ? null : (
           <div className="field">
             <label className="field-label" htmlFor="invite-token">

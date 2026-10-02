@@ -48,7 +48,11 @@ export default async function InvitationAcceptPage({
         <p className="muted">
           La invitación se valida en el servidor y solo puede usarse una vez.
         </p>
-        <InvitationAcceptanceForm flow={flow} hasHeldInvitation={hasHeldInvitation} />
+        <InvitationAcceptanceForm
+          flow={flow}
+          hasHeldInvitation={hasHeldInvitation}
+          heldInvitationUnavailable={flow !== null && !hasHeldInvitation}
+        />
       </section>
     </main>
   );

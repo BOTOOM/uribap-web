@@ -57,7 +57,7 @@ describe("invitation acceptance page", () => {
     expect(mocks.auth).not.toHaveBeenCalled();
   });
 
-  it("passes only the flow and cookie-presence flag to the client form", async () => {
+  it("passes only flow and cookie availability to the client form", async () => {
     const hasCookie = vi.fn(
       (name: string) => name === invitationTokenCookieName(FLOW),
     );
@@ -72,9 +72,28 @@ describe("invitation acceptance page", () => {
 
     expect(hasCookie).toHaveBeenCalledWith(invitationTokenCookieName(FLOW));
     expect(form).toBeDefined();
-    expect(form?.props).toEqual({ flow: FLOW, hasHeldInvitation: true });
+    expect(form?.props).toEqual({
+      flow: FLOW,
+      hasHeldInvitation: true,
+      heldInvitationUnavailable: false,
+    });
     expect(JSON.stringify(form?.props)).not.toContain(TOKEN);
     expect(getCookie).not.toHaveBeenCalled();
+  });
+
+  it("marks a missing held invitation as unavailable", async () => {
+    mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
+
+    const page = await InvitationAcceptPage({
+      searchParams: Promise.resolve({ flow: FLOW }),
+    });
+    const form = findAcceptanceForm(page);
+
+    expect(form?.props).toEqual({
+      flow: FLOW,
+      hasHeldInvitation: false,
+      heldInvitationUnavailable: true,
+    });
   });
 
   it("returns to the token-free flow URL when login is required", async () => {
