@@ -21,6 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Ingredientes", href: "/ingredientes", icon: "carrot" },
   { label: "Preparación", href: "/preparacion", icon: "clock" },
   { label: "Hogar", href: "/settings/household" as Route, icon: "users" },
+  { label: "Memoria", href: "/settings/memoria" as Route, icon: "heart" },
   { label: "Agentes", href: "/settings/agentes" as Route, icon: "bot" },
 ];
 
