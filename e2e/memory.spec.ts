@@ -11,8 +11,8 @@ test.describe("household memory settings", () => {
     await expect(page.getByRole("heading", { name: "Memoria del hogar" })).toBeVisible();
 
     const content = `E2E household memory ${Date.now()}`;
-    await page.getByLabel("Tipo de recuerdo nuevo").first().selectOption("note");
-    await page.getByLabel("Recuerdo nuevo").first().fill(content);
+    await page.getByLabel("Tipo de recuerdo nuevo", { exact: true }).first().selectOption("note");
+    await page.getByLabel("Recuerdo nuevo", { exact: true }).first().fill(content);
     await page.getByRole("button", { name: "Agregar recuerdo" }).first().click();
     await expect(page.getByText(content)).toBeVisible();
 
@@ -24,15 +24,17 @@ test.describe("household memory settings", () => {
     await page.getByLabel("Nombre de la persona").fill(dinerName);
     await page.getByRole("button", { name: "Agregar persona" }).click();
     const dinerCard = page.locator("article.memory-diner-card").filter({ hasText: dinerName });
-    await expect(dinerCard.getByRole("heading", { name: dinerName })).toBeVisible();
+    await expect(
+      dinerCard.getByRole("heading", { name: dinerName, exact: true }),
+    ).toBeVisible();
 
-    await dinerCard.getByLabel("Tipo de recuerdo nuevo").selectOption("restriction");
-    await dinerCard.getByLabel("Recuerdo nuevo").fill("E2E sin nueces");
+    await dinerCard.getByLabel("Tipo de recuerdo nuevo", { exact: true }).selectOption("restriction");
+    await dinerCard.getByLabel("Recuerdo nuevo", { exact: true }).fill("E2E sin nueces");
     await dinerCard.getByRole("button", { name: "Agregar recuerdo" }).click();
     await expect(dinerCard.getByText("E2E sin nueces")).toBeVisible();
 
-    await dinerCard.getByLabel("Tipo de recuerdo nuevo").selectOption("like");
-    await dinerCard.getByLabel("Recuerdo nuevo").fill("E2E le gusta el arroz");
+    await dinerCard.getByLabel("Tipo de recuerdo nuevo", { exact: true }).selectOption("like");
+    await dinerCard.getByLabel("Recuerdo nuevo", { exact: true }).fill("E2E le gusta el arroz");
     await dinerCard.getByRole("button", { name: "Agregar recuerdo" }).click();
     await expect(dinerCard.getByText("E2E le gusta el arroz")).toBeVisible();
 
@@ -48,8 +50,12 @@ test.describe("household memory settings", () => {
 
     page.once("dialog", (dialog) => dialog.accept());
     await dinerCard.getByRole("button", { name: "Archivar persona" }).click();
-    await expect(page.getByText("Persona archivada.")).toHaveText("Persona archivada.");
-    await expect(page.getByRole("heading", { name: dinerName })).toHaveCount(0);
+    await expect(
+      page.getByText(`Se archivó a “${dinerName}”.`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: dinerName, exact: true }),
+    ).toHaveCount(0);
 
     for (const width of [375, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
