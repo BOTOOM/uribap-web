@@ -47,23 +47,40 @@ describe("onboarding route membership authority", () => {
 
   it("does not redirect from stale session memberships when the API reports none", async () => {
     mocks.auth.mockResolvedValue({ user: { memberships: [{ householdId: "stale", status: "active" }] } });
-    mocks.serverApiFetch.mockResolvedValue({ memberships: [] });
+    mocks.serverApiFetch
+      .mockResolvedValueOnce({ memberships: [] })
+      .mockResolvedValueOnce({ items: [] });
 
     const page = await OnboardingPage();
 
     expect(page.type).toBe("main");
     expect(mocks.serverApiFetch).toHaveBeenCalledWith("/me");
+    expect(mocks.serverApiFetch).toHaveBeenCalledWith("/me/invitations");
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
   it("keeps onboarding for inactive API memberships", async () => {
     mocks.auth.mockResolvedValue({ user: { memberships: [] } });
-    mocks.serverApiFetch.mockResolvedValue({ memberships: [{ status: "inactive" }] });
+    mocks.serverApiFetch
+      .mockResolvedValueOnce({ memberships: [{ status: "inactive" }] })
+      .mockResolvedValueOnce({ items: [] });
 
     const page = await OnboardingPage();
 
     expect(page.type).toBe("main");
     expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("keeps onboarding when pending invitations cannot be loaded", async () => {
+    mocks.auth.mockResolvedValue({ user: { memberships: [] } });
+    mocks.serverApiFetch
+      .mockResolvedValueOnce({ memberships: [] })
+      .mockRejectedValueOnce(new Error("Invitations unavailable"));
+
+    const page = await OnboardingPage();
+
+    expect(page.type).toBe("main");
+    expect(mocks.serverApiFetch).toHaveBeenNthCalledWith(2, "/me/invitations");
   });
 
   it("redirects when the API reports an active membership even if the session snapshot is empty", async () => {

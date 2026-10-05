@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Use the Web repository on `devin/1790823174-household-memory`.
-- The API 018 OpenAPI snapshot is pinned from API commit `0a5114160468f4fdc51937c615441eebb0a6f263`.
+- The API 018 OpenAPI snapshot is pinned from API commit `ef792f4909e0960133441b13308aa3ee699b87b6`.
 - Use the existing authenticated local stack for gated E2E only; the uncommitted preview uses fixture data.
 
 ## Validate

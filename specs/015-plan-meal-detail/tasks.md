@@ -12,7 +12,7 @@
 
 **Purpose**: Pin the API contract and generate the feature's TypeScript boundary.
 
-- [x] T001 Update `contracts/uribap-api.openapi.json`, `contracts/metadata.json`, `src/lib/api/generated/schema.ts`, and `tests/unit/api-contract.test.ts` to API revision `b7281461476b5ad312f0e2966328922c0e3d3b2a`, schema `v13`, and generated date `2026-10-01`.
+- [x] T001 Update `contracts/uribap-api.openapi.json`, `contracts/metadata.json`, `src/lib/api/generated/schema.ts`, and `tests/unit/api-contract.test.ts` to API revision `03dcb972b7fdc5a3d341894a80a4eabcebf32605`, schema `v13`, and generated date `2026-10-05`.
 
 ---
 

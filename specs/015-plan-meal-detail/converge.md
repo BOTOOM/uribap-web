@@ -2,7 +2,7 @@
 
 ## Implementation and Verification
 
-- [x] API v13 contract pinned to `b7281461476b5ad312f0e2966328922c0e3d3b2a`.
+- [x] API v13 contract pinned to `03dcb972b7fdc5a3d341894a80a4eabcebf32605`.
 - [x] Required `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm api:check`, and `pnpm build` checks pass.
 - [x] `git diff --check` passes.
 - [x] `e2e/plan-detail.spec.ts` exists and follows the `RUN_PLANNING_E2E=1` authenticated-stack gate. E2E execution was not run per task scope.

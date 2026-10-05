@@ -3,7 +3,7 @@
 **Date**: 2026-10-01
 **Branch**: `devin/1790823174-household-memory`
 **Based on**: Part A commit `5f2c5589fe802ea0263e7d9e8dea198dd94b5b22`
-**Contract source**: API feature 018 commit `0a5114160468f4fdc51937c615441eebb0a6f263`
+**Contract source**: API feature 018 commit `ef792f4909e0960133441b13308aa3ee699b87b6`
 
 ## Delivered
 

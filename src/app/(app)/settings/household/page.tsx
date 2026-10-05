@@ -2,7 +2,9 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { ActivityFeed } from "@/components/household/ActivityFeed";
 import { InvitationForm } from "@/components/household/InvitationForm";
 import { MemberManagement } from "@/components/household/MemberManagement";
+import { PendingInvitations } from "@/components/household/PendingInvitations";
 import { serverApiFetch } from "@/lib/api/server-client";
+import type { components } from "@/lib/api/generated/schema";
 
 type CurrentUser = {
   memberships: Array<{
@@ -58,6 +60,7 @@ type HouseholdPageData = {
   members: Members;
   membership: CurrentUser["memberships"][number];
   activity: Activity | null;
+  pendingInvitations: components["schemas"]["PendingInvitationResponse"][];
 };
 
 async function loadHouseholdData(): Promise<HouseholdPageData | { error: string }> {
@@ -67,14 +70,17 @@ async function loadHouseholdData(): Promise<HouseholdPageData | { error: string 
     if (!membership) {
       return { error: "Crea o acepta una invitación antes de administrar el hogar." };
     }
-    const [household, members, activity] = await Promise.all([
+    const [household, members, activity, pendingInvitations] = await Promise.all([
       serverApiFetch<Household>(`/households/${membership.household_id}`),
       serverApiFetch<Members>(`/households/${membership.household_id}/members`),
       serverApiFetch<Activity>(`/households/${membership.household_id}/activity`).catch(
         () => null,
       ),
+      serverApiFetch<components["schemas"]["PendingInvitationPage"]>("/me/invitations")
+        .then((page) => page.items)
+        .catch(() => []),
     ]);
-    return { household, members, membership, activity };
+    return { household, members, membership, activity, pendingInvitations };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
   }
@@ -91,7 +97,7 @@ export default async function HouseholdSettingsPage() {
   if ("error" in data) {
     return <ErrorState description={data.error} title="No se pudo cargar el hogar" />;
   }
-  const { household, members, membership, activity } = data;
+  const { household, members, membership, activity, pendingInvitations } = data;
   const canInvite = membership.role === "owner" || membership.role === "admin";
 
   return (
@@ -105,6 +111,10 @@ export default async function HouseholdSettingsPage() {
           </p>
         </div>
       </div>
+
+      {pendingInvitations.length > 0 ? (
+        <PendingInvitations items={pendingInvitations} />
+      ) : null}
 
       <div className="grid grid-2">
         <article className="card card-flush">
@@ -140,7 +150,7 @@ export default async function HouseholdSettingsPage() {
           <div>
             <h2>Actividad del hogar</h2>
             <span className="muted">
-              Registro de eventos y avisos de correo capturados localmente.
+              Registro de eventos y estado de las notificaciones.
             </span>
           </div>
         </div>

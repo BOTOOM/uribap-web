@@ -11,6 +11,8 @@ describe("pinned API contract", () => {
     expect(contract.paths["/api/v1/health/live"]).toBeDefined();
     expect(contract.paths["/api/v1/health/ready"]).toBeDefined();
     expect(contract.paths["/api/v1/me"]).toBeDefined();
+    expect(contract.paths["/api/v1/me/invitations"]).toBeDefined();
+    expect(contract.paths["/api/v1/me/invitations/{invitation_id}/accept"]).toBeDefined();
     expect(contract.paths["/api/v1/households"]).toBeDefined();
     expect(contract.paths["/api/v1/invitations/accept"]).toBeDefined();
     expect(contract.paths["/api/v1/plans/{plan_id}/entries/{entry_id}/detail"]).toBeDefined();
@@ -31,8 +33,8 @@ describe("pinned API contract", () => {
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
     expect(metadata.schemaVersion).toBe("v14");
     expect(metadata.apiRevision).toBe(
-      "0a5114160468f4fdc51937c615441eebb0a6f263",
+      "ef792f4909e0960133441b13308aa3ee699b87b6",
     );
-    expect(metadata.generatedAt).toBe("2026-10-01");
+    expect(metadata.generatedAt).toBe("2026-10-05");
   });
 });

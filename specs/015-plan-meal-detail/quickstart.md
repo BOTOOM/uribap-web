@@ -1,6 +1,6 @@
 # Quickstart — Plan Meal Detail and Completion Outcomes
 
-1. Use the post-dependency API branch head `b7281461476b5ad312f0e2966328922c0e3d3b2a`.
+1. Use the post-dependency API branch head `03dcb972b7fdc5a3d341894a80a4eabcebf32605`.
 2. Copy `openapi/openapi.json` from that API revision to
    `contracts/uribap-api.openapi.json`, run `pnpm api:generate`, and pin metadata to
    schema `v13`, the API revision above, and date `2026-10-01`.
