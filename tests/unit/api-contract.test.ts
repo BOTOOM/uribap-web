@@ -17,14 +17,23 @@ describe("pinned API contract", () => {
     expect(contract.paths["/api/v1/invitations/accept"]).toBeDefined();
     expect(contract.paths["/api/v1/plans/{plan_id}/entries/{entry_id}/detail"]).toBeDefined();
     expect(contract.paths["/api/v1/plans/{plan_id}/entries/{entry_id}/skip"]).toBeDefined();
+    expect(contract.paths["/api/v1/memory/profile"]).toHaveProperty("get");
+    expect(contract.paths["/api/v1/diners"]).toHaveProperty("get");
+    expect(contract.paths["/api/v1/diners"]).toHaveProperty("post");
+    expect(contract.paths["/api/v1/diners/{diner_id}"]).toHaveProperty("patch");
+    expect(contract.paths["/api/v1/diners/{diner_id}"]).toHaveProperty("delete");
+    expect(contract.paths["/api/v1/memories"]).toHaveProperty("get");
+    expect(contract.paths["/api/v1/memories"]).toHaveProperty("post");
+    expect(contract.paths["/api/v1/memories/{memory_id}"]).toHaveProperty("patch");
+    expect(contract.paths["/api/v1/memories/{memory_id}"]).toHaveProperty("delete");
   });
 
   it("records the API repository, revision, and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
-    expect(metadata.schemaVersion).toBe("v13");
+    expect(metadata.schemaVersion).toBe("v14");
     expect(metadata.apiRevision).toBe(
-      "03dcb972b7fdc5a3d341894a80a4eabcebf32605",
+      "ef792f4909e0960133441b13308aa3ee699b87b6",
     );
     expect(metadata.generatedAt).toBe("2026-10-05");
   });

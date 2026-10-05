@@ -2167,6 +2167,242 @@ button.inventory-row:focus-visible {
   border-top: 0;
 }
 
+.memory-settings {
+  min-width: 0;
+}
+
+.memory-page-head {
+  margin-bottom: 18px;
+}
+
+.memory-page-head p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.memory-empty-note {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface-subtle);
+  color: var(--muted);
+}
+
+.memory-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.memory-card,
+.memory-diner-card {
+  min-width: 0;
+}
+
+.memory-card {
+  display: grid;
+  gap: 16px;
+}
+
+.memory-card-nested {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.memory-card-heading h2,
+.memory-card-heading h3 {
+  margin: 0;
+}
+
+.memory-diner-card {
+  display: grid;
+  gap: 16px;
+}
+
+.memory-diner-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.memory-diner-heading h2 {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+
+.memory-linked-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--accent) 9%, var(--surface));
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.memory-linked-chip.is-unlinked {
+  background: var(--surface-subtle);
+  color: var(--muted);
+}
+
+.memory-diner-actions,
+.memory-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.memory-diner-actions .btn-sm {
+  min-height: 44px;
+}
+
+.memory-groups {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.memory-kind-group {
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.memory-kind-group h3,
+.memory-kind-group h4 {
+  margin: 0 0 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.memory-kind-group.is-restriction {
+  padding: 12px;
+  border: 1px solid color-mix(in oklch, var(--missing) 30%, var(--border));
+  border-left: 4px solid var(--missing);
+  border-radius: 12px;
+  background: color-mix(in oklch, var(--missing) 6%, var(--surface));
+}
+
+.memory-kind-group.is-restriction h3,
+.memory-kind-group.is-restriction h4 {
+  color: var(--missing);
+}
+
+.memory-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.memory-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-top: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
+}
+
+.memory-kind-group.is-restriction .memory-item {
+  border-color: color-mix(in oklch, var(--missing) 18%, var(--border));
+}
+
+.memory-content {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.memory-actions .btn-sm {
+  min-height: 44px;
+  padding-inline: 10px;
+}
+
+.memory-edit-form {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.memory-add-form {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.memory-no-memories {
+  margin: 0;
+}
+
+.memory-add-diner {
+  max-width: 720px;
+  margin-top: 18px;
+}
+
+.memory-add-diner h2 {
+  margin-bottom: 18px;
+  font-size: clamp(22px, 2vw, 27px);
+}
+
+@media (max-width: 820px) {
+  .memory-settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .memory-diner-heading {
+    display: grid;
+  }
+
+  .memory-diner-actions {
+    width: 100%;
+  }
+
+  .memory-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .memory-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .memory-diner-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .memory-diner-actions .btn,
+  .memory-form-actions .btn {
+    width: 100%;
+  }
+
+  .memory-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .memory-add-diner {
+    padding: 18px;
+  }
+}
+
 .toggle {
   position: relative;
   width: 52px;
