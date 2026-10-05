@@ -11,8 +11,9 @@ verification scope. No additional clarification is required.
   this avoids guessing the contract revision.
 - Invitation delivery status is API-authoritative and maps one-to-one to the four
   specified Spanish messages.
-- The token is read before the auth check and nested safely inside the internal
-  `returnTo` path; the existing `safeReturnTo` preserves its query.
+- The token query is handed off through `/api/invitations/hold` to a flow-scoped
+  HttpOnly cookie before the auth check. Login `returnTo` contains only
+  `/invitations/accept?flow=<uuid>`, and `safeReturnTo` preserves that query.
 - Pending invitation retrieval is independent of the existing `/me` membership
   request, so its failure can degrade to an empty list without blocking onboarding.
 - The BFF mutation remains server-side and uses the existing authenticated request

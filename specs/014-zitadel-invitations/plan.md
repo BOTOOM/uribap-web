@@ -50,10 +50,10 @@ invitation delivery and pending invitations.
 
 ## UI and BFF Design
 
-- Build the signed-out acceptance return target in a pure helper. Read the token before
-  checking authentication and encode the full `/invitations/accept?token=...` route
-  inside the `returnTo` value. Reuse `safeReturnTo`, which retains pathname, search,
-  and fragment.
+- Move the token query into a flow-scoped HttpOnly cookie through
+  `/api/invitations/hold` before checking authentication. The hold route redirects to
+  `/invitations/accept?flow=<uuid>`; login `returnTo` carries only that flow URL, never
+  the token. Reuse `safeReturnTo`, which retains pathname, search, and fragment.
 - Add an optional invitee name field; send it only when non-empty. Use the four exact
   delivery messages in the feature specification and remove Mailpit-specific copy.
 - Fetch `/me/invitations` server-side during onboarding. If this fetch fails, treat it
