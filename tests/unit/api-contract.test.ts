@@ -6,7 +6,7 @@ const contractPath = resolve(process.cwd(), "contracts/uribap-api.openapi.json")
 const metadataPath = resolve(process.cwd(), "contracts/metadata.json");
 
 describe("pinned API contract", () => {
-  it("contains the foundation health boundary", () => {
+  it("contains the foundation and meal-detail boundaries", () => {
     const contract = JSON.parse(readFileSync(contractPath, "utf8")) as { paths: Record<string, unknown> };
     expect(contract.paths["/api/v1/health/live"]).toBeDefined();
     expect(contract.paths["/api/v1/health/ready"]).toBeDefined();
@@ -15,14 +15,16 @@ describe("pinned API contract", () => {
     expect(contract.paths["/api/v1/me/invitations/{invitation_id}/accept"]).toBeDefined();
     expect(contract.paths["/api/v1/households"]).toBeDefined();
     expect(contract.paths["/api/v1/invitations/accept"]).toBeDefined();
+    expect(contract.paths["/api/v1/plans/{plan_id}/entries/{entry_id}/detail"]).toBeDefined();
+    expect(contract.paths["/api/v1/plans/{plan_id}/entries/{entry_id}/skip"]).toBeDefined();
   });
 
   it("records the API repository, revision, and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
-    expect(metadata.schemaVersion).toBe("v12");
+    expect(metadata.schemaVersion).toBe("v13");
     expect(metadata.apiRevision).toBe(
-      "2370d69cc41d28169801f57c5d4e61ee18660605",
+      "03dcb972b7fdc5a3d341894a80a4eabcebf32605",
     );
     expect(metadata.generatedAt).toBe("2026-10-05");
   });

@@ -46,7 +46,7 @@ export function CompleteMealButton({
   return (
     <span>
       <button className="btn btn-primary" disabled={pending} onClick={complete} type="button">
-        {pending ? "Completando…" : "Completar comida"}
+        {pending ? "Guardando…" : "Marcar como cocinada"}
       </button>
       {message ? (
         <span className="form-status" role="status">

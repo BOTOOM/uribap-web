@@ -623,6 +623,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/{plan_id}/entries/{entry_id}/detail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plan Entry Detail Route */
+        get: operations["plan_entry_detail_route_api_v1_plans__plan_id__entries__entry_id__detail_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/{plan_id}/entries/{entry_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Skip Entry Route */
+        post: operations["skip_entry_route_api_v1_plans__plan_id__entries__entry_id__skip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{plan_id}/events": {
         parameters: {
             query?: never;
@@ -1677,6 +1711,11 @@ export interface components {
             /** Unit */
             unit: string;
         };
+        /**
+         * MealCompletionOutcome
+         * @enum {string}
+         */
+        MealCompletionOutcome: "cooked" | "skipped";
         /** MealCompletionPage */
         MealCompletionPage: {
             /** Items */
@@ -1719,6 +1758,9 @@ export interface components {
              */
             meal_plan_entry_id: string;
             meal_type: components["schemas"]["RecipeMealType"] | null;
+            outcome: components["schemas"]["MealCompletionOutcome"];
+            /** Outcome Note */
+            outcome_note: string | null;
             /** Planned Date */
             planned_date: string | null;
             /** Recipe Name */
@@ -1739,6 +1781,11 @@ export interface components {
             updated_at: string;
             /** Version */
             version: number;
+        };
+        /** MealCompletionSkip */
+        MealCompletionSkip: {
+            /** Reason */
+            reason?: string | null;
         };
         /**
          * MealCompletionState
@@ -1777,6 +1824,75 @@ export interface components {
             recipe_version_id: string;
             /** Servings */
             servings: number;
+        };
+        /** MealPlanEntryDetailIngredientResponse */
+        MealPlanEntryDetailIngredientResponse: {
+            /**
+             * Ingredient Id
+             * Format: uuid
+             */
+            ingredient_id: string;
+            /** Ingredient Name */
+            ingredient_name: string;
+            /** On Hand Amount */
+            on_hand_amount: string;
+            /** Optional */
+            optional: boolean;
+            /** Position */
+            position: number;
+            /** Required Amount */
+            required_amount: string;
+            /** Shortfall Amount */
+            shortfall_amount: string;
+            /** Unit */
+            unit: string;
+        };
+        /** MealPlanEntryDetailResponse */
+        MealPlanEntryDetailResponse: {
+            /** Base Servings */
+            base_servings: number;
+            completion: components["schemas"]["MealCompletionResponse"] | null;
+            /**
+             * Entry Id
+             * Format: uuid
+             */
+            entry_id: string;
+            /** Ingredients */
+            ingredients: components["schemas"]["MealPlanEntryDetailIngredientResponse"][];
+            meal_type: components["schemas"]["RecipeMealType"];
+            /** Notes */
+            notes: string | null;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            plan_state: components["schemas"]["MealPlanState"];
+            /**
+             * Planned Date
+             * Format: date
+             */
+            planned_date: string;
+            /** Prep Minutes */
+            prep_minutes: number;
+            /** Recipe Description */
+            recipe_description: string | null;
+            /**
+             * Recipe Id
+             * Format: uuid
+             */
+            recipe_id: string;
+            /** Recipe Name */
+            recipe_name: string;
+            /**
+             * Recipe Version Id
+             * Format: uuid
+             */
+            recipe_version_id: string;
+            /** Servings */
+            servings: number;
+            /** Version Number */
+            version_number: number;
         };
         /** MealPlanEntryResponse */
         MealPlanEntryResponse: {
@@ -4658,6 +4774,151 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MealCompletionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MealCompletionResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    plan_entry_detail_route_api_v1_plans__plan_id__entries__entry_id__detail_get: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Household-ID": string;
+            };
+            path: {
+                plan_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MealPlanEntryDetailResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    skip_entry_route_api_v1_plans__plan_id__entries__entry_id__skip_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key"?: string | null;
+                "X-Household-ID": string;
+            };
+            path: {
+                plan_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MealCompletionSkip"];
             };
         };
         responses: {

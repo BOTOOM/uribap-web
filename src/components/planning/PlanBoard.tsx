@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { CompleteMealButton } from "@/components/completion/CompleteMealButton";
-import { MealPlanEntryActions } from "@/components/planning/MealPlanEntryActions";
+import { MealEntryDetail } from "@/components/planning/MealEntryDetail";
 import { MealPlanEntryForm } from "@/components/planning/MealPlanEntryForm";
 import {
   Dialog,
@@ -44,7 +43,9 @@ export type BoardEntry = {
   servings: number;
   notes: string | null;
   recipeName: string;
+  outcome: "cooked" | "skipped" | null;
   completed: boolean;
+  completionVersion: number | null;
 };
 
 export function PlanBoard({
@@ -75,11 +76,6 @@ export function PlanBoard({
       }),
     [weekStart],
   );
-  const todayIndex = Math.max(0, days.indexOf(today));
-  const [activeDay, setActiveDay] = useState(todayIndex === -1 ? 0 : todayIndex);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [addDate, setAddDate] = useState<string | null>(null);
-
   const byDay = useMemo(() => {
     const map = new Map<string, BoardEntry[]>();
     for (const entry of entries) {
@@ -93,8 +89,15 @@ export function PlanBoard({
     return map;
   }, [entries]);
 
+  const todayIndex = days.indexOf(today);
+  const [activeDay, setActiveDay] = useState(todayIndex >= 0 ? todayIndex : 0);
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    const todayEntries = byDay.get(today) ?? [];
+    return (todayEntries.find((entry) => !entry.completed) ?? todayEntries[0])?.id ?? null;
+  });
+  const [addDate, setAddDate] = useState<string | null>(null);
+
   const editable = state === "draft";
-  const completable = state === "approved";
   const selected = entries.find((entry) => entry.id === selectedId) ?? null;
   const totalSlots = days.length * MEAL_TYPES.length;
 
@@ -107,17 +110,29 @@ export function PlanBoard({
       <div aria-label="Días de la semana" className="day-picker" role="tablist">
         {days.map((day, index) => {
           const count = byDay.get(day)?.length ?? 0;
+          const dateNumber = new Date(`${day}T00:00:00Z`).getUTCDate();
+          const isToday = day === today;
           return (
             <button
+              aria-label={`${formatDayLong(day)}, ${count} comidas`}
               aria-selected={activeDay === index}
-              className={activeDay === index ? "active" : undefined}
+              className={[
+                activeDay === index ? "active" : "",
+                isToday ? "today" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               key={day}
-              onClick={() => setActiveDay(index)}
+              onClick={() => {
+                setActiveDay(index);
+                setSelectedId((byDay.get(day) ?? [])[0]?.id ?? null);
+              }}
               role="tab"
               type="button"
             >
-              {dayInitial(day)}
-              {count > 0 ? <span>{count}</span> : null}
+              <span className="day-picker-initial">{dayInitial(day)}</span>
+              <span className="day-picker-date">{dateNumber}</span>
+              {count > 0 ? <span aria-hidden="true" className="day-picker-dot" /> : null}
             </button>
           );
         })}
@@ -144,18 +159,20 @@ export function PlanBoard({
                       aria-pressed={selectedId === entry.id}
                       className={`meal-card${selectedId === entry.id ? " selected" : ""}`}
                       key={entry.id}
-                      onClick={() =>
-                        setSelectedId(selectedId === entry.id ? null : entry.id)
-                      }
+                      onClick={() => {
+                        setActiveDay(index);
+                        setSelectedId(entry.id);
+                      }}
                       type="button"
                     >
                       <span className="meal-type">{MEAL_LABELS[entry.mealType]}</span>
                       <strong>{entry.recipeName}</strong>
-                      {entry.completed ? (
-                        <span className="status available">
-                          <Icon name="check" size={12} />
-                          Completada
+                      {entry.outcome === "cooked" ? (
+                        <span className="status completed">
+                          <Icon name="check" size={12} /> Cocinada
                         </span>
+                      ) : entry.outcome === "skipped" ? (
+                        <span className="status neutral">Domicilio</span>
                       ) : (
                         <span className="availability">
                           {entry.servings} raciones
@@ -187,72 +204,19 @@ export function PlanBoard({
         </div>
       </div>
 
-      <div aria-live="polite" className="card impact-panel">
-        {selected ? (
-          <>
-            <div className="impact-cell">
-              <span>
-                {formatDayLong(selected.plannedDate)} · {MEAL_LABELS[selected.mealType]}
-              </span>
-              <strong>{selected.recipeName}</strong>
-            </div>
-            <div className="impact-cell">
-              <span>Raciones</span>
-              <strong>
-                {selected.servings}
-                {selected.notes ? ` · ${selected.notes}` : ""}
-              </strong>
-            </div>
-            <div className="impact-cell">
-              <span>Estado</span>
-              <strong>
-                {selected.completed
-                  ? "Completada — inventario descontado"
-                  : completable
-                    ? "Aprobada — lista para cocinar"
-                    : "Planeada — demanda proyectada"}
-              </strong>
-            </div>
-            <div className="impact-cell">
-              <span>Acciones</span>
-              <div className="planner-actions" style={{ marginLeft: 0 }}>
-                {editable ? (
-                  <MealPlanEntryActions
-                    editable={editable}
-                    entryId={selected.id}
-                    planId={planId}
-                    version={version}
-                  />
-                ) : null}
-                {completable && !selected.completed ? (
-                  <CompleteMealButton entryId={selected.id} planId={planId} />
-                ) : null}
-                {!editable && !completable ? <span className="muted">—</span> : null}
-                {selected.completed ? <span className="muted">—</span> : null}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="impact-cell">
-              <span>Cómo funciona</span>
-              <strong>Toca una comida para ver su detalle y acciones.</strong>
-            </div>
-            <div className="impact-cell">
-              <span>Inventario</span>
-              <strong>El plan proyecta demanda; solo cocinar descuenta existencias.</strong>
-            </div>
-            <div className="impact-cell">
-              <span>Compra</span>
-              <strong>Los faltantes del plan llegan a la lista al generarla.</strong>
-            </div>
-            <div className="impact-cell">
-              <span>Preparación</span>
-              <strong>Los pasos previos aparecen en la preparación.</strong>
-            </div>
-          </>
-        )}
-      </div>
+      {selected ? (
+        <MealEntryDetail
+          entryId={selected.id}
+          planId={planId}
+          planState={state}
+          refreshKey={`${selected.id}:${selected.outcome ?? "pending"}:${selected.completionVersion ?? "none"}`}
+          version={version}
+        />
+      ) : (
+        <div aria-live="polite" className="card no-meal-selected">
+          <p className="muted">Toca una comida para ver ingredientes y preparación.</p>
+        </div>
+      )}
 
       <Dialog open={addDate !== null} onOpenChange={(open) => !open && setAddDate(null)}>
         <DialogContent aria-describedby="add-meal-desc">

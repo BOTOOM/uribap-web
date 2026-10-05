@@ -69,8 +69,8 @@ export function CorrectLineForm({
   }
 
   return (
-    <form className="form-row" onSubmit={submit} style={{ alignItems: "flex-end" }}>
-      <div className="field" style={{ maxWidth: 140 }}>
+    <form className="form-row correct-line-form" onSubmit={submit}>
+      <div className="field correct-line-field">
         <label className="field-label" htmlFor={`correct-${lineId}`}>
           Cantidad real ({unit})
         </label>

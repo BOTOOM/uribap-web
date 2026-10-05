@@ -1,16 +1,19 @@
 import Link from "next/link";
 import type { Route } from "next";
 
-import { CorrectLineForm } from "@/components/completion/CorrectLineForm";
-import { ReopenCompletionButton } from "@/components/completion/ReopenCompletionButton";
+import { CompletedMealsList } from "@/components/completion/CompletedMealsList";
 import { MealPlanCreateButton } from "@/components/planning/MealPlanCreateButton";
 import { MealPlanTransitionBar } from "@/components/planning/MealPlanTransitionBar";
 import { PlanBoard } from "@/components/planning/PlanBoard";
 import { ErrorState } from "@/components/states/ErrorState";
 import { Icon } from "@/components/ui/Icon";
-import { ApiRequestError, serverHouseholdFetch } from "@/lib/api/server-client";
+import {
+  ApiRequestError,
+  serverApiFetch,
+  serverHouseholdFetch,
+} from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
-import { formatDayMonth, formatQuantity, formatWeekRangeLong, toIsoDay } from "@/lib/format";
+import { formatDayMonth, formatWeekRangeLong, todayInTimeZone, toIsoDay } from "@/lib/format";
 import { mondayOf } from "@/lib/forecast/window";
 import type { CatalogIngredient } from "@/lib/ingredients";
 
@@ -18,21 +21,21 @@ type MealPlan = components["schemas"]["MealPlanResponse"];
 type MealCompletion = components["schemas"]["MealCompletionResponse"];
 type PublishedVersion = components["schemas"]["PublishedRecipeVersionResponse"];
 type Ingredient = components["schemas"]["IngredientResponse"];
-type MealType = components["schemas"]["RecipeMealType"];
 type PlanState = components["schemas"]["MealPlanState"];
+
+type CurrentUser = {
+  memberships: Array<{ household_id: string; status: string }>;
+};
+
+type HouseholdTimezone = {
+  timezone: string;
+};
 
 const STATE_LABELS: Record<PlanState, string> = {
   draft: "borrador",
   proposed: "propuesto",
   approved: "aprobado",
   archived: "archivado",
-};
-
-const MEAL_LABELS: Record<MealType, string> = {
-  breakfast: "Desayuno",
-  lunch: "Almuerzo",
-  dinner: "Cena",
-  snack: "Snack",
 };
 
 function shiftWeek(weekStart: string, weeks: number): string {
@@ -84,6 +87,20 @@ async function loadIngredients(): Promise<CatalogIngredient[]> {
   }
 }
 
+async function loadHouseholdToday(): Promise<string> {
+  try {
+    const currentUser = await serverApiFetch<CurrentUser>("/me");
+    const membership = currentUser.memberships.find((item) => item.status === "active");
+    if (!membership) return toIsoDay(new Date());
+    const household = await serverApiFetch<HouseholdTimezone>(
+      `/households/${membership.household_id}`,
+    );
+    return todayInTimeZone(household.timezone);
+  } catch {
+    return toIsoDay(new Date());
+  }
+}
+
 export default async function PlanPage({
   searchParams,
 }: {
@@ -91,9 +108,10 @@ export default async function PlanPage({
 }) {
   const { week } = await searchParams;
   const requested = week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? new Date(`${week}T00:00:00Z`) : null;
-  const weekStart = toIsoDay(mondayOf(requested ?? new Date()));
-  const today = toIsoDay(new Date());
-  const currentWeek = toIsoDay(mondayOf(new Date()));
+  const today = await loadHouseholdToday();
+  const currentHouseholdDate = new Date(`${today}T00:00:00Z`);
+  const weekStart = toIsoDay(mondayOf(requested ?? currentHouseholdDate));
+  const currentWeek = toIsoDay(mondayOf(currentHouseholdDate));
 
   const [plan, versions, completions, ingredients] = await Promise.all([
     loadPlan(weekStart),
@@ -170,16 +188,23 @@ export default async function PlanPage({
       .map((item) => [item.meal_plan_entry_id, item]),
   );
 
-  const boardEntries = plan.entries.map((entry) => ({
-    id: entry.id,
-    plannedDate: entry.planned_date,
-    mealType: entry.meal_type,
-    servings: entry.servings,
-    notes: entry.notes,
-    recipeName: versionNames.get(entry.recipe_version_id) ?? "Receta del hogar",
-    completed: recordedByEntry.has(entry.id),
-  }));
+  const boardEntries = plan.entries.map((entry) => {
+    const completion = recordedByEntry.get(entry.id) ?? null;
+    return {
+      id: entry.id,
+      plannedDate: entry.planned_date,
+      mealType: entry.meal_type,
+      servings: entry.servings,
+      notes: entry.notes,
+      recipeName: versionNames.get(entry.recipe_version_id) ?? "Receta del hogar",
+      outcome: completion?.outcome ?? null,
+      completed: completion !== null,
+      completionVersion: completion?.version ?? null,
+    };
+  });
   const completedCount = boardEntries.filter((entry) => entry.completed).length;
+  const completionError =
+    completions && !Array.isArray(completions) ? completions.error : undefined;
 
   return (
     <>
@@ -225,70 +250,8 @@ export default async function PlanPage({
         weekStart={plan.week_start_date}
       />
 
-      {planCompletions.length > 0 || (completions && "error" in completions) ? (
-        <article className="card card-flush" style={{ marginTop: 18 }}>
-          <div className="card-title">
-            <h2>Comidas completadas</h2>
-            <span className="meta">{planCompletions.length} registros</span>
-          </div>
-          {completions && "error" in completions ? (
-            <p role="alert">{completions.error}</p>
-          ) : null}
-          <div className="detail-list">
-            {planCompletions.map((completion) => (
-              <div className="detail-row" key={completion.id}>
-                <div>
-                  <span className="meal-name">
-                    {completion.recipe_name ?? completion.recipe_version_id}
-                  </span>
-                  <span className="muted" style={{ display: "block" }}>
-                    {completion.planned_date ? formatDayMonth(completion.planned_date) : ""}
-                    {completion.meal_type ? ` · ${MEAL_LABELS[completion.meal_type]}` : ""}
-                  </span>
-                  <ul style={{ margin: "6px 0 0", paddingLeft: 18, listStyle: "disc" }}>
-                    {completion.lines.map((line) => {
-                      const differs = line.actual_amount !== line.planned_amount;
-                      return (
-                        <li className="muted" key={line.id} style={{ fontSize: 12 }}>
-                          {line.ingredient_name ?? line.ingredient_id}:{" "}
-                          {formatQuantity(line.actual_amount, line.unit)}
-                          {differs
-                            ? ` (plan: ${formatQuantity(line.planned_amount, line.unit)})`
-                            : ""}
-                          {completion.state === "recorded" ? (
-                            <CorrectLineForm
-                              completionId={completion.id}
-                              currentAmount={line.actual_amount}
-                              lineId={line.id}
-                              unit={line.unit}
-                              version={completion.version}
-                            />
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {completion.state === "reopened" && completion.reopen_reason ? (
-                    <span className="muted" style={{ fontSize: 12 }}>
-                      Reabierta: {completion.reopen_reason}
-                    </span>
-                  ) : null}
-                </div>
-                <span className={`status ${completion.state === "recorded" ? "available" : "pending"}`}>
-                  {completion.state === "recorded" ? "Registrada" : "Reabierta"}
-                </span>
-                {completion.state === "recorded" ? (
-                  <ReopenCompletionButton
-                    completionId={completion.id}
-                    version={completion.version}
-                  />
-                ) : (
-                  <span />
-                )}
-              </div>
-            ))}
-          </div>
-        </article>
+      {planCompletions.length > 0 || completionError ? (
+        <CompletedMealsList completions={planCompletions} error={completionError} />
       ) : null}
     </>
   );
