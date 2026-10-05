@@ -27,7 +27,7 @@
     "@tanstack/react-query": "5.102.8",
     "date-fns": "4.1.0",
     "motion": "13.2.0",
-    "next": "16.3.3",
+    "next": "16.3.6",
     "next-auth": "5.0.0-beta.32",
     "openapi-fetch": "0.17.0",
     "react": "19.2.4",
@@ -48,7 +48,7 @@
     "@vitejs/plugin-react": "6.1.0",
     "@vitest/coverage-v8": "5.0.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.3.6",
     "jsdom": "30.0.1",
     "openapi-typescript": "7.13.0",
     "tailwindcss": "4.3.3",
@@ -57,6 +57,9 @@
   },
   "pnpm": {
     "overrides": {
+      "brace-expansion@1": "1.1.21",
+      "brace-expansion@2": "2.1.7",
+      "brace-expansion@5": "5.0.12",
       "js-yaml": "4.3.2"
     }
   }
