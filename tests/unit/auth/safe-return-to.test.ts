@@ -7,6 +7,13 @@ describe("safeReturnTo", () => {
     expect(safeReturnTo("/inventario?tab=lots#current")).toBe("/inventario?tab=lots#current");
   });
 
+  it("preserves a token-free invitation flow query", () => {
+    const flow = "123e4567-e89b-42d3-a456-426614174000";
+    expect(safeReturnTo(`/invitations/accept?flow=${flow}`)).toBe(
+      `/invitations/accept?flow=${flow}`,
+    );
+  });
+
   it.each([
     "//evil.example",
     "///evil.example",

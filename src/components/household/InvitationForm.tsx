@@ -2,29 +2,60 @@
 
 import { useState } from "react";
 
+import type { components } from "@/lib/api/generated/schema";
+
+type InvitationCreatePayload = Pick<
+  components["schemas"]["InvitationCreate"],
+  "email" | "role" | "display_name"
+>;
+type InvitationDelivery = components["schemas"]["InvitationCreatedResponse"]["delivery"];
+
+const DELIVERY_MESSAGES: Record<InvitationDelivery, (email: string) => string> = {
+  zitadel_invite: (email) =>
+    `Invitación creada. ${email} recibirá un correo para crear su acceso y verá la invitación al entrar a Uribap.`,
+  existing_account:
+    () =>
+      "Invitación creada. Esta persona ya tiene cuenta: verá la invitación al entrar a Uribap.",
+  email: () => "Invitación enviada por correo.",
+  failed: () =>
+    "La invitación quedó creada, pero no se pudo enviar el correo. Pídele que entre a Uribap con este email para aceptarla.",
+};
+
 export function InvitationForm({ householdId }: { householdId: string }) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"member" | "admin">("member");
+  const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState<components["schemas"]["InvitationCreate"]["role"]>("member");
   const [message, setMessage] = useState<string | null>(null);
+  const [messageRole, setMessageRole] = useState<"status" | "alert">("status");
   const [pending, setPending] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setMessage(null);
+    setMessageRole("status");
+    const trimmedDisplayName = displayName.trim();
+    const payload: InvitationCreatePayload = {
+      email,
+      role,
+      ...(trimmedDisplayName ? { display_name: trimmedDisplayName } : {}),
+    };
     try {
       const response = await fetch(`/api/households/${householdId}/invitations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify(payload),
       });
-      const result = (await response.json().catch(() => null)) as {
-        detail?: string;
-      } | null;
+      const result = (await response.json().catch(() => null)) as
+        | (Partial<components["schemas"]["InvitationCreatedResponse"]> & { detail?: string })
+        | null;
       if (!response.ok) throw new Error(result?.detail ?? "No se pudo crear la invitación.");
+      if (!result?.delivery) throw new Error("No se pudo crear la invitación.");
       setEmail("");
-      setMessage("Invitación creada. Revisa Mailpit para ver el mensaje local.");
+      setDisplayName("");
+      setMessage(DELIVERY_MESSAGES[result.delivery](email));
     } catch (error) {
+      setMessageRole("alert");
       setMessage(
         error instanceof Error ? error.message : "No se pudo crear la invitación.",
       );
@@ -49,8 +80,20 @@ export function InvitationForm({ householdId }: { householdId: string }) {
           onChange={(event) => setEmail(event.target.value)}
         />
         <span className="helper">
-          En local el correo se captura en Mailpit; nada sale al exterior.
+          Si la persona no tiene cuenta, recibirá un correo para crear su acceso.
         </span>
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="invite-name">
+          Nombre (opcional)
+        </label>
+        <input
+          className="input"
+          id="invite-name"
+          maxLength={200}
+          value={displayName}
+          onChange={(event) => setDisplayName(event.target.value)}
+        />
       </div>
       <div className="field">
         <label className="field-label" htmlFor="invite-role">
@@ -60,7 +103,9 @@ export function InvitationForm({ householdId }: { householdId: string }) {
           className="select"
           id="invite-role"
           value={role}
-          onChange={(event) => setRole(event.target.value as "member" | "admin")}
+          onChange={(event) =>
+            setRole(event.target.value as components["schemas"]["InvitationCreate"]["role"])
+          }
         >
           <option value="member">Persona miembro</option>
           <option value="admin">Administración</option>
@@ -72,7 +117,7 @@ export function InvitationForm({ householdId }: { householdId: string }) {
         </button>
       </div>
       {message ? (
-        <p className="form-status" role="status">
+        <p className="form-status" role={messageRole}>
           {message}
         </p>
       ) : null}
