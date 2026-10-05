@@ -5,7 +5,7 @@ import nextConfig from "../../next.config";
 describe("security headers configuration", () => {
   it("applies baseline headers to every route", async () => {
     const groups = await nextConfig.headers?.();
-    expect(groups).toHaveLength(2);
+    expect(groups).toHaveLength(4);
     const group = groups?.[0];
     expect(group?.source).toBe("/(.*)");
 
@@ -27,6 +27,8 @@ describe("security headers configuration", () => {
     expect(csp).toContain("connect-src 'self' http://localhost:8010");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    expect(csp).toContain("form-action 'self'");
+    expect(csp).toContain("base-uri 'self'");
   });
 
   it("marks document routes as non-cacheable but spares static assets", async () => {
@@ -39,5 +41,17 @@ describe("security headers configuration", () => {
     )?.value;
     expect(cacheControl).toContain("no-store");
     expect(cacheControl).toContain("private");
+  });
+
+  it("overrides the referrer policy on invitation handoff and acceptance routes", async () => {
+    const groups = await nextConfig.headers?.();
+
+    for (const source of ["/api/invitations/hold", "/invitations/accept"]) {
+      const group = groups?.find((candidate) => candidate.source === source);
+      expect(group?.headers).toContainEqual({
+        key: "Referrer-Policy",
+        value: "no-referrer",
+      });
+    }
   });
 });

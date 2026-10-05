@@ -147,9 +147,15 @@ describe("route protection proxy", () => {
   it("bypasses public health and Auth.js endpoints", async () => {
     const health = await proxy(new NextRequest("https://uribap.example.test/api/health"));
     const auth = await proxy(new NextRequest("https://uribap.example.test/api/auth/session"));
+    const invitationHold = await proxy(
+      new NextRequest(
+        "https://uribap.example.test/api/invitations/hold?token=synthetic-invitation",
+      ),
+    );
 
     expect(health.headers.get("x-middleware-next")).toBe("1");
     expect(auth.headers.get("x-middleware-next")).toBe("1");
+    expect(invitationHold.headers.get("x-middleware-next")).toBe("1");
     expect(sessionGet).not.toHaveBeenCalled();
   });
 

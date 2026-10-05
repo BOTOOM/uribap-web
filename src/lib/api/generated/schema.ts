@@ -384,6 +384,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List My Invitations */
+        get: operations["list_my_invitations_api_v1_me_invitations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/invitations/{invitation_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept My Invitation */
+        post: operations["accept_my_invitation_api_v1_me_invitations__invitation_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/meal-completions": {
         parameters: {
             query?: never;
@@ -1475,6 +1509,8 @@ export interface components {
         };
         /** InvitationCreate */
         InvitationCreate: {
+            /** Display Name */
+            display_name?: string | null;
             /** Email */
             email: string;
             /**
@@ -1488,6 +1524,48 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "member";
+        };
+        /** InvitationCreatedResponse */
+        InvitationCreatedResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Delivery
+             * @enum {string}
+             */
+            delivery: "zitadel_invite" | "existing_account" | "email" | "failed";
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Household Id
+             * Format: uuid
+             */
+            household_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Invited By User Id
+             * Format: uuid
+             */
+            invited_by_user_id: string;
+            /**
+             * Requested Role
+             * @enum {string}
+             */
+            requested_role: "admin" | "member";
+            /** Status */
+            status: string;
         };
         /** InvitationPage */
         InvitationPage: {
@@ -2062,6 +2140,38 @@ export interface components {
             limit: number;
             /** Next Cursor */
             next_cursor?: string | null;
+        };
+        /** PendingInvitationPage */
+        PendingInvitationPage: {
+            /** Items */
+            items: components["schemas"]["PendingInvitationResponse"][];
+        };
+        /** PendingInvitationResponse */
+        PendingInvitationResponse: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Household Id
+             * Format: uuid
+             */
+            household_id: string;
+            /** Household Name */
+            household_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Invited By Display Name */
+            invited_by_display_name: string | null;
+            /**
+             * Requested Role
+             * @enum {string}
+             */
+            requested_role: "admin" | "member";
         };
         /** PreparationRuleCreate */
         PreparationRuleCreate: {
@@ -2897,7 +3007,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InvitationResponse"];
+                    "application/json": components["schemas"]["InvitationCreatedResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3723,6 +3833,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentUserResponse"];
+                };
+            };
+        };
+    };
+    list_my_invitations_api_v1_me_invitations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingInvitationPage"];
+                };
+            };
+        };
+    };
+    accept_my_invitation_api_v1_me_invitations__invitation_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

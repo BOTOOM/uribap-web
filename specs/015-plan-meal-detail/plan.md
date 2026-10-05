@@ -28,7 +28,7 @@ Replace the plan's four-cell impact panel with a selected-entry detail experienc
 
 ## API Contract Sequence
 
-Use the API branch `devin/1790817968-exclude-completed-forecast` after its dependency-fix push. Copy the API snapshot into `contracts/uribap-api.openapi.json`, run `pnpm api:generate`, set `contracts/metadata.json` to API revision `b7281461476b5ad312f0e2966328922c0e3d3b2a`, schema version `v13`, and generated date `2026-10-01`, then update `tests/unit/api-contract.test.ts`.
+Use the API branch `devin/1790817968-exclude-completed-forecast` after its dependency-fix push. Copy the API snapshot into `contracts/uribap-api.openapi.json`, run `pnpm api:generate`, set `contracts/metadata.json` to API revision `03dcb972b7fdc5a3d341894a80a4eabcebf32605`, schema version `v13`, and generated date `2026-10-05`, then update `tests/unit/api-contract.test.ts`.
 
 The generated contract must expose:
 
@@ -118,7 +118,7 @@ The lead resolved analysis finding C1 by requiring a gated plan-detail E2E speci
 ## Quickstart
 
 1. Copy the API branch's post-dependency `openapi/openapi.json` into `contracts/uribap-api.openapi.json`.
-2. Run `pnpm api:generate`; set contract metadata to API SHA `b7281461476b5ad312f0e2966328922c0e3d3b2a`, `v13`, and `2026-10-01`; update its unit test.
+2. Run `pnpm api:generate`; set contract metadata to API SHA `03dcb972b7fdc5a3d341894a80a4eabcebf32605`, `v13`, and `2026-10-05`; update its unit test.
 3. Add the specified tests before implementing the plan detail and completion components.
 4. Run the five pnpm verification commands in this plan and `git diff --check`.
 5. Keep `src/app/dev-preview/plan/page.tsx` uncommitted, run `pnpm dev`, and verify the preview route is reachable.

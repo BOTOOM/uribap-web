@@ -14,6 +14,7 @@ export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   if (
     pathname === "/api/health" ||
+    pathname === "/api/invitations/hold" ||
     pathname.startsWith("/api/auth/") ||
     pathname === "/api/auth"
   ) {

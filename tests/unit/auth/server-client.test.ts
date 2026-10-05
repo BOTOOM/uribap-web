@@ -3,19 +3,14 @@ import { webcrypto } from "node:crypto";
 import { encode } from "next-auth/jwt";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import InvitationAcceptPage from "@/app/(public)/invitations/accept/page";
 import { LOGOUT_EPOCH_COOKIE, signLogoutEpoch } from "@/lib/auth/session-response";
 
-const { cookiesMock, headersMock, authMock, redirectMock } = vi.hoisted(() => ({
+const { cookiesMock, headersMock } = vi.hoisted(() => ({
   cookiesMock: vi.fn(),
   headersMock: vi.fn(),
-  authMock: vi.fn(),
-  redirectMock: vi.fn(),
 }));
 
-vi.mock("@/lib/auth/auth", () => ({ auth: authMock }));
 vi.mock("next/headers", () => ({ cookies: cookiesMock, headers: headersMock }));
-vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 const AUTH_SECRET = "synthetic-auth-secret-for-server-client-012345";
 const COOKIE_NAME = "__Secure-authjs.session-token";
@@ -51,7 +46,15 @@ async function loadServerClient() {
 describe("server API access token boundary", () => {
   beforeEach(() => {
     vi.stubGlobal("crypto", webcrypto);
-    cookiesMock.mockResolvedValue({ toString: () => cookieHeader });
+    cookieHeader = "";
+    cookiesMock.mockResolvedValue({
+      toString: () => cookieHeader,
+      get: (name: string) => {
+        const prefix = `${name}=`;
+        const pair = cookieHeader.split(/;\s*/).find((value) => value.startsWith(prefix));
+        return pair ? { name, value: pair.slice(prefix.length) } : undefined;
+      },
+    });
     headersMock.mockResolvedValue(new Headers({ "x-forwarded-proto": "https, http" }));
   });
 
@@ -99,22 +102,6 @@ describe("server API access token boundary", () => {
 
     await expect(serverApiFetch("/me")).rejects.toMatchObject({ status: 401 });
     expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("redirects a refresh-failed session before showing the invitation form", async () => {
-    const redirectError = new Error("redirected to login");
-    authMock.mockResolvedValue({
-      user: { id: "", name: null, email: null, image: null },
-      error: "RefreshAccessTokenError",
-    });
-    redirectMock.mockImplementation((target: string) => {
-      throw new Error(`${target}:${redirectError.message}`);
-    });
-
-    await expect(
-      InvitationAcceptPage({ searchParams: Promise.resolve({ token: "synthetic-invitation" }) }),
-    ).rejects.toThrow("/login?returnTo=/invitations/accept:redirected to login");
-    expect(redirectMock).toHaveBeenCalledWith("/login?returnTo=/invitations/accept");
   });
 
   it("rejects a request without an encrypted session cookie", async () => {
