@@ -1494,10 +1494,7 @@ export interface components {
         IngredientPage: {
             /** Items */
             items: components["schemas"]["IngredientResponse"][];
-            /** Page Info */
-            page_info: {
-                [key: string]: unknown;
-            };
+            page_info: components["schemas"]["PageInfo"];
         };
         /** IngredientResponse */
         IngredientResponse: {
@@ -3838,6 +3835,7 @@ export interface operations {
                 dimension?: string | null;
                 include_global?: boolean;
                 limit?: number;
+                cursor?: string | null;
             };
             header: {
                 "X-Household-ID": string;

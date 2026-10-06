@@ -3,6 +3,7 @@ import { ManualTaskForm } from "@/components/preparation/ManualTaskForm";
 import { PreparationTaskActions } from "@/components/preparation/PreparationTaskActions";
 import { Icon } from "@/components/ui/Icon";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
+import { listAllIngredients } from "@/lib/api/list-all-ingredients";
 import type { components } from "@/lib/api/generated/schema";
 import { formatDueLabel, formatDayLong, formatQuantity, relativeDay } from "@/lib/format";
 
@@ -57,8 +58,7 @@ async function loadTasks(): Promise<Array<Task & { overdue: boolean }> | { error
 
 async function loadIngredients(): Promise<Ingredient[]> {
   try {
-    const page = await serverHouseholdFetch<{ items: Ingredient[] }>("/ingredients");
-    return page.items;
+    return await listAllIngredients();
   } catch {
     return [];
   }

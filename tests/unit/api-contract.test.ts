@@ -46,14 +46,25 @@ describe("pinned API contract", () => {
     expect(contract.components.schemas.DemandForecastLine.properties).toHaveProperty(
       "pantry_staple",
     );
+    const ingredientList = contract.paths["/api/v1/ingredients"] as {
+      get?: {
+        parameters?: Array<{ in?: string; name?: string }>;
+      };
+    };
+    expect(ingredientList.get?.parameters).toEqual(
+      expect.arrayContaining([expect.objectContaining({ in: "query", name: "cursor" })]),
+    );
+    expect(contract.components.schemas.IngredientPage.properties?.page_info).toEqual({
+      $ref: "#/components/schemas/PageInfo",
+    });
   });
 
   it("records the API repository, revision, and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
-    expect(metadata.schemaVersion).toBe("v15");
+    expect(metadata.schemaVersion).toBe("v16");
     expect(metadata.apiRevision).toBe(
-      "e0e347a68ed7c9a3e386645e7058636897b8d567",
+      "b0883cd34dbf4951283f8028239f60f4c3383e5d",
     );
     expect(metadata.generatedAt).toBe("2026-10-06");
   });

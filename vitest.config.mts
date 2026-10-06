@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      "server-only": path.resolve(rootDirectory, "./tests/mocks/server-only.ts"),
       "@": path.resolve(rootDirectory, "./src"),
     },
   },
