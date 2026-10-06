@@ -79,7 +79,7 @@ The shared helper tests cover multi-page and failure behavior; retain each page'
 
 - [X] T010 Run the focused helper and API-contract tests, lint, typecheck, `pnpm api:check`, production build, and `/uribap-web-testing`; compare `contracts/uribap-api.openapi.json` with the API revision and run `git diff --check`.
 - [X] T011 Record executed and skipped checks, results, and any concrete blockers in `specs/018-ingredient-pagination/converge.md`.
-- [ ] T012 Commit the feature files and push `devin/1791307670-ingredient-pagination`, leaving the untracked `src/app/dev-preview/` directory untouched and unstaged.
+- [X] T012 Commit the feature files and push `devin/1791307670-ingredient-pagination`, leaving the untracked `src/app/dev-preview/` directory untouched and unstaged.
 
 ---
 
