@@ -92,11 +92,16 @@ describe("IngredientForm", () => {
     });
   });
 
-  it("initializes edits from the API and sends changes through PATCH", async () => {
-    render(<IngredientForm ingredient={ACEITE} submitLabel="Guardar cambios" />);
+  it("sends only the changed pantry-staple flag through PATCH", async () => {
+    render(
+      <IngredientForm
+        ingredient={{ ...ACEITE, pantry_staple: false }}
+        submitLabel="Guardar cambios"
+      />,
+    );
 
     const checkbox = screen.getByRole("checkbox", { name: "Básico de despensa" });
-    expect(checkbox).toBeChecked();
+    expect(checkbox).not.toBeChecked();
     fireEvent.click(checkbox);
     submitForm("Guardar cambios");
 
@@ -105,11 +110,35 @@ describe("IngredientForm", () => {
       "/api/ingredients/ingredient-1",
       expect.objectContaining({ method: "PATCH" }),
     );
-    expect(requestBody()).toEqual({
-      name: "Aceite",
-      category: "Aceites",
-      pantry_staple: false,
+    expect(requestBody()).toEqual({ pantry_staple: true });
+  });
+
+  it("sends only the changed name through PATCH", async () => {
+    render(<IngredientForm ingredient={ACEITE} submitLabel="Guardar cambios" />);
+    fireEvent.change(screen.getByLabelText("Nombre"), {
+      target: { value: "Aceite nuevo" },
     });
+    submitForm("Guardar cambios");
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    expect(requestBody()).toEqual({ name: "Aceite nuevo" });
+  });
+
+  it("does not send a request or show a toast when nothing changed", async () => {
+    const onSuccess = vi.fn();
+    render(
+      <IngredientForm
+        ingredient={ACEITE}
+        onSuccess={onSuccess}
+        submitLabel="Guardar cambios"
+      />,
+    );
+    submitForm("Guardar cambios");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
   });
 
   it("exposes API errors in an alert", async () => {
@@ -119,6 +148,9 @@ describe("IngredientForm", () => {
       json: async () => ({ detail: "No tienes permiso para editar este ingrediente." }),
     });
     render(<IngredientForm ingredient={ACEITE} submitLabel="Guardar cambios" />);
+    fireEvent.change(screen.getByLabelText("Nombre"), {
+      target: { value: "Aceite nuevo" },
+    });
     submitForm("Guardar cambios");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

@@ -48,23 +48,29 @@ export function IngredientForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
-    setMessage(null);
+    const nextName = name.trim();
+    const nextCategory = category.trim() || null;
     const payload:
       | components["schemas"]["IngredientCreate"]
       | components["schemas"]["IngredientUpdate"] = editing
       ? {
-          name: name.trim(),
-          category: category.trim() || null,
-          pantry_staple: pantryStaple,
+          ...(nextName !== ingredient.name ? { name: nextName } : {}),
+          ...(nextCategory !== (ingredient.category ?? null) ? { category: nextCategory } : {}),
+          ...(pantryStaple !== ingredient.pantry_staple ? { pantry_staple: pantryStaple } : {}),
         }
       : {
-          name: name.trim(),
-          category: category.trim() || null,
+          name: nextName,
+          category: nextCategory,
           dimension,
           base_unit: baseUnit,
           pantry_staple: pantryStaple,
         };
+    if (editing && Object.keys(payload).length === 0) {
+      onSuccess?.();
+      return;
+    }
+    setPending(true);
+    setMessage(null);
     const fallbackMessage = editing
       ? "No se pudo actualizar el ingrediente."
       : "No se pudo crear el ingrediente.";

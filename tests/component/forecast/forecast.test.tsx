@@ -43,6 +43,25 @@ describe("demand forecast table", () => {
     expect(screen.queryByText("Cubierto")).not.toBeInTheDocument();
   });
 
+  it("shows full mini-bar availability for an in-stock pantry staple", () => {
+    const { container } = render(
+      <DemandTable
+        items={[
+          {
+            ...LINE,
+            on_hand_amount: "100.000000",
+            pantry_staple: true,
+            shortfall_amount: "0.000000",
+          },
+        ]}
+      />,
+    );
+
+    const bar = container.querySelector<HTMLSpanElement>(".mini-bar > span");
+    expect(bar?.style.getPropertyValue("--w")).toBe("100%");
+    expect(bar).toHaveStyle({ background: "var(--fg)" });
+  });
+
   it("labels out-of-stock pantry staples from the API shortfall", () => {
     render(
       <DemandTable

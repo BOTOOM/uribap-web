@@ -219,7 +219,7 @@ export function MealEntryDetailView({
                   <span className="entry-ingredient-amount">
                     {formatQuantity(ingredient.required_amount, ingredient.unit)}
                   </span>
-                  {!recordedCompletion || ingredient.pantry_staple ? (
+                  {!recordedCompletion || (outcome === "cooked" && ingredient.pantry_staple) ? (
                     <span
                       className={`status ${
                         Number(ingredient.shortfall_amount) > 0 ? "missing" : "available"

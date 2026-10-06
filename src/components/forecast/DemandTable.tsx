@@ -17,7 +17,11 @@ export function DemandTable({ items }: { items: DemandLine[] }) {
         const shortfall = Number(line.shortfall_amount) > 0;
         const required = Math.max(Number(line.required_amount) + Number(line.optional_amount), 0.000001);
         const covered = Math.min(Number(line.on_hand_amount), required);
-        const width = Math.min(100, Math.round((covered / required) * 100));
+        const width = line.pantry_staple
+          ? Number(line.on_hand_amount) > 0
+            ? 100
+            : 0
+          : Math.min(100, Math.round((covered / required) * 100));
         return (
           <div className="forecast-line" key={`${line.ingredient_id}-${line.unit}`} role="listitem">
             <strong>

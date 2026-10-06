@@ -246,6 +246,23 @@ describe("MealEntryDetailView", () => {
     expect(screen.getByText("Pedimos domicilio")).toBeInTheDocument();
     expect(screen.queryByText(/Faltan|Hay/)).not.toBeInTheDocument();
   });
+
+  it("does not show pantry-staple availability for a skipped meal", () => {
+    renderDetail({
+      completion: { ...COMPLETION, outcome: "skipped", outcome_note: "Pedimos domicilio" },
+      ingredients: [
+        {
+          ...DETAIL.ingredients[0],
+          pantry_staple: true,
+          on_hand_amount: "0.000000",
+          shortfall_amount: "300.000000",
+        },
+      ],
+    });
+
+    expect(screen.queryByText("Se acabó")).not.toBeInTheDocument();
+    expect(screen.queryByText("Básico de despensa")).not.toBeInTheDocument();
+  });
 });
 
 describe("MealEntryDetail", () => {
