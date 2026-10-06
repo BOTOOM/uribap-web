@@ -1607,6 +1607,41 @@ button.avatar {
   font-weight: 650;
 }
 
+.ingredient-first-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ingredient-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.ingredient-staple-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in oklch, var(--accent) 24%, var(--border));
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: color-mix(in oklch, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.ingredient-edit-button {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .ingredient-table td:nth-child(2),
 .ingredient-table th:nth-child(2) {
   text-align: right;
@@ -1985,6 +2020,41 @@ button.inventory-row:focus-visible {
 .form {
   display: grid;
   gap: 18px;
+}
+
+.ingredient-staple-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--surface-subtle);
+}
+
+.ingredient-staple-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+}
+
+.ingredient-staple-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.ingredient-staple-copy label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ingredient-staple-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .form-row {

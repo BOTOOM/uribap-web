@@ -201,7 +201,9 @@ export function MealEntryDetailView({
         <section aria-labelledby={`entry-ingredients-${headingId}`}>
           <h3 id={`entry-ingredients-${headingId}`}>Ingredientes</h3>
           {outcome === "cooked" ? (
-            <p className="entry-inventory-note">Ya se descontó del inventario.</p>
+            <p className="entry-inventory-note">
+              Se descontaron los ingredientes consumibles. Los básicos de despensa no se descuentan.
+            </p>
           ) : null}
           {outcome === "skipped" ? (
             <p className="entry-inventory-note">No se cocinó; el inventario no cambió.</p>
@@ -217,15 +219,19 @@ export function MealEntryDetailView({
                   <span className="entry-ingredient-amount">
                     {formatQuantity(ingredient.required_amount, ingredient.unit)}
                   </span>
-                  {!recordedCompletion ? (
+                  {!recordedCompletion || ingredient.pantry_staple ? (
                     <span
                       className={`status ${
                         Number(ingredient.shortfall_amount) > 0 ? "missing" : "available"
                       }`}
                     >
-                      {Number(ingredient.shortfall_amount) > 0
-                        ? `Faltan ${formatQuantity(ingredient.shortfall_amount, ingredient.unit)}`
-                        : `Hay ${formatQuantity(ingredient.on_hand_amount, ingredient.unit)}`}
+                      {ingredient.pantry_staple
+                        ? Number(ingredient.shortfall_amount) > 0
+                          ? "Se acabó"
+                          : "Básico de despensa"
+                        : Number(ingredient.shortfall_amount) > 0
+                          ? `Faltan ${formatQuantity(ingredient.shortfall_amount, ingredient.unit)}`
+                          : `Hay ${formatQuantity(ingredient.on_hand_amount, ingredient.unit)}`}
                     </span>
                   ) : null}
                 </li>
@@ -278,8 +284,8 @@ export function MealEntryDetailView({
             <SkipMealButton entryId={detail.entry_id} planId={planId} />
           </div>
           <p className="entry-action-help">
-            Al marcarla como cocinada se descuentan estos ingredientes. Si pidieron domicilio, no
-            se toca el inventario.
+            Al marcarla como cocinada se descuentan los ingredientes consumibles. Los básicos de
+            despensa no se descuentan. Si pidieron domicilio, no se toca el inventario.
           </p>
         </footer>
       ) : detail.plan_state === "approved" && recordedCompletion ? (

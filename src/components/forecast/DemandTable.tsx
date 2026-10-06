@@ -27,13 +27,15 @@ export function DemandTable({ items }: { items: DemandLine[] }) {
               {formatQuantity(line.required_amount)} necesario ·{" "}
               {formatQuantity(line.on_hand_amount)} en casa
             </span>
-            {shortfall ? (
-              <span className="status missing">
-                Faltan {formatQuantity(line.shortfall_amount)}
-              </span>
-            ) : (
-              <span className="status available">Cubierto</span>
-            )}
+            <span className={`status ${shortfall ? "missing" : "available"}`}>
+              {line.pantry_staple
+                ? shortfall
+                  ? "Se acabó"
+                  : "Básico de despensa"
+                : shortfall
+                  ? `Faltan ${formatQuantity(line.shortfall_amount)}`
+                  : "Cubierto"}
+            </span>
             <div className="mini-bar">
               <span
                 style={
