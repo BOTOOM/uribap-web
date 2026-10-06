@@ -1,9 +1,9 @@
 <!--
 Sync Impact Report
-Version change: template → 1.0.0
-Modified principles: none; replaced the generated placeholders with frontend governance.
-Added sections: frontend constraints, workflow and model policy.
-Removed sections: none; the template placeholders were resolved.
+Version change: 1.0.0 → 1.0.2
+Modified principles: Development Workflow and Model Policy; removed mandatory CLI verification of model identifiers.
+Added sections: none.
+Removed sections: none.
 Deferred items: exact dependency versions are selected during foundation after release-age and security checks.
 -->
 # Uribap Web Constitution
@@ -72,7 +72,8 @@ own business logic.
 - Each feature MUST follow Spec Kit: constitution → specify → clarify → plan → checklist →
   tasks → analyze → implement → converge.
 - Every feature `plan.md` MUST record its primary model, reviewer model, subagent model, and
-  escalation condition using identifiers verified by `devin models list --format json`.
+  escalation condition using the recommended defaults below or another available model; verifying
+  identifiers with the `devin` CLI is not required.
 - Recommended defaults as of 2026-09-10: `gpt-5-6-luna-high` for product/UI architecture,
   `gpt-5-6-sol-high` for implementation, `gpt-5-6-terra-high` for auth/accessibility and
   final review, `glm-5-3-max` for long-context artifact analysis, `kimi-k3-max` only for
@@ -92,4 +93,4 @@ A major version changes or removes a principle; a minor version adds a principle
 expands governance; a patch version clarifies wording without changing obligations. Any
 constitution conflict found by analysis is blocking until resolved explicitly.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-08 | **Last Amended**: 2026-09-08
+**Version**: 1.0.2 | **Ratified**: 2026-09-08 | **Last Amended**: 2026-10-06
