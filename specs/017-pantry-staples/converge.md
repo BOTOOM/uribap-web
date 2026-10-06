@@ -29,4 +29,6 @@ The first pre-commit `pnpm api:check` observed the expected generated-schema dif
 
 Branch: `devin/1791246997-pantry-staples`
 
-Commit SHA, push status, and diff stat are pending verification.
+Implementation commit: `0acff351ab04c84c625e6788b4179f188961ab13` (`feat(017): add pantry staple ingredient support`).
+
+Implementation diff against `origin/main`: 27 files changed, 1,209 insertions, 220 deletions. The final branch head and push status are recorded in the delivery handoff.

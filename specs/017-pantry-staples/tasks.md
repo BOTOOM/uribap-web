@@ -51,7 +51,7 @@
 **Purpose**: Run the requested Web gate, record the result, and deliver the branch.
 
 - [x] T011 Run lint, typecheck, focused component/API-contract tests, API generation check, production build, `git diff --check`, and final API/OpenAPI `cmp`; complete convergence notes.
-- [ ] T012 Commit and push the feature branch; record the final SHA and diff stat.
+- [x] T012 Commit and push the feature branch; record the final SHA and diff stat.
 
 ---
 
