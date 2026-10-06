@@ -91,7 +91,7 @@ export function InventoryAdjustmentForm({
         <span className="field-label" id="adj-direction-label">
           Tipo de ajuste
         </span>
-        <div aria-labelledby="adj-direction-label" className="tabs" role="group">
+        <fieldset aria-labelledby="adj-direction-label" className="tabs">
           <button
             aria-pressed={direction === "out"}
             className={`tab${direction === "out" ? " active" : ""}`}
@@ -108,7 +108,7 @@ export function InventoryAdjustmentForm({
           >
             Añadir
           </button>
-        </div>
+        </fieldset>
       </div>
       <div className="field">
         <label className="field-label" htmlFor="adj-delta">

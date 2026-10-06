@@ -83,10 +83,9 @@ export function ActivityFeed({ initialFeed, outbox }: {
 
   return (
     <div>
-      <dl
+      <fieldset
         aria-label="Resumen de correo"
-        className="grid grid-4"
-        role="group"
+        className="grid grid-4 outbox-summary"
         style={{ marginBottom: 14 }}
       >
         <div className="quantity-box">
@@ -105,7 +104,7 @@ export function ActivityFeed({ initialFeed, outbox }: {
           <span>Suprimido</span>
           <strong>{outbox.suppressed}</strong>
         </div>
-      </dl>
+      </fieldset>
       <p className="helper">
         El envío de email está deshabilitado: los avisos suprimidos se registran sin enviarse.
       </p>

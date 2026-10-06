@@ -77,7 +77,7 @@ export function MealPlanTransitionBar({
   }
 
   return (
-    <div aria-label="Acciones del plan" className="planner-actions" role="group" style={{ marginLeft: 0 }}>
+    <fieldset aria-label="Acciones del plan" className="planner-actions" style={{ marginLeft: 0 }}>
       {ACTIONS_BY_STATE[state].map(({ action, label }, index) => (
         <button
           className={index === 0 ? "btn btn-secondary" : "btn btn-ghost"}
@@ -99,6 +99,6 @@ export function MealPlanTransitionBar({
           Recargar plan actualizado
         </button>
       ) : null}
-    </div>
+    </fieldset>
   );
 }

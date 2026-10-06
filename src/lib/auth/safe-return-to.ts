@@ -1,3 +1,4 @@
+// biome-ignore lint/suspicious/noControlCharactersInRegex: These escapes intentionally reject control characters in return URLs.
 const unsafeCharacters = /[\\\u0000-\u001f\u007f-\u009f]/;
 const origin = "https://uribap.local";
 

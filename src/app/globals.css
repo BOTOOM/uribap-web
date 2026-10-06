@@ -486,6 +486,13 @@ button.avatar {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+fieldset.outbox-summary {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
 .grid-main {
   grid-template-columns: minmax(0, 1.58fr) minmax(292px, 0.68fr);
 }
@@ -771,6 +778,9 @@ button.avatar {
 .forecast {
   display: grid;
   gap: 13px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .forecast-line {
@@ -863,6 +873,19 @@ button.avatar {
   align-items: center;
   gap: 8px;
   margin-left: auto;
+}
+
+fieldset.planner-actions {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+fieldset.tabs,
+fieldset.code-block {
+  min-width: 0;
+  margin: 0;
 }
 
 .week-summary {

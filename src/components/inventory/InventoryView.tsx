@@ -338,6 +338,7 @@ export function InventoryView({
               key={location}
               onClick={() => setTab(location)}
               role="tab"
+              type="button"
             >
               {LOCATION_LABELS[location]}
             </button>

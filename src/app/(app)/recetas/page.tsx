@@ -117,7 +117,7 @@ export default async function RecipesPage({
         />
       </form>
 
-      <div aria-label="Filtrar recetas por estado" className="filters">
+      <nav aria-label="Filtrar recetas por estado" className="filters">
         {FILTERS.map((filter) => (
           <Link
             aria-current={estado === filter.value || (!estado && filter.value === "") ? "true" : undefined}
@@ -128,7 +128,7 @@ export default async function RecipesPage({
             {filter.label}
           </Link>
         ))}
-      </div>
+      </nav>
 
       {filtered.length === 0 ? (
         <div className="empty" role="status" style={{ marginTop: 16 }}>

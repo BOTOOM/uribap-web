@@ -60,7 +60,7 @@ export function ShoppingListTransitionBar({
   }
 
   return (
-    <div aria-label="Acciones de la lista" className="planner-actions" role="group" style={{ marginLeft: 0 }}>
+    <fieldset aria-label="Acciones de la lista" className="planner-actions" style={{ marginLeft: 0 }}>
       {ACTIONS_BY_STATE[state].map(({ action, label }, index) => (
         <button
           className={index === 0 ? "btn btn-secondary" : "btn btn-ghost"}
@@ -82,6 +82,6 @@ export function ShoppingListTransitionBar({
           Recargar lista actualizada
         </button>
       ) : null}
-    </div>
+    </fieldset>
   );
 }

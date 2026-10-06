@@ -12,14 +12,14 @@ export function DemandTable({ items }: { items: DemandLine[] }) {
     );
   }
   return (
-    <div aria-label="Demanda proyectada por ingrediente" className="forecast" role="list">
+    <ul aria-label="Demanda proyectada por ingrediente" className="forecast">
       {items.map((line) => {
         const shortfall = Number(line.shortfall_amount) > 0;
         const required = Math.max(Number(line.required_amount) + Number(line.optional_amount), 0.000001);
         const covered = Math.min(Number(line.on_hand_amount), required);
         const width = Math.min(100, Math.round((covered / required) * 100));
         return (
-          <div className="forecast-line" key={`${line.ingredient_id}-${line.unit}`} role="listitem">
+          <li className="forecast-line" key={`${line.ingredient_id}-${line.unit}`}>
             <strong>
               {line.ingredient_name} <span className="muted">({line.unit})</span>
             </strong>
@@ -44,9 +44,9 @@ export function DemandTable({ items }: { items: DemandLine[] }) {
                 }
               />
             </div>
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
