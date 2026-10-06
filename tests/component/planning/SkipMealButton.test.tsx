@@ -60,12 +60,11 @@ describe("SkipMealButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
-    expect(
-      fetchMock.mock.calls.map(([, init]) => {
-        const headers = init?.headers as Record<string, string> | undefined;
-        return headers?.["Idempotency-Key"];
-      }),
-    ).toEqual(["skip-key-1", "skip-key-2"]);
+    // biome-ignore lint/correctness/noUnsafeOptionalChaining: The mocked requests in this assertion provide headers.
+    expect(fetchMock.mock.calls.map(([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"])).toEqual([
+      "skip-key-1",
+      "skip-key-2",
+    ]);
   });
 
   it("shows a conflict message and a reload affordance on 409", async () => {

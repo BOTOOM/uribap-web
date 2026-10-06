@@ -26,7 +26,7 @@ export function ToastRegion() {
   }, []);
 
   return (
-    <section aria-label="Notificaciones" aria-live="polite" className="toast-region">
+    <div aria-live="polite" className="toast-region" role="region">
       {toasts.map((toastItem) => (
         <div className="toast" key={toastItem.id} role="status">
           <span>{toastItem.message}</span>
@@ -41,6 +41,6 @@ export function ToastRegion() {
           </button>
         </div>
       ))}
-    </section>
+    </div>
   );
 }

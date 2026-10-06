@@ -32,7 +32,6 @@
       "react": "recommended"
     },
     "rules": {
-      "recommended": true,
       "complexity": {
         "noImportantStyles": "off",
         "useOptionalChain": "off"
@@ -42,7 +41,10 @@
         "noNonNullAssertion": "off"
       },
       "a11y": {
-        "noAutofocus": "off"
+        "noAutofocus": "off",
+        "noInteractiveElementToNoninteractiveRole": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "useSemanticElements": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off"

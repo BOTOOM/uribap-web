@@ -327,10 +327,10 @@ export function McpAgentPanel({
             <span className="field-label" id="mcp-url-label">
               URL del servidor
             </span>
-            <fieldset aria-labelledby="mcp-url-label" className="code-block">
+            <div aria-labelledby="mcp-url-label" className="code-block">
               <code>{mcpUrl}</code>
               <CopyButton label="URL" text={mcpUrl} />
-            </fieldset>
+            </div>
           </div>
           <p className="muted">
             Autenticación en cada petición: <code>Authorization: Bearer &lt;token&gt;</code>.
