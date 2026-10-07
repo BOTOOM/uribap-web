@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 
+import { HomeMealList, type HomeMealRow } from "@/components/dashboard/HomeMealList";
 import { ErrorState } from "@/components/states/ErrorState";
 import { Icon } from "@/components/ui/Icon";
 import { ApiRequestError, serverApiFetch, serverHouseholdFetch } from "@/lib/api/server-client";
@@ -16,7 +17,6 @@ import {
 import { mondayOf } from "@/lib/forecast/window";
 
 type MealPlan = components["schemas"]["MealPlanResponse"];
-type MealPlanEntry = MealPlan["entries"][number];
 type MealType = components["schemas"]["RecipeMealType"];
 type PublishedVersion = components["schemas"]["PublishedRecipeVersionResponse"];
 type DemandForecast = components["schemas"]["DemandForecastResponse"];
@@ -81,36 +81,6 @@ async function loadDashboard() {
   return { today, weekStart, plan, versions, forecast, list, tasks, completions, me };
 }
 
-function MealRows({
-  entries,
-  names,
-  emptyLabel,
-}: {
-  entries: MealPlanEntry[];
-  names: Map<string, string>;
-  emptyLabel: string;
-}) {
-  if (entries.length === 0) {
-    return <p className="muted">{emptyLabel}</p>;
-  }
-  return (
-    <div className="meal-list">
-      {entries.map((entry) => (
-        <div className="meal-row" key={entry.id}>
-          <span className="meta">{MEAL_LABELS[entry.meal_type]}</span>
-          <div>
-            <div className="meal-name">
-              {names.get(entry.recipe_version_id) ?? "Receta del hogar"}
-            </div>
-            <span className="muted">{entry.servings} raciones</span>
-          </div>
-          <span className="status available">Planeada</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default async function DashboardPage() {
   const data = await loadDashboard();
 
@@ -130,6 +100,28 @@ export default async function DashboardPage() {
       item.recipe_name,
     ]),
   );
+  const planEntryIds = new Set((plan?.entries ?? []).map((entry) => entry.id));
+  const recordedByEntry = new Map<string, MealCompletion>(
+    (data.completions.ok ? data.completions.value.items : [])
+      .filter(
+        (completion) =>
+          completion.state === "recorded" &&
+          planEntryIds.has(completion.meal_plan_entry_id),
+      )
+      .map((completion) => [completion.meal_plan_entry_id, completion] as const),
+  );
+  const toHomeRows = (entries: MealPlan["entries"]): HomeMealRow[] =>
+    entries.map((entry) => {
+      const completion = recordedByEntry.get(entry.id);
+      return {
+        id: entry.id,
+        mealLabel: MEAL_LABELS[entry.meal_type],
+        recipeName: names.get(entry.recipe_version_id) ?? "Receta del hogar",
+        servings: entry.servings,
+        outcome: completion?.outcome ?? null,
+        completionVersion: completion?.version ?? null,
+      };
+    });
 
   const todayEntries = (plan?.entries ?? [])
     .filter((entry) => entry.planned_date === data.today)
@@ -195,10 +187,12 @@ export default async function DashboardPage() {
                 </span>
               ) : null}
             </div>
-            <MealRows
+            <HomeMealList
               emptyLabel="Nada planeado para hoy. Añade una comida desde el plan semanal."
-              entries={todayEntries}
-              names={names}
+              planId={plan?.id ?? null}
+              planState={plan?.state ?? null}
+              planVersion={plan?.version ?? null}
+              rows={toHomeRows(todayEntries)}
             />
           </article>
 
@@ -209,10 +203,12 @@ export default async function DashboardPage() {
                 Ver detalle
               </Link>
             </div>
-            <MealRows
+            <HomeMealList
               emptyLabel="Mañana está libre en el plan."
-              entries={tomorrowEntries}
-              names={names}
+              planId={plan?.id ?? null}
+              planState={plan?.state ?? null}
+              planVersion={plan?.version ?? null}
+              rows={toHomeRows(tomorrowEntries)}
             />
           </article>
 

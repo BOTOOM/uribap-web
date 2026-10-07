@@ -12,8 +12,10 @@ test.describe("plan meal detail", () => {
     const meal = page.locator(".meal-card:not(.empty)").first();
     await expect(meal).toBeVisible();
     await meal.click();
-    await expect(page.getByRole("heading", { name: "Ingredientes" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Preparación" })).toBeVisible();
+    const dialog = page.getByRole("dialog", { name: "Detalle de la comida" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Ingredientes" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Preparación" })).toBeVisible();
 
     for (const width of [375, 1440]) {
       await page.setViewportSize({ width, height: 900 });

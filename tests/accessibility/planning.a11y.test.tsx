@@ -1,3 +1,4 @@
+import axe from "axe-core";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,6 +8,7 @@ import { MealPlanEntryForm } from "@/components/planning/MealPlanEntryForm";
 import { MealPlanTransitionBar } from "@/components/planning/MealPlanTransitionBar";
 import { CompletedMealsList } from "@/components/completion/CompletedMealsList";
 import { MealEntryDetailView } from "@/components/planning/MealEntryDetail";
+import { MealDetailDialog } from "@/components/planning/MealDetailDialog";
 import { SkipMealButton } from "@/components/planning/SkipMealButton";
 import type { components } from "@/lib/api/generated/schema";
 
@@ -179,6 +181,38 @@ describe("meal planning accessibility", () => {
     expect(screen.getByText("Ya se descontó del inventario.")).toBeInTheDocument();
     expect(screen.getByText("Cocinada")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reabrir" })).toBeInTheDocument();
+  });
+
+  it("has no serious or critical axe violations when the meal detail dialog is open", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ detail: ENTRY_DETAIL })));
+    render(
+      <MealDetailDialog
+        onClose={vi.fn()}
+        planId="plan-1"
+        planState="approved"
+        target={{
+          id: "entry-1",
+          outcome: null,
+          completionVersion: null,
+        }}
+        version={1}
+      />,
+    );
+
+    const dialog = await screen.findByRole("dialog", { name: "Detalle de la comida" });
+    await screen.findByRole("heading", { name: "Ingredientes" });
+    const results = await axe.run(dialog, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+      },
+    });
+
+    expect(
+      results.violations.filter(({ impact }) =>
+        impact === "critical" || impact === "serious",
+      ),
+    ).toEqual([]);
   });
 
   it("labels the reason input when the skip form is expanded", () => {

@@ -132,38 +132,56 @@ describe("weekly plan board", () => {
     );
   });
 
-  it("selects the first pending meal by meal order when entries arrive out of order", () => {
-    const completedBreakfast: BoardEntry = {
-      ...ENTRY,
-      id: "completed-breakfast",
-      mealType: "breakfast",
-      recipeName: "Avena",
-      outcome: "cooked",
-      completed: true,
-    };
-    const pendingLunch: BoardEntry = {
-      ...ENTRY,
-      id: "pending-lunch",
-      mealType: "lunch",
-      recipeName: "Sopa de lentejas",
-    };
-    const pendingDinner: BoardEntry = {
-      ...ENTRY,
-      id: "pending-dinner",
-      recipeName: "Arroz con pollo",
-    };
-    renderBoard({
-      entries: [pendingDinner, completedBreakfast, pendingLunch],
-      state: "approved",
-    });
+  it("does not fetch meal detail or open a dialog on mount", () => {
+    const fetchMock = vi.fn(async () => Response.json({ detail: DETAIL }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    expect(screen.getAllByRole("tab")).toHaveLength(7);
+    renderBoard();
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /arroz con pollo/i })).not.toHaveClass(
+      "selected",
+    );
+  });
+
+  it("opens the selected meal in a dialog and fetches its detail", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ detail: DETAIL }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderBoard();
+    const card = screen.getByRole("button", { name: /arroz con pollo/i });
+
+    fireEvent.click(card);
+
     expect(
-      screen.getByRole("button", { name: /sopa de lentejas/i }),
-    ).toHaveAttribute("aria-pressed", "true");
+      await screen.findByRole("dialog", { name: "Detalle de la comida" }),
+    ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /avena/i }),
-    ).toHaveAttribute("aria-pressed", "false");
+      await screen.findByRole("heading", { name: "Arroz con pollo" }),
+    ).toBeInTheDocument();
+    expect(card).toHaveAttribute("aria-haspopup", "dialog");
+    expect(card).toHaveClass("selected");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/plans/plan-1/entries/entry-1/detail",
+      expect.anything(),
+    );
+  });
+
+  it("closes the detail dialog with Escape and the close button", async () => {
+    renderBoard();
+    const card = screen.getByRole("button", { name: /arroz con pollo/i });
+    fireEvent.click(card);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(card).not.toHaveClass("selected");
+
+    fireEvent.click(card);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(card).not.toHaveClass("selected");
   });
 
   it("refetches meal detail when a recorded completion version changes", async () => {
@@ -188,7 +206,12 @@ describe("weekly plan board", () => {
     };
     const view = render(<PlanBoard {...props} />);
 
-    expect(await screen.findByRole("heading", { name: "Arroz con pollo" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /arroz con pollo/i }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Arroz con pollo" }),
+    ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     view.rerender(<PlanBoard {...props} entries={[correctedEntry]} />);
@@ -213,78 +236,45 @@ describe("weekly plan board", () => {
     expect(emptyDay.querySelector(".day-picker-dot")).not.toBeInTheDocument();
   });
 
-  it("selects the first meal of today when all today's meals are recorded", () => {
-    const cookedBreakfast: BoardEntry = {
+  it("changes the active day without selecting or opening a meal", () => {
+    const tuesdayEntry: BoardEntry = {
       ...ENTRY,
-      id: "cooked-breakfast",
-      mealType: "breakfast",
-      recipeName: "Avena",
-      outcome: "cooked",
-      completed: true,
-    };
-    const skippedDinner: BoardEntry = {
-      ...ENTRY,
-      id: "skipped-dinner",
-      outcome: "skipped",
-      completed: true,
-    };
-    renderBoard({ entries: [skippedDinner, cookedBreakfast] });
-
-    expect(
-      screen.getByRole("button", { name: /avena/i }),
-    ).toHaveAttribute("aria-pressed", "true");
-  });
-
-  it("selects the day's first meal when its mobile tab is tapped", () => {
-    const firstTuesday: BoardEntry = {
-      ...ENTRY,
-      id: "tuesday-breakfast",
+      id: "tuesday-entry",
       plannedDate: "2026-09-29",
-      mealType: "breakfast",
       recipeName: "Arepa con queso",
     };
-    const secondTuesday: BoardEntry = {
-      ...ENTRY,
-      id: "tuesday-dinner",
-      plannedDate: "2026-09-29",
-      recipeName: "Fríjoles",
+    const fetchMock = vi.fn(async () => Response.json({ detail: DETAIL }));
+    vi.stubGlobal("fetch", fetchMock);
+    renderBoard({ entries: [ENTRY, tuesdayEntry] });
+
+    fireEvent.click(
+      screen.getByRole("tab", { name: /martes 29 de septiembre, 1 comidas/i }),
+    );
+
+    expect(
+      screen.getByRole("tab", { name: /martes 29 de septiembre, 1 comidas/i }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("closes the dialog when its selected entry disappears after refresh", async () => {
+    const props = {
+      entries: [ENTRY],
+      ingredients: INGREDIENTS,
+      planId: "plan-1",
+      state: "draft" as const,
+      today: "2026-09-28",
+      version: 1,
+      versions: VERSIONS,
+      weekStart: "2026-09-28",
     };
-    renderBoard({ entries: [ENTRY, secondTuesday, firstTuesday] });
+    const view = render(<PlanBoard {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /arroz con pollo/i }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("tab", { name: /martes 29 de septiembre, 2 comidas/i }),
-    );
-
-    expect(
-      screen.getByRole("button", { name: /arepa con queso/i }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(
-      screen.getByRole("button", { name: /fríjoles/i }),
-    ).toHaveAttribute("aria-pressed", "false");
-  });
-
-  it("clears selection when an empty day is selected", () => {
-    renderBoard();
-
-    fireEvent.click(
-      screen.getByRole("tab", { name: /miércoles 30 de septiembre, 0 comidas/i }),
-    );
-
-    expect(
-      screen.getByText("Toca una comida para ver ingredientes y preparación."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /arroz con pollo/i }),
-    ).toHaveAttribute("aria-pressed", "false");
-  });
-
-  it("keeps a meal selected when its card is tapped again", () => {
-    renderBoard();
-    const card = screen.getByRole("button", { name: /arroz con pollo/i });
-
-    fireEvent.click(card);
-
-    expect(card).toHaveAttribute("aria-pressed", "true");
+    view.rerender(<PlanBoard {...props} entries={[]} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
   it("labels cooked and skipped meals with their outcome", () => {
@@ -428,6 +418,7 @@ describe("weekly plan board", () => {
 
   it("offers completion instead of editing on approved plans", async () => {
     renderBoard({ state: "approved" });
+    fireEvent.click(screen.getByRole("button", { name: /arroz con pollo/i }));
 
     expect(
       await screen.findByRole("button", { name: "Marcar como cocinada" }),
