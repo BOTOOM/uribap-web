@@ -1,6 +1,6 @@
-# Specification Quality Checklist: Household-local dashboard date
+# Specification Quality Checklist: Browser-local dashboard date
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Purpose**: Validate specification completeness and quality for the browser-first date authority
 **Created**: 2026-10-07
 **Feature**: [spec.md](../spec.md)
 
@@ -31,4 +31,5 @@
 
 ## Notes
 
-- The existing weekly plan behavior establishes the household time zone as the product default.
+- The user-approved authority order is browser zone via `uribap_tz` cookie, household time zone, then UTC.
+- First visit without a valid browser cookie uses the household time zone until the client writes the browser zone and refreshes.

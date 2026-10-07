@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import type { Route } from "next";
 
 import { ErrorState } from "@/components/states/ErrorState";
@@ -6,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { ApiRequestError, serverApiFetch, serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
 import { dashboardDateWindow } from "@/lib/dashboard/date-window";
+import { BROWSER_TIME_ZONE_COOKIE, decodeTimeZoneCookie, pickTimeZone } from "@/lib/time-zone";
 import {
   formatDueLabel,
   formatQuantity,
@@ -66,17 +68,22 @@ async function loadDashboard() {
     serverHouseholdFetch<{ items: MealCompletion[] }>("/meal-completions"),
   );
 
-  const me = await mePromise;
-  let today = toIsoDay(new Date());
-  if (me.ok) {
+  const [me, cookieStore] = await Promise.all([mePromise, cookies()]);
+  const browserTimeZone = decodeTimeZoneCookie(
+    cookieStore.get(BROWSER_TIME_ZONE_COOKIE)?.value,
+  );
+  let householdTimeZone: string | null = null;
+  if (!browserTimeZone && me.ok) {
     const membership = me.value.memberships.find((item) => item.status === "active");
     if (membership) {
       const household = await tryLoad(
         serverApiFetch<HouseholdTimezone>(`/households/${membership.household_id}`),
       );
-      if (household.ok) today = todayInTimeZone(household.value.timezone);
+      if (household.ok) householdTimeZone = household.value.timezone;
     }
   }
+  const timeZone = pickTimeZone(browserTimeZone, householdTimeZone);
+  const today = timeZone ? todayInTimeZone(timeZone) : toIsoDay(new Date());
   const dateWindow = dashboardDateWindow(today);
 
   const [plan, versions, forecast, list, tasks, completions] = await Promise.all([

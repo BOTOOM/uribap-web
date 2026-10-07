@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { dashboardDateWindow } from "@/lib/dashboard/date-window";
 import { todayInTimeZone, toIsoDay } from "@/lib/format";
+import { pickTimeZone } from "@/lib/time-zone";
 
 describe("dashboardDateWindow", () => {
   afterEach(() => {
@@ -21,6 +22,16 @@ describe("dashboardDateWindow", () => {
       weekStart: "2026-10-05",
       weekEnd: "2026-10-11",
     });
+  });
+
+  it("prefers the browser time zone over the household time zone", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-08T01:00:00Z"));
+
+    const browserTimeZone = pickTimeZone("Asia/Tokyo", "America/Bogota");
+
+    expect(browserTimeZone).toBe("Asia/Tokyo");
+    expect(todayInTimeZone(browserTimeZone ?? "UTC")).toBe("2026-10-08");
   });
 
   it("uses the UTC date when the time zone is invalid", () => {
