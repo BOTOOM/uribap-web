@@ -57,7 +57,7 @@
 - [x] T012 Create `src/app/dev-preview/meal-modal/page.tsx` as an untracked local-only fixture with four plan meals, cooked/skipped/pending home rows, and a detail-fetch mock.
 - [x] T013 Run the focused tests, `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm test:a11y`, `git diff --check`, and one full `pnpm test` at the end; record results in `converge.md`.
 - [x] T014 Start `pnpm dev` on port 3100, verify `/dev-preview/meal-modal` loads without auth, and leave the server running; record the URL and any visual limitation.
-- [ ] T015 Commit Spec Kit artifacts before product code, commit the feature separately, explicitly exclude `next-env.d.ts` and `src/app/dev-preview`, then push the feature branch without waiting for CI.
+- [x] T015 Commit Spec Kit artifacts before product code, commit the feature separately, explicitly exclude `next-env.d.ts` and `src/app/dev-preview`, then push the feature branch without waiting for CI.
 
 ## Dependencies & Execution Order
 

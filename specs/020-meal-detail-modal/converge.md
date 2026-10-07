@@ -33,9 +33,13 @@ Implementation and the requested local verification are complete. The local prev
 
 ## Commits and Delivery
 
-Pending. Commit documentation first as `docs(020): specify meal detail modal`, then product changes as `feat(plan): open meal detail in a modal`. Exclude `next-env.d.ts` and all `src/app/dev-preview` fixtures, push the feature branch, and do not wait for CI.
+Completed in order:
+
+1. `6a7bc8f` — `docs(020): specify meal detail modal`
+2. `43213b6` — `feat(plan): open meal detail in a modal`
+
+Both commits were pushed to `devin/1791403355-meal-detail-modal`. `next-env.d.ts` and all `src/app/dev-preview` fixtures were excluded. No PR was created and CI was not watched.
 
 ## Open Items
 
-- Complete the ordered commits and push; do not wait for CI.
-- Report the gated E2E and visual-verification limitations explicitly; do not mark an unrun authenticated flow as passed.
+- None. The gated E2E and visual-verification limitations are recorded above.
