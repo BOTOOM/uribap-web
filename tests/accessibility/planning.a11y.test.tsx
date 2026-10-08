@@ -95,6 +95,7 @@ const ENTRY_DETAIL: MealEntryDetail = {
       on_hand_amount: "100.000000",
       shortfall_amount: "200.000000",
       position: 0,
+      pantry_staple: false,
     },
   ],
 };
@@ -176,7 +177,11 @@ describe("meal planning accessibility", () => {
       />,
     );
 
-    expect(screen.getByText("Ya se descontó del inventario.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Se descontaron los ingredientes consumibles. Los básicos de despensa no se descuentan.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Cocinada")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reabrir" })).toBeInTheDocument();
   });

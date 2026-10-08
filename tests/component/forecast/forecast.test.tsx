@@ -13,6 +13,7 @@ const LINE = {
   total_amount: "700.000000",
   on_hand_amount: "500.000000",
   shortfall_amount: "200.000000",
+  pantry_staple: false,
 };
 
 describe("demand forecast table", () => {
@@ -28,6 +29,54 @@ describe("demand forecast table", () => {
   it("marks covered lines without a shortfall badge", () => {
     render(<DemandTable items={[{ ...LINE, shortfall_amount: "0.000000" }]} />);
     expect(screen.getByText("Cubierto")).toBeInTheDocument();
+    expect(screen.queryByText(/Faltan/)).not.toBeInTheDocument();
+  });
+
+  it("labels stocked pantry staples without the covered state", () => {
+    render(
+      <DemandTable
+        items={[{ ...LINE, pantry_staple: true, shortfall_amount: "0.000000" }]}
+      />,
+    );
+
+    expect(screen.getByText("Básico de despensa")).toBeInTheDocument();
+    expect(screen.queryByText("Cubierto")).not.toBeInTheDocument();
+  });
+
+  it("shows full mini-bar availability for an in-stock pantry staple", () => {
+    const { container } = render(
+      <DemandTable
+        items={[
+          {
+            ...LINE,
+            on_hand_amount: "100.000000",
+            pantry_staple: true,
+            shortfall_amount: "0.000000",
+          },
+        ]}
+      />,
+    );
+
+    const bar = container.querySelector<HTMLSpanElement>(".mini-bar > span");
+    expect(bar?.style.getPropertyValue("--w")).toBe("100%");
+    expect(bar).toHaveStyle({ background: "var(--fg)" });
+  });
+
+  it("labels out-of-stock pantry staples from the API shortfall", () => {
+    render(
+      <DemandTable
+        items={[
+          {
+            ...LINE,
+            on_hand_amount: "0.000000",
+            pantry_staple: true,
+            shortfall_amount: "700.000000",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Se acabó")).toBeInTheDocument();
     expect(screen.queryByText(/Faltan/)).not.toBeInTheDocument();
   });
 

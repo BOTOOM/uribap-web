@@ -1308,6 +1308,8 @@ export interface components {
             on_hand_amount: string;
             /** Optional Amount */
             optional_amount: string;
+            /** Pantry Staple */
+            pantry_staple: boolean;
             /** Required Amount */
             required_amount: string;
             /** Shortfall Amount */
@@ -1477,6 +1479,11 @@ export interface components {
             package_size_amount?: string | null;
             /** Package Size Unit */
             package_size_unit?: string | null;
+            /**
+             * Pantry Staple
+             * @default false
+             */
+            pantry_staple: boolean;
         };
         /**
          * IngredientDimension
@@ -1512,6 +1519,8 @@ export interface components {
             name: string;
             /** Normalized Name */
             normalized_name: string;
+            /** Pantry Staple */
+            pantry_staple: boolean;
         };
         /** IngredientUpdate */
         IngredientUpdate: {
@@ -1519,6 +1528,8 @@ export interface components {
             category?: string | null;
             /** Name */
             name?: string | null;
+            /** Pantry Staple */
+            pantry_staple?: boolean | null;
         };
         /** InventoryAdjustment */
         InventoryAdjustment: {
@@ -1987,6 +1998,8 @@ export interface components {
             on_hand_amount: string;
             /** Optional */
             optional: boolean;
+            /** Pantry Staple */
+            pantry_staple: boolean;
             /** Position */
             position: number;
             /** Required Amount */
