@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -167,21 +168,25 @@ describe("weekly plan board", () => {
     );
   });
 
-  it("closes the detail dialog with Escape and the close button", async () => {
+  it("returns focus to the meal card after Escape and the close button", async () => {
+    const user = userEvent.setup();
     renderBoard();
     const card = screen.getByRole("button", { name: /arroz con pollo/i });
-    fireEvent.click(card);
+    card.focus();
+    await user.keyboard("{Enter}");
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
 
-    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+    await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(card).not.toHaveClass("selected");
+    expect(card).toHaveFocus();
 
-    fireEvent.click(card);
+    await user.keyboard("{Enter}");
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(card).not.toHaveClass("selected");
+    expect(card).toHaveFocus();
   });
 
   it("refetches meal detail when a recorded completion version changes", async () => {
@@ -259,6 +264,7 @@ describe("weekly plan board", () => {
   });
 
   it("closes the dialog when its selected entry disappears after refresh", async () => {
+    const user = userEvent.setup();
     const props = {
       entries: [ENTRY],
       ingredients: INGREDIENTS,
@@ -270,11 +276,17 @@ describe("weekly plan board", () => {
       weekStart: "2026-09-28",
     };
     const view = render(<PlanBoard {...props} />);
-    fireEvent.click(screen.getByRole("button", { name: /arroz con pollo/i }));
+    const card = screen.getByRole("button", { name: /arroz con pollo/i });
+    const activeDay = screen.getByRole("tab", {
+      name: "lunes 28 de septiembre, 1 comidas",
+    });
+    card.focus();
+    await user.keyboard("{Enter}");
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
 
     view.rerender(<PlanBoard {...props} entries={[]} />);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(activeDay).toHaveFocus();
   });
 
   it("labels cooked and skipped meals with their outcome", () => {

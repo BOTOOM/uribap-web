@@ -81,3 +81,9 @@
 - The exact verification sequence is documented in `plan.md` and `quickstart.md`.
 - Keep the preview source untracked and never stage the `src/app/dev-preview` path.
 - The E2E remains gated; do not weaken or remove its existing gate.
+
+## Phase 5: Review follow-up — focus restoration
+
+- [x] T016 Add optional scoped `fallbackFocus` handling to `MealDetailDialog`; restore focus to the latest surviving entry trigger and fall back to PlanBoard's active day selector or the HomeMealList's own `.meal-list` container.
+- [x] T017 Add Enter/Escape/Cerrar focus-return tests and deleted-entry fallback tests to both component suites; add keyboard-open/axe/close coverage for PlanBoard and HomeMealList while retaining the direct-dialog axe test.
+- [x] T018 Update the spec, plan, research, component contract, checklist, tasks, and convergence evidence; run the requested focused Vitest files, `pnpm test:a11y`, lint, typecheck, and `git diff --check`.

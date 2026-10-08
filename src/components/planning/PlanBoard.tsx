@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { MealDetailDialog } from "@/components/planning/MealDetailDialog";
 import { MealPlanEntryForm } from "@/components/planning/MealPlanEntryForm";
@@ -93,6 +93,7 @@ export function PlanBoard({
   const [activeDay, setActiveDay] = useState(todayIndex >= 0 ? todayIndex : 0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addDate, setAddDate] = useState<string | null>(null);
+  const activeDayButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const editable = state === "draft";
   const selected = entries.find((entry) => entry.id === selectedId) ?? null;
@@ -120,6 +121,7 @@ export function PlanBoard({
                 .filter(Boolean)
                 .join(" ")}
               key={day}
+              ref={activeDay === index ? activeDayButtonRef : null}
               onClick={() => {
                 setActiveDay(index);
               }}
@@ -152,6 +154,7 @@ export function PlanBoard({
                 <div className="day-meals">
                   {dayEntries.map((entry) => (
                     <button
+                      data-meal-entry-trigger={entry.id}
                       aria-haspopup="dialog"
                       className={`meal-card${selected?.id === entry.id ? " selected" : ""}`}
                       key={entry.id}
@@ -201,6 +204,7 @@ export function PlanBoard({
       </div>
 
       <MealDetailDialog
+        fallbackFocus={() => activeDayButtonRef.current}
         onClose={() => setSelectedId(null)}
         planId={planId}
         planState={state}

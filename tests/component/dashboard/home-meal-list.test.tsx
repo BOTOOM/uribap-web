@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -100,12 +101,15 @@ describe("home meal list", () => {
     }
   });
 
-  it("opens the existing detail and fetches the selected plan entry", async () => {
+  it("opens detail with Enter and returns focus after Escape and the close button", async () => {
+    const user = userEvent.setup();
     const fetchMock = vi.fn(async () => Response.json({ detail: DETAIL }));
     vi.stubGlobal("fetch", fetchMock);
     renderHomeMealList();
+    const row = screen.getByRole("button", { name: /ensalada tibia/i });
+    row.focus();
 
-    fireEvent.click(screen.getByRole("button", { name: /ensalada tibia/i }));
+    await user.keyboard("{Enter}");
 
     expect(
       await screen.findByRole("dialog", { name: "Detalle de la comida" }),
@@ -117,6 +121,43 @@ describe("home meal list", () => {
       "/api/plans/plan-1/entries/entry-pending/detail",
       expect.anything(),
     );
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(row).toHaveFocus();
+
+    await user.keyboard("{Enter}");
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(row).toHaveFocus();
+  });
+
+  it("focuses its meal-list container when the selected row disappears", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async () => Response.json({ detail: DETAIL }));
+    vi.stubGlobal("fetch", fetchMock);
+    const view = renderHomeMealList();
+    const row = screen.getByRole("button", { name: /ensalada tibia/i });
+    const fallback = view.container.querySelector(".meal-list");
+    expect(fallback).toHaveAttribute("tabindex", "-1");
+    row.focus();
+
+    await user.keyboard("{Enter}");
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+
+    view.rerender(
+      <HomeMealList
+        emptyLabel="No hay comidas."
+        planId="plan-1"
+        planState="draft"
+        planVersion={7}
+        rows={ROWS.filter((meal) => meal.id !== "entry-pending")}
+      />,
+    );
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(fallback).toHaveFocus();
   });
 
   it("shows the empty label when there are no rows", () => {

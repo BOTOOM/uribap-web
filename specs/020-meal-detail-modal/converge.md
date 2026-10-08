@@ -9,7 +9,7 @@
 
 ## Verification Record
 
-Implementation and the requested local verification are complete. The local preview remains running on port 3100.
+Initial implementation and its requested local verification are complete. No `:3100` preview server was started for the focus-restoration review follow-up, as requested.
 
 | Check | Result | Evidence |
 |---|---|---|
@@ -37,9 +37,23 @@ Completed in order:
 
 1. `6a7bc8f` — `docs(020): specify meal detail modal`
 2. `43213b6` — `feat(plan): open meal detail in a modal`
+3. `8a09bf9` — `docs(020): record meal modal delivery`
+4. `674b266` — `fix(plan): keep meal detail close button visible`
 
-Both commits were pushed to `devin/1791403355-meal-detail-modal`. `next-env.d.ts` and all `src/app/dev-preview` fixtures were excluded. No PR was created and CI was not watched.
+All four commits were pushed to `devin/1791403355-meal-detail-modal`. `next-env.d.ts` and all `src/app/dev-preview` fixtures were excluded. No PR was created and CI was not watched.
 
 ## Open Items
 
 - None. The gated E2E and visual-verification limitations are recorded above.
+
+## Review follow-up: focus restoration
+
+- `MealDetailDialog` restores focus to the latest entry trigger when it remains present. When refreshed data removes it, PlanBoard supplies its active day selector and HomeMealList supplies its own `.meal-list` container as fallback; no global fallback selector is used.
+- PlanBoard and HomeMealList component tests cover Enter-to-open, Escape and Cerrar focus return, and deleted-entry fallback focus. Accessibility tests retain the direct-dialog axe test and add keyboard-opened PlanBoard/HomeMealList scans with focus-return assertions.
+- Focused Vitest: PASS — 3 files, 29 tests. Full `pnpm test`: PASS — 56 files, 285 tests.
+- `pnpm lint`, `pnpm typecheck`, `pnpm api:check`, `pnpm build`, and `pnpm test:a11y`: PASS.
+- `pnpm test:e2e`: PASS — 8 passed, 13 skipped; responsive checks covered 375, 768, 1024, and 1440px. The authenticated planning E2E remains gated.
+- `pnpm licenses:check`: PASS — 14 license families. `pnpm performance:check`: PASS — 1,064,193 / 2,000,000 bytes.
+- Docker health: BLOCKED — `docker compose up -d --build` requires the absent `.env.local`; `docker compose ps` showed no services.
+- `pnpm audit`: FAIL — 9 findings (1 low, 4 moderate, 4 high); the high findings include braces, source-map-js, sharp, and Next.js SSRF (`GHSA-cjq9-62q9-8jv4`). No dependency files changed in this follow-up.
+- `git diff --check`: PASS — exit code 0.

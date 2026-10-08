@@ -24,6 +24,7 @@
 - [x] CHK010 Home rows and plan cards use semantic, keyboard-operable controls with dialog intent.
 - [x] CHK011 Visible focus, reduced motion, mobile safe area, scrolling, and footer reachability are requirements.
 - [x] CHK012 Axe and responsive overflow checks have explicit test coverage.
+- [x] CHK013 Closing restores focus to the originating trigger, or to the owning component's fallback if refreshed data removed it.
 
 ## Notes
 

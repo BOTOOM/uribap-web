@@ -11,6 +11,7 @@ The user supplied a settled interaction and implementation design. No product or
 5. **Detail refresh**: the selected target's ID, outcome, and completion version form the existing detail component's refresh key. No new cache or fetch behavior is introduced.
 6. **Test accessibility engine**: `tests/accessibility/planning.a11y.test.tsx` is a Vitest/jsdom component test, while the existing Playwright axe scan is in `e2e/a11y.spec.ts`. The feature will use `axe-core` in jsdom for the requested open-dialog axe assertion. `axe-core@4.13.0` is already present transitively through `@axe-core/playwright`; if Vitest cannot resolve it directly, expose that same version as a direct development dependency rather than introducing a second axe version.
 7. **Preview access**: the requested `/dev-preview/meal-modal` route is outside `src/proxy.ts`'s auth matcher. The root layout does not authenticate requests, so the fixture can be served without a session.
+8. **Focus restoration**: the controlled Radix dialog has no trigger element to restore focus to. `MealDetailDialog` must remember the latest entry ID, focus its surviving card/row on close, and use a callback supplied by its owner if refreshed data removed that trigger.
 
 ## Repository Findings
 

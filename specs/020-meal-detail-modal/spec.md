@@ -22,9 +22,9 @@ As a household member planning or preparing meals, I want to open a meal's exist
 
 1. **Given** a plan board with one or more meals and no active selection, **When** the board mounts, **Then** no detail request is made and no dialog is open.
 2. **Given** a meal card on the board, **When** the user activates it, **Then** the matching meal detail opens in a dialog and the card indicates selection only while the dialog is open.
-3. **Given** the dialog is open, **When** the user presses Escape or activates its close button, **Then** the dialog closes and focus returns according to the existing dialog behavior.
+3. **Given** the dialog is open, **When** the user presses Escape or activates its close button, **Then** the dialog closes and focus returns to the meal card that opened it.
 4. **Given** a meal detail dialog is closed, **When** the user changes the selected day, **Then** the day changes without opening or selecting a meal.
-5. **Given** an open meal is removed from refreshed plan data, **When** the board receives the updated entries, **Then** the dialog closes instead of showing stale detail.
+5. **Given** an open meal is removed from refreshed plan data, **When** the board receives the updated entries, **Then** the dialog closes instead of showing stale detail and focus moves to the active day selector.
 
 ### User Story 2 - Inspect today's or tomorrow's meal from home (Priority: P1)
 
@@ -42,11 +42,13 @@ As a household member using the home page, I want to open today's or tomorrow's 
 4. **Given** a row without a recorded completion, **When** it is rendered, **Then** it shows the available “Planeada” status.
 5. **Given** there is no plan or no row for the requested day, **When** the home section renders, **Then** it shows its existing empty label and no meal dialog can open.
 6. **Given** the “Mañana” section is rendered, **When** the user chooses “Ver detalle”, **Then** that existing link continues to navigate to the plan page.
+7. **Given** a home row's detail is open, **When** the row is removed by refreshed data and the dialog closes, **Then** focus moves to that list's meal-list container.
 
 ### Edge Cases
 
 - A day with no entries remains in its existing empty state; changing to it does not select another day's meal.
 - A selected entry missing from refreshed data yields no dialog target, even while other entries remain.
+- Closing the dialog restores focus to its latest surviving meal trigger; if the trigger disappeared, its owning board or home list supplies the fallback.
 - Cooked/skipped completion metadata can change while a dialog is open; the target's completion version participates in the detail refresh key so the existing detail component can reload.
 - A home section can lack plan metadata; its empty state must not fabricate a plan ID or mount an interactive dialog.
 - The existing detail component retains its loading, error, retry, and action states inside the dialog.
@@ -60,8 +62,8 @@ As a household member using the home page, I want to open today's or tomorrow's 
 - **FR-002**: Activating a plan meal card MUST open that entry's existing detail in a labelled dialog.
 - **FR-003**: The day picker MUST change the active day without choosing or opening a meal.
 - **FR-004**: A plan card MUST expose that it opens a dialog, and its selected visual state MUST be present only while its dialog is open.
-- **FR-005**: Closing the detail dialog by Escape, the close button, or the dialog's normal dismiss behavior MUST clear its selected target.
-- **FR-006**: A refreshed plan that no longer contains the selected entry MUST close the dialog.
+- **FR-005**: Closing the detail dialog by Escape, the close button, or the dialog's normal dismiss behavior MUST clear its selected target and restore focus to the latest surviving trigger.
+- **FR-006**: A refreshed plan that no longer contains the selected entry MUST close the dialog and move focus to the active day selector.
 - **FR-007**: Plan and home dialogs MUST render the existing `MealEntryDetail` behavior; this feature MUST NOT change its fetching, action, retry, or view logic.
 - **FR-008**: The detail refresh key MUST include the entry ID, outcome (or pending marker), and completion version (or none marker).
 - **FR-009**: Today's and tomorrow's home meal rows MUST be keyboard-operable buttons that open the matching meal detail without route navigation.
@@ -69,7 +71,7 @@ As a household member using the home page, I want to open today's or tomorrow's 
 - **FR-011**: The home page MUST derive completion labels from recorded server completion data; it MUST NOT infer or mutate meal outcomes in the browser.
 - **FR-012**: Home sections without a plan or without entries MUST show their provided empty label and MUST NOT open a dialog.
 - **FR-013**: The existing “Ver detalle” link in the Mañana section MUST remain unchanged.
-- **FR-014**: The detail dialog MUST have an accessible name, visible close control, keyboard dismissal, focus-visible support, and reduced-motion-compatible animation.
+- **FR-014**: The detail dialog MUST have an accessible name, visible close control, keyboard dismissal, focus-visible support, trigger/fallback focus restoration, and reduced-motion-compatible animation.
 - **FR-015**: The desktop dialog MUST fit within the viewport at a maximum width of 920px; at the existing mobile breakpoint it MUST behave as a bottom sheet, avoid horizontal overflow, respect the safe area, and keep detail actions reachable.
 - **FR-016**: This feature MUST NOT change the API contract, home date/loading logic, plan detail fetch/actions, or unrelated dashboard content.
 
@@ -85,8 +87,8 @@ As a household member using the home page, I want to open today's or tomorrow's 
 
 - **SC-001**: With a populated plan board, initial render causes zero detail endpoint requests; activating a card causes one request for that entry.
 - **SC-002**: From either today's or tomorrow's home row, a user can open the corresponding recipe in a dialog without a route change.
-- **SC-003**: Component tests verify all three completion labels, no-plan/empty behavior, close behavior, and day-picker behavior.
-- **SC-004**: An axe check reports no serious or critical violations for the open meal-detail dialog.
+- **SC-003**: Component tests verify all three completion labels, no-plan/empty behavior, keyboard close behavior, trigger focus restoration, deleted-entry fallback focus, and day-picker behavior.
+- **SC-004**: Direct-dialog and keyboard-opened axe checks report no serious or critical violations; keyboard dismissal restores focus to the PlanBoard card and HomeMealList row.
 - **SC-005**: The plan-detail E2E assertion verifies a visible dialog and no horizontal overflow at its existing 375px and 1440px viewports.
 - **SC-006**: The dialog remains scrollable and its footer actions are reachable at mobile and desktop viewport sizes.
 
@@ -95,5 +97,5 @@ As a household member using the home page, I want to open today's or tomorrow's 
 - The existing `MealEntryDetail` component and authenticated detail endpoint remain authoritative for detail content and action outcomes.
 - Server Components continue to load plan, entry, and recorded completion data; the new client components receive serializable projections.
 - `null` plan context is represented explicitly for a home section without a plan, so no placeholder plan ID or state is required.
-- The existing Radix `Dialog` wrapper supplies modal focus management, Escape handling, and focus return.
+- The existing Radix `Dialog` wrapper supplies modal focus management and Escape handling. Because this controlled dialog has no Radix trigger, the owning components explicitly restore focus to the last meal trigger or a local fallback when that trigger disappears.
 - The feature does not alter date selection or data-loading behavior on the home page.

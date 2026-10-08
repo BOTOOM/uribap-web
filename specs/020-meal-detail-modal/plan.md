@@ -39,15 +39,15 @@ The `AGENTS.md` model matrix recommends `gpt-5-6-luna-high` for UI architecture,
 
 ### Shared detail dialog
 
-Add `src/components/planning/MealDetailDialog.tsx` as a client leaf. It receives plan context, a nullable `MealDetailTarget`, and an `onClose` callback. `target !== null` controls the existing Radix `Dialog`; the content has the accessible title and close button. Render the existing `MealEntryDetail` inside `.dialog-body` only for an active target, with refresh key `${id}:${outcome ?? "pending"}:${completionVersion ?? "none"}`.
+Add `src/components/planning/MealDetailDialog.tsx` as a client leaf. It receives plan context, a nullable `MealDetailTarget`, an `onClose` callback, and an optional `fallbackFocus` callback. `target !== null` controls the existing Radix `Dialog`; the content has the accessible title and close button. Render the existing `MealEntryDetail` inside `.dialog-body` only for an active target, with refresh key `${id}:${outcome ?? "pending"}:${completionVersion ?? "none"}`. Remember the latest non-null target ID and handle close autofocus by focusing its `data-meal-entry-trigger` element using an escaped selector. If that trigger no longer exists, invoke the supplied local fallback; leave Radix's default behavior unchanged if neither target exists.
 
 ### Plan board
 
-In `src/components/planning/PlanBoard.tsx`, initialize `selectedId` to `null`; derive the target from the latest entries; set the active day and selected ID only from a meal-card activation. Day-picker actions update only the active day. Remove inline detail and `.no-meal-selected`; selection styling reflects an open detail target only. When a refresh removes the target entry, the derived target becomes `null` and the dialog closes.
+In `src/components/planning/PlanBoard.tsx`, initialize `selectedId` to `null`; derive the target from the latest entries; set the active day and selected ID only from a meal-card activation. Day-picker actions update only the active day. Remove inline detail and `.no-meal-selected`; selection styling reflects an open detail target only. When a refresh removes the target entry, the derived target becomes `null`, the dialog closes, and its optional fallback resolves the active day selector through a ref.
 
 ### Home rows
 
-Add `src/components/dashboard/HomeMealList.tsx`. The server page builds `recordedByEntry` only from recorded completions and projects row labels, recipe names, servings, outcomes, and completion versions. Nullable plan context represents the no-plan case; no target/dialog is mounted without valid plan metadata and a selected row. Preserve both existing empty labels and the “Ver detalle” link.
+Add `src/components/dashboard/HomeMealList.tsx`. The server page builds `recordedByEntry` only from recorded completions and projects row labels, recipe names, servings, outcomes, and completion versions. Nullable plan context represents the no-plan case; no target/dialog opens without valid plan metadata and a selected row. Preserve both existing empty labels and the “Ver detalle” link. Keep the list's own `.meal-list` container programmatically focusable as its scoped fallback when its selected row disappears.
 
 ### Styling and accessibility
 
@@ -55,9 +55,9 @@ Extend `src/app/globals.css` for the 920px modal width, body padding, card-chrom
 
 ### Test design
 
-- Update `tests/component/planning/plan-board.test.tsx` for no initial fetch/dialog, click-to-open, Escape/button close, day-picker behavior, deletion after refresh, and existing create flow.
-- Add `tests/component/dashboard/home-meal-list.test.tsx` for row labels/details/outcomes, endpoint fetch on activation, and empty/no-plan states.
-- Add an axe-core/jsdom assertion for the open dialog to `tests/accessibility/planning.a11y.test.tsx`. Because axe-core is currently only a transitive dependency of Playwright and not root-resolvable under pnpm, add the already-locked version `axe-core@4.13.0` as a direct development dependency and update the lockfile with pnpm.
+- Update `tests/component/planning/plan-board.test.tsx` for no initial fetch/dialog, click-to-open, keyboard Escape/button focus return, day-picker behavior, deleted-entry fallback focus, and existing create flow.
+- Add `tests/component/dashboard/home-meal-list.test.tsx` for row labels/details/outcomes, endpoint fetch on activation, empty/no-plan states, keyboard focus return, and deleted-row fallback focus.
+- Keep the direct-dialog axe assertion and add keyboard-opened PlanBoard and HomeMealList axe checks to `tests/accessibility/planning.a11y.test.tsx`. Because axe-core is currently only a transitive dependency of Playwright and not root-resolvable under pnpm, add the already-locked version `axe-core@4.13.0` as a direct development dependency and update the lockfile with pnpm.
 - Update the existing gated `e2e/plan-detail.spec.ts` to assert the opened dialog and horizontal overflow at its existing viewport checks; preserve its gate.
 - Add the requested static preview under `src/app/dev-preview/meal-modal/page.tsx`; mock only the local detail fetch in that untracked fixture.
 
@@ -65,7 +65,7 @@ Extend `src/app/globals.css` for the 920px modal width, body padding, card-chrom
 
 - **API authority**: Pass. Meal detail and recorded completion outcomes remain sourced from existing API data.
 - **Server/client boundary**: Pass. Server pages load/project rows; client leaves own modal selection.
-- **Accessibility**: Pass by design. Accessible dialog title, close affordance, semantic buttons, keyboard dismissal, focus-visible styling, axe coverage, and reduced-motion override are included.
+- **Accessibility**: Pass by design. Accessible dialog title, close affordance, semantic buttons, keyboard dismissal, explicit trigger/fallback focus restoration, focus-visible styling, axe coverage, and reduced-motion override are included.
 - **Responsive behavior**: Pass by design. Desktop width is capped at 920px; mobile uses the existing 820px breakpoint and a safe-area-aware bottom sheet with scrollable content.
 - **Contract integrity**: Pass. No OpenAPI or BFF changes.
 - **Security**: Pass. The preview fixture uses only static fake data; no credentials or external services.
