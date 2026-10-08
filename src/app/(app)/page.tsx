@@ -1,19 +1,22 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import type { Route } from "next";
 
 import { ErrorState } from "@/components/states/ErrorState";
 import { Icon } from "@/components/ui/Icon";
 import { ApiRequestError, serverApiFetch, serverHouseholdFetch } from "@/lib/api/server-client";
 import type { components } from "@/lib/api/generated/schema";
+import { dashboardDateWindow } from "@/lib/dashboard/date-window";
+import { BROWSER_TIME_ZONE_COOKIE, decodeTimeZoneCookie, pickTimeZone } from "@/lib/time-zone";
 import {
-  addDays,
   formatDueLabel,
   formatQuantity,
   formatWeekRange,
+  isoDayInTimeZone,
   relativeDay,
+  todayInTimeZone,
   toIsoDay,
 } from "@/lib/format";
-import { mondayOf } from "@/lib/forecast/window";
 
 type MealPlan = components["schemas"]["MealPlanResponse"];
 type MealPlanEntry = MealPlan["entries"][number];
@@ -23,6 +26,12 @@ type DemandForecast = components["schemas"]["DemandForecastResponse"];
 type ShoppingList = components["schemas"]["ShoppingListResponse"];
 type TaskPage = components["schemas"]["PreparationTaskPage"];
 type MealCompletion = components["schemas"]["MealCompletionResponse"];
+type CurrentUser = {
+  memberships: Array<{ household_id: string; status: string }>;
+};
+type HouseholdTimezone = {
+  timezone: string;
+};
 
 const MEAL_LABELS: Record<MealType, string> = {
   breakfast: "Desayuno",
@@ -49,36 +58,58 @@ async function tryLoad<T>(promise: Promise<T>): Promise<LoadResult<T>> {
   }
 }
 
-async function loadDashboard() {
-  const today = toIsoDay(new Date());
-  const weekStart = toIsoDay(mondayOf(new Date()));
-  const weekEndDate = new Date(`${weekStart}T00:00:00Z`);
-  weekEndDate.setUTCDate(weekEndDate.getUTCDate() + 6);
+export async function loadDashboard() {
+  const mePromise = tryLoad(serverApiFetch<CurrentUser>("/me"));
+  const versionsPromise = tryLoad(
+    serverHouseholdFetch<{ items: PublishedVersion[] }>("/recipes/published-versions"),
+  );
+  const listPromise = tryLoad(serverHouseholdFetch<ShoppingList>("/shopping-lists/current"));
+  const tasksPromise = tryLoad(serverHouseholdFetch<TaskPage>("/preparation-tasks"));
+  const completionsPromise = tryLoad(
+    serverHouseholdFetch<{ items: MealCompletion[] }>("/meal-completions"),
+  );
 
-  const [me, plan, versions, forecast, list, tasks, completions] = await Promise.all([
-    tryLoad(serverApiFetch<{ memberships: unknown[] }>("/me")),
+  const [me, cookieStore] = await Promise.all([mePromise, cookies()]);
+  const browserTimeZone = decodeTimeZoneCookie(
+    cookieStore.get(BROWSER_TIME_ZONE_COOKIE)?.value,
+  );
+  let householdTimeZone: string | null = null;
+  if (!browserTimeZone && me.ok) {
+    const membership = me.value.memberships.find((item) => item.status === "active");
+    if (membership) {
+      const household = await tryLoad(
+        serverApiFetch<HouseholdTimezone>(`/households/${membership.household_id}`),
+      );
+      if (household.ok) householdTimeZone = household.value.timezone;
+    }
+  }
+  const timeZone = pickTimeZone(browserTimeZone, householdTimeZone);
+  const today = timeZone ? todayInTimeZone(timeZone) : toIsoDay(new Date());
+  const dateWindow = dashboardDateWindow(today);
+
+  const [plan, versions, forecast, list, tasks, completions] = await Promise.all([
     tryLoad(
-      serverHouseholdFetch<MealPlan>(`/plans/current?week_start=${weekStart}`).catch(
+      serverHouseholdFetch<MealPlan>(
+        `/plans/current?week_start=${dateWindow.weekStart}`,
+      ).catch(
         (error) => {
           if (error instanceof ApiRequestError && error.status === 404) return null;
           throw error;
         },
       ),
     ),
-    tryLoad(
-      serverHouseholdFetch<{ items: PublishedVersion[] }>("/recipes/published-versions"),
-    ),
+    versionsPromise,
     tryLoad(
       serverHouseholdFetch<DemandForecast>(
-        `/forecast/demand?from_date=${weekStart}&to_date=${toIsoDay(weekEndDate)}`,
+        `/forecast/demand?from_date=${dateWindow.weekStart}&to_date=${dateWindow.weekEnd}`,
       ),
     ),
-    tryLoad(serverHouseholdFetch<ShoppingList>("/shopping-lists/current")),
-    tryLoad(serverHouseholdFetch<TaskPage>("/preparation-tasks")),
-    tryLoad(serverHouseholdFetch<{ items: MealCompletion[] }>("/meal-completions")),
+    listPromise,
+    tasksPromise,
+    completionsPromise,
   ]);
 
-  return { today, weekStart, plan, versions, forecast, list, tasks, completions, me };
+  return { ...dateWindow, timeZone, plan, versions, forecast, list, tasks, completions, me };
 }
 
 function MealRows({
@@ -134,9 +165,8 @@ export default async function DashboardPage() {
   const todayEntries = (plan?.entries ?? [])
     .filter((entry) => entry.planned_date === data.today)
     .sort((a, b) => MEAL_ORDER[a.meal_type] - MEAL_ORDER[b.meal_type]);
-  const tomorrowIso = addDays(data.today, 1);
   const tomorrowEntries = (plan?.entries ?? [])
-    .filter((entry) => entry.planned_date === tomorrowIso)
+    .filter((entry) => entry.planned_date === data.tomorrow)
     .sort((a, b) => MEAL_ORDER[a.meal_type] - MEAL_ORDER[b.meal_type]);
 
   const forecastLines = data.forecast.ok
@@ -326,7 +356,14 @@ export default async function DashboardPage() {
             <div className="card-title">
               <h2>Completado</h2>
               {latestCompletion?.created_at ? (
-                <span className="meta">{relativeDay(toIsoDay(new Date(latestCompletion.created_at)), data.today)}</span>
+                <span className="meta">
+                  {relativeDay(
+                    data.timeZone
+                      ? isoDayInTimeZone(new Date(latestCompletion.created_at), data.timeZone)
+                      : toIsoDay(new Date(latestCompletion.created_at)),
+                    data.today,
+                  )}
+                </span>
               ) : null}
             </div>
             {latestCompletion ? (
