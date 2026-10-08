@@ -1,4 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import axe from "axe-core";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -6,7 +8,10 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 import { MealPlanEntryForm } from "@/components/planning/MealPlanEntryForm";
 import { MealPlanTransitionBar } from "@/components/planning/MealPlanTransitionBar";
 import { CompletedMealsList } from "@/components/completion/CompletedMealsList";
+import { HomeMealList } from "@/components/dashboard/HomeMealList";
 import { MealEntryDetailView } from "@/components/planning/MealEntryDetail";
+import { MealDetailDialog } from "@/components/planning/MealDetailDialog";
+import { PlanBoard } from "@/components/planning/PlanBoard";
 import { SkipMealButton } from "@/components/planning/SkipMealButton";
 import type { components } from "@/lib/api/generated/schema";
 
@@ -34,6 +39,29 @@ const INGREDIENTS = [
     name: "Arroz",
     dimension: "mass" as const,
     base_unit: "g",
+  },
+];
+
+const BOARD_ENTRY = {
+  id: "entry-1",
+  plannedDate: "2026-09-28",
+  mealType: "dinner" as const,
+  servings: 2,
+  notes: null,
+  recipeName: "Caldo de pollo",
+  outcome: null,
+  completed: false,
+  completionVersion: null,
+};
+
+const HOME_ROWS = [
+  {
+    id: "entry-1",
+    mealLabel: "Cena",
+    recipeName: "Caldo de pollo",
+    servings: 2,
+    outcome: null,
+    completionVersion: null,
   },
 ];
 
@@ -184,6 +212,117 @@ describe("meal planning accessibility", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Cocinada")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reabrir" })).toBeInTheDocument();
+  });
+
+  it("has no serious or critical axe violations when the meal detail dialog is open", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ detail: ENTRY_DETAIL })));
+    render(
+      <MealDetailDialog
+        onClose={vi.fn()}
+        planId="plan-1"
+        planState="approved"
+        target={{
+          id: "entry-1",
+          outcome: null,
+          completionVersion: null,
+        }}
+        version={1}
+      />,
+    );
+
+    const dialog = await screen.findByRole("dialog", { name: "Detalle de la comida" });
+    await screen.findByRole("heading", { name: "Ingredientes" });
+    const results = await axe.run(dialog, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+      },
+    });
+
+    expect(
+      results.violations.filter(({ impact }) =>
+        impact === "critical" || impact === "serious",
+      ),
+    ).toEqual([]);
+  });
+
+  it("opens the plan-board dialog by keyboard with no serious or critical axe violations", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ detail: ENTRY_DETAIL })));
+    render(
+      <PlanBoard
+        entries={[BOARD_ENTRY]}
+        ingredients={INGREDIENTS}
+        planId="plan-1"
+        state="approved"
+        today="2026-09-28"
+        version={1}
+        versions={VERSIONS}
+        weekStart="2026-09-28"
+      />,
+    );
+
+    const card = screen.getByRole("button", { name: /caldo de pollo/i });
+    for (let index = 0; index < 16 && document.activeElement !== card; index += 1) {
+      await user.tab();
+    }
+    expect(card).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    const dialog = await screen.findByRole("dialog", { name: "Detalle de la comida" });
+    await screen.findByRole("heading", { name: "Ingredientes" });
+    const results = await axe.run(dialog, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+      },
+    });
+
+    expect(
+      results.violations.filter(({ impact }) =>
+        impact === "critical" || impact === "serious",
+      ),
+    ).toEqual([]);
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(card).toHaveFocus());
+  });
+
+  it("opens the home meal dialog by keyboard with no serious or critical axe violations", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ detail: ENTRY_DETAIL })));
+    render(
+      <HomeMealList
+        emptyLabel="No hay comidas."
+        planId="plan-1"
+        planState="approved"
+        planVersion={1}
+        rows={HOME_ROWS}
+      />,
+    );
+
+    const row = screen.getByRole("button", { name: /caldo de pollo/i });
+    await user.tab();
+    expect(row).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    const dialog = await screen.findByRole("dialog", { name: "Detalle de la comida" });
+    await screen.findByRole("heading", { name: "Ingredientes" });
+    const results = await axe.run(dialog, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+      },
+    });
+
+    expect(
+      results.violations.filter(({ impact }) =>
+        impact === "critical" || impact === "serious",
+      ),
+    ).toEqual([]);
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(row).toHaveFocus());
   });
 
   it("labels the reason input when the skip form is expanded", () => {

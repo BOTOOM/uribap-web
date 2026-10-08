@@ -1,6 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import nextConfig from "../../next.config";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.resetModules();
+});
+
+async function readCspFor(nodeEnv: "development" | "production") {
+  vi.stubEnv("NODE_ENV", nodeEnv);
+  vi.resetModules();
+  const config = (await import("../../next.config")).default;
+  const groups = await config.headers?.();
+  return groups?.[0].headers.find(
+    (entry) => entry.key === "Content-Security-Policy",
+  )?.value;
+}
 
 describe("security headers configuration", () => {
   it("applies baseline headers to every route", async () => {
@@ -29,6 +44,14 @@ describe("security headers configuration", () => {
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
     expect(csp).toContain("form-action 'self'");
     expect(csp).toContain("base-uri 'self'");
+  });
+
+  it("allows eval for React development diagnostics but not in production", async () => {
+    const developmentCsp = await readCspFor("development");
+    expect(developmentCsp).toContain("'unsafe-eval'");
+
+    const productionCsp = await readCspFor("production");
+    expect(productionCsp).not.toContain("'unsafe-eval'");
   });
 
   it("marks document routes as non-cacheable but spares static assets", async () => {
