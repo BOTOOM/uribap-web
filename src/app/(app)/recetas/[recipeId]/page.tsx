@@ -13,6 +13,7 @@ import {
 import { ErrorState } from "@/components/states/ErrorState";
 import { Icon } from "@/components/ui/Icon";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
+import { listAllIngredients } from "@/lib/api/list-all-ingredients";
 import type { components } from "@/lib/api/generated/schema";
 import { formatQuantity } from "@/lib/format";
 import { weekWindow } from "@/lib/forecast/window";
@@ -70,10 +71,7 @@ async function loadVersion(
 
 async function loadIngredients(): Promise<EditorIngredient[]> {
   try {
-    const data = await serverHouseholdFetch<{ items: EditorIngredient[] }>(
-      "/ingredients?limit=100",
-    );
-    return data.items;
+    return await listAllIngredients("/ingredients?limit=100");
   } catch {
     return [];
   }

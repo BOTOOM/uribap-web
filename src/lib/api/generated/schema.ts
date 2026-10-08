@@ -1494,10 +1494,7 @@ export interface components {
         IngredientPage: {
             /** Items */
             items: components["schemas"]["IngredientResponse"][];
-            /** Page Info */
-            page_info: {
-                [key: string]: unknown;
-            };
+            page_info: components["schemas"]["PageInfo"];
         };
         /** IngredientResponse */
         IngredientResponse: {
@@ -3838,6 +3835,7 @@ export interface operations {
                 dimension?: string | null;
                 include_global?: boolean;
                 limit?: number;
+                cursor?: string | null;
             };
             header: {
                 "X-Household-ID": string;
@@ -3856,13 +3854,31 @@ export interface operations {
                     "application/json": components["schemas"]["IngredientPage"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

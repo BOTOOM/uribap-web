@@ -90,17 +90,22 @@ export async function serverApiFetch<T>(path: string, init: RequestInit = {}): P
   );
 }
 
-export async function serverHouseholdFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function getActiveHouseholdId(): Promise<string> {
   const currentUser = await serverApiFetch<{
     memberships: Array<{ household_id: string; status: string }>;
   }>("/me");
   const membership = currentUser.memberships.find((item) => item.status === "active");
   if (!membership) throw new ApiRequestError(403, "forbidden", "No hay un hogar activo.");
+  return membership.household_id;
+}
+
+export async function serverHouseholdFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const householdId = await getActiveHouseholdId();
   return serverApiFetch<T>(path, {
     ...init,
     headers: {
       ...(init.headers ?? {}),
-      "X-Household-ID": membership.household_id,
+      "X-Household-ID": householdId,
     },
   });
 }

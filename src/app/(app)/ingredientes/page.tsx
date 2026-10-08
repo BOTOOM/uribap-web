@@ -1,15 +1,14 @@
 import { IngredientCreateDialog } from "@/components/ingredients/IngredientCreateDialog";
 import { IngredientTable } from "@/components/ingredients/IngredientTable";
 import { ErrorState } from "@/components/states/ErrorState";
-import { serverHouseholdFetch } from "@/lib/api/server-client";
+import { listAllIngredients } from "@/lib/api/list-all-ingredients";
 import type { components } from "@/lib/api/generated/schema";
 
 type Ingredient = components["schemas"]["IngredientResponse"];
 
 async function loadIngredients(): Promise<Ingredient[] | { error: string }> {
   try {
-    const data = await serverHouseholdFetch<{ items: Ingredient[] }>("/ingredients");
-    return data.items;
+    return await listAllIngredients();
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
   }
