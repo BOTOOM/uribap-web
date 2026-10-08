@@ -82,17 +82,21 @@ export function toIsoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export function todayInTimeZone(timeZone: string): string {
+export function isoDayInTimeZone(instant: Date, timeZone: string): string {
   try {
     return new Intl.DateTimeFormat("en-CA", {
       timeZone,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-    }).format(new Date());
+    }).format(instant);
   } catch {
-    return toIsoDay(new Date());
+    return toIsoDay(instant);
   }
+}
+
+export function todayInTimeZone(timeZone: string): string {
+  return isoDayInTimeZone(new Date(), timeZone);
 }
 
 export function addDays(isoDay: string, days: number): string {

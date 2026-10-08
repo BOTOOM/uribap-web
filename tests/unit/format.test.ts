@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { todayInTimeZone, toIsoDay } from "@/lib/format";
+import { isoDayInTimeZone, todayInTimeZone, toIsoDay } from "@/lib/format";
 
 describe("todayInTimeZone", () => {
   afterEach(() => {
@@ -19,5 +19,12 @@ describe("todayInTimeZone", () => {
     vi.setSystemTime(new Date("2026-10-01T01:30:00Z"));
 
     expect(todayInTimeZone("Not/A_Timezone")).toBe(toIsoDay(new Date()));
+  });
+
+  it("converts an instant to its calendar day in the requested time zone", () => {
+    const instant = new Date("2026-10-08T00:30:00Z");
+
+    expect(isoDayInTimeZone(instant, "America/Bogota")).toBe("2026-10-07");
+    expect(isoDayInTimeZone(instant, "Asia/Tokyo")).toBe("2026-10-08");
   });
 });

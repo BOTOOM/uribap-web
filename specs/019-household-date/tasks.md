@@ -125,3 +125,26 @@ description: "Implementation tasks for browser-local dashboard date"
 2. Keep the home and AppShell server-rendered, isolating browser time-zone detection in one client leaf.
 3. Derive the home date window from the selected zone without changing `dashboardDateWindow`.
 4. Verify cookie synchronization, boundary behavior, and the documented first-visit fallback.
+
+---
+
+## Phase 7: Review follow-up
+
+**Purpose**: Keep completion labels and browser-zone synchronization current, and exercise the
+dashboard's real date-resolution and request-building path.
+
+- [x] T019 Add `isoDayInTimeZone` beside `todayInTimeZone`, delegate today calculation to it, use
+  the resolved dashboard zone for the latest-completion label, and cover the Bogota/Tokyo instant
+  boundary.
+- [x] T020 Re-run browser-zone synchronization on pathname changes and visible focus/visibility
+  events; verify cookie writes and refresh counts in the component test.
+- [x] T021 Cover `loadDashboard` with a Tokyo cookie, a Bogota household fallback, and a failed
+  household lookup; assert the exact plan and forecast request paths.
+- [x] T022 Run the focused Vitest files, lint, typecheck, and `git diff --check`; record results in
+  `converge.md`.
+
+### Review follow-up verification evidence
+
+- Focused Vitest: `pnpm exec vitest run --config vitest.config.mts tests/unit/format.test.ts tests/unit/dashboard-date-window.test.ts tests/unit/dashboard-data-path.test.ts tests/component/browser-time-zone-sync.test.tsx` — **PASS**, 4 files and 11 tests.
+- `pnpm lint` — **PASS**.
+- `pnpm typecheck` — **PASS**.

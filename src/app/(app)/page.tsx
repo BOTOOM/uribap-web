@@ -12,6 +12,7 @@ import {
   formatDueLabel,
   formatQuantity,
   formatWeekRange,
+  isoDayInTimeZone,
   relativeDay,
   todayInTimeZone,
   toIsoDay,
@@ -57,7 +58,7 @@ async function tryLoad<T>(promise: Promise<T>): Promise<LoadResult<T>> {
   }
 }
 
-async function loadDashboard() {
+export async function loadDashboard() {
   const mePromise = tryLoad(serverApiFetch<CurrentUser>("/me"));
   const versionsPromise = tryLoad(
     serverHouseholdFetch<{ items: PublishedVersion[] }>("/recipes/published-versions"),
@@ -108,7 +109,7 @@ async function loadDashboard() {
     completionsPromise,
   ]);
 
-  return { ...dateWindow, plan, versions, forecast, list, tasks, completions, me };
+  return { ...dateWindow, timeZone, plan, versions, forecast, list, tasks, completions, me };
 }
 
 function MealRows({
@@ -355,7 +356,14 @@ export default async function DashboardPage() {
             <div className="card-title">
               <h2>Completado</h2>
               {latestCompletion?.created_at ? (
-                <span className="meta">{relativeDay(toIsoDay(new Date(latestCompletion.created_at)), data.today)}</span>
+                <span className="meta">
+                  {relativeDay(
+                    data.timeZone
+                      ? isoDayInTimeZone(new Date(latestCompletion.created_at), data.timeZone)
+                      : toIsoDay(new Date(latestCompletion.created_at)),
+                    data.today,
+                  )}
+                </span>
               ) : null}
             </div>
             {latestCompletion ? (
