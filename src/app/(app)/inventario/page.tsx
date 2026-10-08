@@ -8,6 +8,7 @@ import type { LotOption } from "@/components/inventory/InventoryAdjustmentForm";
 import type { IngredientOption } from "@/components/inventory/InventoryLotForm";
 import { ErrorState } from "@/components/states/ErrorState";
 import { serverHouseholdFetch } from "@/lib/api/server-client";
+import { listAllIngredients } from "@/lib/api/list-all-ingredients";
 import type { components } from "@/lib/api/generated/schema";
 import {
   formatDayMonth,
@@ -42,8 +43,7 @@ async function loadShoppingList(): Promise<ShoppingList | null> {
 
 async function loadIngredients(): Promise<IngredientOption[]> {
   try {
-    const data = await serverHouseholdFetch<{ items: IngredientOption[] }>("/ingredients");
-    return data.items;
+    return await listAllIngredients();
   } catch {
     return [];
   }

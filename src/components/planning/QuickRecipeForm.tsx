@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { IngredientCreateForm } from "@/components/ingredients/IngredientCreateForm";
+import { IngredientForm } from "@/components/ingredients/IngredientForm";
 import { Icon } from "@/components/ui/Icon";
 import type { components } from "@/lib/api/generated/schema";
 import { formatQuantity } from "@/lib/format";
@@ -157,7 +157,7 @@ export function QuickRecipeForm({
             <Icon name="close" size={16} />
           </button>
         </div>
-        <IngredientCreateForm
+        <IngredientForm
           autoFocusName
           onCancel={() => setCreatingIngredient(false)}
           onCreated={(ingredient) => {

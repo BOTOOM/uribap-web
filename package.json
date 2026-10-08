@@ -38,6 +38,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@biomejs/biome": "2.5.14",
+    "axe-core": "4.13.0",
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
@@ -59,7 +60,8 @@
       "brace-expansion@1": "1.1.21",
       "brace-expansion@2": "2.1.7",
       "brace-expansion@5": "5.0.12",
-      "js-yaml": "4.3.2"
+      "js-yaml": "4.3.2",
+      "sharp@0": "0.35.5"
     }
   }
 }

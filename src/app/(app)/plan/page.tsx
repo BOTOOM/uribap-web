@@ -12,6 +12,7 @@ import {
   serverApiFetch,
   serverHouseholdFetch,
 } from "@/lib/api/server-client";
+import { listAllIngredients } from "@/lib/api/list-all-ingredients";
 import type { components } from "@/lib/api/generated/schema";
 import { formatDayMonth, formatWeekRangeLong, todayInTimeZone, toIsoDay } from "@/lib/format";
 import { mondayOf } from "@/lib/forecast/window";
@@ -20,7 +21,6 @@ import type { CatalogIngredient } from "@/lib/ingredients";
 type MealPlan = components["schemas"]["MealPlanResponse"];
 type MealCompletion = components["schemas"]["MealCompletionResponse"];
 type PublishedVersion = components["schemas"]["PublishedRecipeVersionResponse"];
-type Ingredient = components["schemas"]["IngredientResponse"];
 type PlanState = components["schemas"]["MealPlanState"];
 
 type CurrentUser = {
@@ -75,8 +75,8 @@ async function loadCompletions(): Promise<MealCompletion[] | { error: string }> 
 
 async function loadIngredients(): Promise<CatalogIngredient[]> {
   try {
-    const data = await serverHouseholdFetch<{ items: Ingredient[] }>("/ingredients");
-    return data.items.map((item) => ({
+    const data = await listAllIngredients();
+    return data.map((item) => ({
       id: item.id,
       name: item.name,
       dimension: item.dimension,

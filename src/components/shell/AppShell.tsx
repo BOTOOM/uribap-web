@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 
 import { Assistant } from "@/components/shell/Assistant";
+import { BrowserTimeZoneSync } from "@/components/shell/BrowserTimeZoneSync";
 import { MobileNav } from "@/components/shell/MobileNav";
 import { ShellNav } from "@/components/shell/ShellNav";
 import { SkipLink } from "@/components/shell/SkipLink";
@@ -9,6 +10,8 @@ import { ToastRegion } from "@/components/shell/ToastRegion";
 import { BrandMark, BrandWordmark } from "@/components/ui/BrandMark";
 import { Icon } from "@/components/ui/Icon";
 import { ApiRequestError, serverApiFetch, serverHouseholdFetch } from "@/lib/api/server-client";
+import { BROWSER_TIME_ZONE_COOKIE, decodeTimeZoneCookie } from "@/lib/time-zone";
+import { cookies } from "next/headers";
 
 type CurrentUser = {
   memberships: Array<{
@@ -25,11 +28,12 @@ type Members = {
 
 type ShoppingList = { items: Array<{ status: string }> };
 
-function todayLabel(): string {
+function todayLabel(timeZone?: string): string {
   return new Intl.DateTimeFormat("es", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    ...(timeZone ? { timeZone } : {}),
   }).format(new Date());
 }
 
@@ -65,11 +69,16 @@ async function loadShell() {
 }
 
 export async function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { householdName, members, pendingShopping } = await loadShell();
+  const [shell, cookieStore] = await Promise.all([loadShell(), cookies()]);
+  const { householdName, members, pendingShopping } = shell;
+  const browserTimeZone = decodeTimeZoneCookie(
+    cookieStore.get(BROWSER_TIME_ZONE_COOKIE)?.value,
+  );
   const memberCount = members.length;
 
   return (
     <>
+      <BrowserTimeZoneSync />
       <SkipLink />
       <div className="app">
         <aside className="sidebar">
@@ -103,7 +112,7 @@ export async function AppShell({ children }: Readonly<{ children: React.ReactNod
         </aside>
         <div className="workspace">
           <header className="topbar">
-            <span className="crumb">{todayLabel()}</span>
+            <span className="crumb">{todayLabel(browserTimeZone ?? undefined)}</span>
             <div className="top-actions">
               {members[0] ? (
                 <Link

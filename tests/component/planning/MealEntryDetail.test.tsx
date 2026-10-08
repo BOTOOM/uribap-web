@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -61,6 +61,7 @@ const DETAIL: Detail = {
       on_hand_amount: "100.000000",
       shortfall_amount: "200.000000",
       position: 0,
+      pantry_staple: false,
     },
     {
       ingredient_id: "cilantro",
@@ -71,6 +72,7 @@ const DETAIL: Detail = {
       on_hand_amount: "20.000000",
       shortfall_amount: "0.000000",
       position: 1,
+      pantry_staple: false,
     },
   ],
 };
@@ -94,6 +96,62 @@ describe("MealEntryDetailView", () => {
     expect(screen.getByText("opcional")).toBeInTheDocument();
     expect(screen.getByText("2 raciones")).toBeInTheDocument();
     expect(screen.getByText("35 min")).toBeInTheDocument();
+  });
+
+  it("labels a stocked pantry staple without replacing other ingredient states", () => {
+    renderDetail({
+      ingredients: [
+        {
+          ...DETAIL.ingredients[0],
+          pantry_staple: true,
+          on_hand_amount: "300.000000",
+          shortfall_amount: "0.000000",
+        },
+        DETAIL.ingredients[1],
+      ],
+    });
+
+    const stapleRow = screen.getByText("Pollo").closest("li")!;
+    expect(within(stapleRow).getByText("Básico de despensa")).toBeInTheDocument();
+    expect(within(stapleRow).queryByText(/^Hay/)).not.toBeInTheDocument();
+    expect(screen.getByText("Hay 20 g")).toBeInTheDocument();
+  });
+
+  it("labels an out-of-stock pantry staple from the API shortfall", () => {
+    renderDetail({
+      ingredients: [
+        {
+          ...DETAIL.ingredients[0],
+          pantry_staple: true,
+          on_hand_amount: "0.000000",
+          shortfall_amount: "300.000000",
+        },
+      ],
+    });
+
+    const stapleRow = screen.getByText("Pollo").closest("li")!;
+    expect(within(stapleRow).getByText("Se acabó")).toBeInTheDocument();
+    expect(within(stapleRow).queryByText(/Faltan/)).not.toBeInTheDocument();
+  });
+
+  it("keeps pantry-staple status visible on a recorded meal", () => {
+    renderDetail({
+      completion: COMPLETION,
+      ingredients: [
+        {
+          ...DETAIL.ingredients[0],
+          pantry_staple: true,
+          shortfall_amount: "0.000000",
+        },
+      ],
+    });
+
+    expect(screen.getByText("Básico de despensa")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Se descontaron los ingredientes consumibles. Los básicos de despensa no se descuentan.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("parses numbered recipe steps into an ordered list", () => {
@@ -159,7 +217,7 @@ describe("MealEntryDetailView", () => {
     expect(screen.getByRole("button", { name: "Pedimos domicilio" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Al marcarla como cocinada se descuentan estos ingredientes. Si pidieron domicilio, no se toca el inventario.",
+        "Al marcarla como cocinada se descuentan los ingredientes consumibles. Los básicos de despensa no se descuentan. Si pidieron domicilio, no se toca el inventario.",
       ),
     ).toBeInTheDocument();
     approved.unmount();
@@ -187,6 +245,23 @@ describe("MealEntryDetailView", () => {
     expect(screen.getByText("No se cocinó; el inventario no cambió.")).toBeInTheDocument();
     expect(screen.getByText("Pedimos domicilio")).toBeInTheDocument();
     expect(screen.queryByText(/Faltan|Hay/)).not.toBeInTheDocument();
+  });
+
+  it("does not show pantry-staple availability for a skipped meal", () => {
+    renderDetail({
+      completion: { ...COMPLETION, outcome: "skipped", outcome_note: "Pedimos domicilio" },
+      ingredients: [
+        {
+          ...DETAIL.ingredients[0],
+          pantry_staple: true,
+          on_hand_amount: "0.000000",
+          shortfall_amount: "300.000000",
+        },
+      ],
+    });
+
+    expect(screen.queryByText("Se acabó")).not.toBeInTheDocument();
+    expect(screen.queryByText("Básico de despensa")).not.toBeInTheDocument();
   });
 });
 

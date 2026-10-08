@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { IngredientCreateForm } from "@/components/ingredients/IngredientCreateForm";
+import { IngredientForm } from "@/components/ingredients/IngredientForm";
 import {
   Dialog,
   DialogClose,
@@ -33,7 +33,7 @@ export function IngredientCreateDialog() {
               Define nombre, dimensión y unidad base: las recetas y el inventario las
               usarán sin conversiones ambiguas.
             </DialogDescription>
-            <IngredientCreateForm onSuccess={() => setOpen(false)} />
+            <IngredientForm onSuccess={() => setOpen(false)} />
           </div>
         </DialogContent>
       </Dialog>
