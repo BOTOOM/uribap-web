@@ -3,18 +3,19 @@
 ## Upstream API
 
 The Web branch pins the OpenAPI document from API revision
-`b0883cd34dbf4951283f8028239f60f4c3383e5d` in
+`74b661925fdec990c386850b90906664bb78b74f` in
 `contracts/uribap-api.openapi.json`. The generated client is derived with `pnpm api:generate`;
 the snapshot is not edited by hand.
 
 ### Request
 
-- Method/path: `GET /ingredients` through `serverHouseholdFetch`.
+- Method/path: `GET /ingredients` through `serverApiFetch`.
 - Page size: `limit=100`, regardless of any `limit` already present in the input path.
 - Continuation: include the previous response's opaque `page_info.next_cursor` as `cursor`.
 - Filters: preserve other input query parameters, including dimension, search, and global-visibility
   filters.
-- Authorization: use the existing active-household server request context.
+- Authorization: resolve the active household once with `getActiveHouseholdId()` and include its ID
+  in the explicit `X-Household-ID` header on every page request.
 
 ### Response
 
@@ -31,7 +32,8 @@ listAllIngredients(path?: string): Promise<IngredientResponse[]>
 ```
 
 - Default path: `"/ingredients"`.
-- Server-only; calls `serverHouseholdFetch`.
+- Server-only; resolves the household once with `getActiveHouseholdId()` and calls `serverApiFetch`
+  with an explicit `X-Household-ID` header for every page.
 - Fetches at most 50 pages and returns the concatenated `items` only after a null/absent next cursor.
 - Preserves the supplied path and non-pagination query parameters.
 - Throws on upstream failure or when a 50th page still has a next cursor.

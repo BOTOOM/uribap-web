@@ -6,7 +6,7 @@
 
 ## Summary
 
-Pin the Web client to API pagination revision `b0883cd34dbf4951283f8028239f60f4c3383e5d`,
+Pin the Web client to API pagination revision `74b661925fdec990c386850b90906664bb78b74f`,
 regenerate its OpenAPI-derived types, and add a server-only helper that gathers every ingredient
 page. Replace the direct one-page ingredient requests on the five specified server-rendered pages,
 retaining their existing local error handling.
@@ -15,8 +15,8 @@ retaining their existing local error handling.
 
 **Language/Version**: TypeScript 5.9, React 19, Next.js 16.3.6.
 
-**Primary Dependencies**: Next.js App Router, `serverHouseholdFetch`, generated OpenAPI types,
-Vitest, pnpm.
+**Primary Dependencies**: Next.js App Router, `getActiveHouseholdId`, `serverApiFetch`, generated
+OpenAPI types, Vitest, pnpm.
 
 **Storage**: No Web-owned ingredient storage; FastAPI remains authoritative.
 
@@ -33,7 +33,8 @@ Docker targets.
 
 **Constraints**:
 
-- Use `serverHouseholdFetch` only from a server-only module; do not expose access tokens or move
+- Resolve the active household once with `getActiveHouseholdId()` and use `serverApiFetch` with an
+  explicit `X-Household-ID` header from the server-only helper; do not expose access tokens or move
   ingredient retrieval into browser code.
 - Preserve all query parameters supplied to `listAllIngredients`, override `limit` to 100, and
   carry each returned cursor through URL-safe query encoding.
@@ -83,7 +84,7 @@ No product-design constitution gate requires an exception.
 ## API Contract Sequence
 
 1. Copy `openapi/openapi.json` from API revision
-   `b0883cd34dbf4951283f8028239f60f4c3383e5d` to
+   `74b661925fdec990c386850b90906664bb78b74f` to
    `contracts/uribap-api.openapi.json`.
 2. Update `contracts/metadata.json` to that API revision, schema version `v16`, and generation date
    `2026-10-06`; update the pinned metadata assertions in `tests/unit/api-contract.test.ts`.
@@ -100,8 +101,11 @@ No product-design constitution gate requires an exception.
   `IngredientResponse[]`.
 - Parse the provided path's search parameters, preserve filters and other parameters, and set
   `limit=100`.
-- Fetch each page with `serverHouseholdFetch<IngredientPage>`. Append items in response order and
-  replace the cursor with `page_info.next_cursor` until it is null or absent.
+- Resolve the active household once before traversal, then fetch each page with
+  `serverApiFetch<IngredientPage>` and an explicit `X-Household-ID` header. Append items in response
+  order and replace the cursor with `page_info.next_cursor` until it is null or absent. Reusing the
+  resolved household ID keeps every page in the traversal scoped to the same household without
+  re-resolving membership for each request.
 - Use a maximum of 50 requests. Throw when page 50 still supplies a cursor.
 - Use `URLSearchParams` so opaque cursors are percent-encoded correctly.
 
@@ -123,9 +127,10 @@ Do not edit the ingredient POST route.
 ### Tests
 
 - Add `tests/unit/api/list-all-ingredients.test.ts`.
-- Mock `serverHouseholdFetch` and cover a three-page traversal, termination on `null`, the 50-page
-  overflow error, continuation failures without partial results, initial-page termination, cursor
-  encoding, and retention of unrelated query parameters.
+- Mock `getActiveHouseholdId` and `serverApiFetch`; cover a three-page traversal, termination on
+  `null`, the 50-page overflow error, continuation failures without partial results, initial-page
+  termination, cursor encoding, retention of unrelated query parameters, and the explicit
+  household header.
 - Update `tests/unit/api-contract.test.ts` for the API revision/schema v16 and cursor contract.
 - Keep product implementation out of scope until the Spec Kit analysis gate is complete.
 

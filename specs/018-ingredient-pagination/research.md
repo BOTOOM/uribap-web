@@ -5,7 +5,7 @@
 ### Use the API pagination contract as the only source of page boundaries
 
 - **Decision**: Pin the Web contract to API commit
-  `b0883cd34dbf4951283f8028239f60f4c3383e5d` and consume
+  `74b661925fdec990c386850b90906664bb78b74f` and consume
   `IngredientPage.items` plus `page_info.next_cursor`.
 - **Rationale**: The API owns the stable `(normalized_name, id)` ordering, filter behavior, and
   opaque cursor. The Web client must follow that contract rather than infer offsets or ordering.
@@ -17,7 +17,9 @@
 - **Decision**: Add `listAllIngredients(path = "/ingredients")` next to `server-client.ts` and
   call it from the five named Server Component page loaders.
 - **Rationale**: This centralizes cursor handling while retaining the existing server-side
-  household authorization boundary and lets each loader keep its current error result.
+  household authorization boundary and lets each loader keep its current error result. The helper
+  resolves the active household once with `getActiveHouseholdId()` and sends that ID explicitly
+  through `serverApiFetch` on every page, so a traversal does not re-resolve membership per request.
 - **Alternatives considered**: Duplicating cursor loops in each page risks inconsistent filter and
   error behavior. Browser pagination would expose a private household-data retrieval path and
   require UI state the feature does not need.
@@ -51,16 +53,16 @@
 
 ## Repository Findings
 
-- The five named pages currently call `serverHouseholdFetch` directly and consume only `items`
-  from one response.
+- Before this feature, the five named pages each made one household-scoped request and consumed only
+  `items` from that response.
 - `ingredientes/page.tsx` returns an error object on fetch failure; inventory, plan, and preparation
   use an empty-array fallback; recipe detail uses an empty ingredient list on failure and currently
   requests `/ingredients?limit=100`.
-- `serverHouseholdFetch` resolves the active household and sends the household header through the
-  existing server-side API client.
-- The current pinned OpenAPI snapshot is v15 and models `IngredientPage.page_info` as an untyped
-  object. The pagination API branch's contract must be copied and regenerated before product
-  implementation so `next_cursor` is typed.
+- The final pagination helper resolves the active household once and calls `serverApiFetch` with an
+  explicit `X-Household-ID` header on each page request.
+- At research time, the pinned OpenAPI snapshot was v15 and modeled `IngredientPage.page_info` as
+  an untyped object. The final Web branch pins API revision
+  `74b661925fdec990c386850b90906664bb78b74f`, schema v16, and a generated typed `next_cursor`.
 - `pnpm api:generate` runs `openapi-typescript` against
   `contracts/uribap-api.openapi.json`. `pnpm api:check` regenerates and checks for generated-schema
   drift.

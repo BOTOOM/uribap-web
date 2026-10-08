@@ -2,14 +2,16 @@
 
 **Date**: 2026-10-06  
 **Branch**: `devin/1791307670-ingredient-pagination`  
-**API revision**: `b0883cd34dbf4951283f8028239f60f4c3383e5d`  
+**API revision**: `74b661925fdec990c386850b90906664bb78b74f`
 **Status**: Implemented and pushed; local verification recorded below.
 
 ## Implementation
 
 - Added server-only `listAllIngredients`, which requests up to 100 ingredients per page, preserves
   query filters, URL-encodes continuation cursors, rejects page failures without returning partial
-  results, and throws if page 50 has another cursor.
+  results, and throws if page 50 has another cursor. It resolves the active household once with
+  `getActiveHouseholdId()` and sends the ID explicitly through `serverApiFetch` on every page, so
+  the traversal stays scoped to one household without repeating membership resolution.
 - Migrated ingredient loading on the catalog, inventory, plan, preparation, and recipe detail
   server pages while retaining each loader's existing catch/fallback behavior.
 - Updated the pinned API snapshot and metadata to schema v16 and regenerated the TypeScript schema.
@@ -23,7 +25,7 @@
 | Gate | Command | Result |
 |---|---|---|
 | API client generation consistency | `pnpm api:check` | **PASS** — schema regenerated from the pinned OpenAPI without drift. |
-| API snapshot identity | `cmp contracts/uribap-api.openapi.json /home/ubuntu/repos/uribap-api/openapi/openapi.json` | **PASS** — byte-identical to API pagination revision `b0883cd`. |
+| API snapshot identity | `cmp contracts/uribap-api.openapi.json /home/ubuntu/repos/uribap-api/openapi/openapi.json` | **PASS** — byte-identical to API pagination revision `74b661925fdec990c386850b90906664bb78b74f`. |
 | Lint | `pnpm lint`; then `pnpm exec eslint tests/unit/api/list-all-ingredients.test.ts` after the final test-only edit | **PASS** — no lint errors or warnings on the full run; targeted lint also passed. |
 | Focused unit/component tests | `pnpm exec vitest run --config vitest.config.mts tests/unit/api/list-all-ingredients.test.ts tests/unit/api-contract.test.ts tests/component/ingredients/IngredientTable.test.tsx tests/component/inventory/inventory-view.test.tsx tests/component/planning/MealEntryDetail.test.tsx tests/component/planning/plan-board.test.tsx tests/component/preparation/preparation.test.tsx tests/component/recipes/RecipeEditDialog.test.tsx` | **PASS** — 8 files, 55 tests. |
 | Full TypeScript gate | `pnpm typecheck` | **FAIL — unrelated pre-existing local file**. Five `TS2741` errors in untracked `src/app/dev-preview/plan/page.tsx` report missing `pantry_staple` on preview fixtures. The directory was explicitly left untouched. |

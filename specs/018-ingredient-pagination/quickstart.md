@@ -4,17 +4,20 @@
 
 - Use the Web feature branch `devin/1791307670-ingredient-pagination`.
 - API pagination is available at revision
-  `b0883cd34dbf4951283f8028239f60f4c3383e5d`.
+  `74b661925fdec990c386850b90906664bb78b74f`.
 - The Web dependency installation is available through pnpm.
 
 ## Contract Setup
 
 1. Copy the API revision's `openapi/openapi.json` to
    `contracts/uribap-api.openapi.json`.
-2. Update contract metadata to API revision `b0883cd34dbf4951283f8028239f60f4c3383e5d`, schema
+2. Update contract metadata to API revision `74b661925fdec990c386850b90906664bb78b74f`, schema
    `v16`, and date `2026-10-06`.
 3. Run `pnpm api:generate` and update the contract metadata unit assertion.
 4. Confirm the generated `IngredientPage.page_info` uses `PageInfo.next_cursor`.
+
+The final helper resolves the active household once with `getActiveHouseholdId()` and uses
+`serverApiFetch` with an explicit `X-Household-ID` header for every page request.
 
 ## Focused Validation
 

@@ -18,7 +18,7 @@
 
 **Purpose**: Generate the typed Web contract from the pushed API pagination revision.
 
-- [X] T001 Copy API revision `b0883cd34dbf4951283f8028239f60f4c3383e5d` into `contracts/uribap-api.openapi.json`, update `contracts/metadata.json` to v16 and `2026-10-06`, then run `pnpm api:generate` for `src/lib/api/generated/schema.ts`.
+- [X] T001 Copy API revision `74b661925fdec990c386850b90906664bb78b74f` into `contracts/uribap-api.openapi.json`, update `contracts/metadata.json` to v16 and `2026-10-06`, then run `pnpm api:generate` for `src/lib/api/generated/schema.ts`.
 - [X] T002 [P] Update `tests/unit/api-contract.test.ts` to assert the API revision, v16 metadata, ingredient cursor parameter, and typed `IngredientPage.page_info`.
 
 ---
@@ -28,7 +28,7 @@
 **Purpose**: Establish and test the common server-side listing behavior required by both user stories.
 
 - [X] T003 [P] Add `tests/unit/api/list-all-ingredients.test.ts` coverage for single- and three-page traversal, continuation failure without partial results, page-cap overflow, URL encoding, and preserving extra query parameters.
-- [X] T004 Implement server-only `listAllIngredients(path = "/ingredients")` in `src/lib/api/list-all-ingredients.ts`, using `serverHouseholdFetch`, `limit=100`, encoded cursors, preserved extra parameters, and a throwing 50-page cap.
+- [X] T004 Implement server-only `listAllIngredients(path = "/ingredients")` in `src/lib/api/list-all-ingredients.ts`, resolving the household once with `getActiveHouseholdId()` and fetching pages through `serverApiFetch` with an explicit `X-Household-ID`, `limit=100`, encoded cursors, preserved extra parameters, and a throwing 50-page cap.
 
 **Checkpoint**: The shared helper passes its focused tests before either page group is migrated.
 
