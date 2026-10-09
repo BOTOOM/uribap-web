@@ -60,6 +60,7 @@ describe("SkipMealButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
+    // biome-ignore lint/correctness/noUnsafeOptionalChaining: The mocked requests in this assertion provide headers.
     expect(fetchMock.mock.calls.map(([, init]) => (init?.headers as Record<string, string>)["Idempotency-Key"])).toEqual([
       "skip-key-1",
       "skip-key-2",

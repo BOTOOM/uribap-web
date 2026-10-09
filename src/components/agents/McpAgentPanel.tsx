@@ -52,6 +52,7 @@ const GUIDES: Guide[] = [
     steps: [
       "En Devin Cloud, los servidores MCP se gestionan en Team Settings → MCP servers para todo el equipo, o por repositorio.",
       "Si el agente trabaja dentro de un repositorio, añade `.devin/mcp_config.json` con este bloque y guarda el token en `.devin/mcp_config.local.json` (ignorado por git).",
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: The string documents a literal environment placeholder.
       "Alternativa: configura el token como secreto de entorno en Devin y referencia `${env:URIBAP_MCP_TOKEN}` en headers.",
     ],
     snippet: (mcpUrl) => `{

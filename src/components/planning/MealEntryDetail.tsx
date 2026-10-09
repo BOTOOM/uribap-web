@@ -111,7 +111,7 @@ export function MealEntryDetail({
 
     void load();
     return () => controller.abort();
-  }, [attempt, entryId, planId, planState, refreshKey, requestKey, version]);
+  }, [entryId, planId, requestKey]);
 
   if (currentState.status === "loading") {
     return (

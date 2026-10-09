@@ -9,6 +9,7 @@ export function BrowserTimeZoneSync() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname re-runs the sync after client navigation
   useEffect(() => {
     const syncTimeZone = () => {
       const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
