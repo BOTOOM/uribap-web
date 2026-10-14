@@ -59,13 +59,44 @@ describe("pinned API contract", () => {
     });
   });
 
+  it("contains the household invitation management boundary", () => {
+    const contract = JSON.parse(readFileSync(contractPath, "utf8")) as {
+      components: {
+        schemas: Record<
+          string,
+          { properties?: Record<string, { anyOf?: Array<{ enum?: string[] }>; enum?: string[] }> }
+        >;
+      };
+      paths: Record<string, Record<string, { operationId?: string }>>;
+    };
+    const invitations = contract.paths["/api/v1/households/{household_id}/invitations"];
+    expect(invitations).toHaveProperty("get");
+    expect(invitations.get?.operationId).toContain("list_household_invitations");
+    expect(invitations).toHaveProperty("post");
+    expect(contract.paths["/api/v1/households/{household_id}/invitations/{invitation_id}"]).toHaveProperty(
+      "delete",
+    );
+    const response = contract.components.schemas.InvitationResponse.properties;
+    expect(response).toHaveProperty("effective_status");
+    expect(response?.effective_status?.enum).toEqual([
+      "pending",
+      "expired",
+      "accepted",
+      "revoked",
+    ]);
+    expect(response).toHaveProperty("delivery");
+    const page = contract.components.schemas.InvitationPage.properties;
+    expect(page).toHaveProperty("items");
+    expect(page).toHaveProperty("page_info");
+  });
+
   it("records the API repository, revision, and schema revision", () => {
     const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as Record<string, string>;
     expect(metadata.apiRepository).toBe("BOTOOM/uribap-api");
-    expect(metadata.schemaVersion).toBe("v16");
+    expect(metadata.schemaVersion).toBe("v17");
     expect(metadata.apiRevision).toBe(
-      "74b661925fdec990c386850b90906664bb78b74f",
+      "c0386230a7b04176e86eaa0984b99a4d90c327e5",
     );
-    expect(metadata.generatedAt).toBe("2026-10-06");
+    expect(metadata.generatedAt).toBe("2026-10-14");
   });
 });

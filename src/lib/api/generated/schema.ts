@@ -1694,6 +1694,11 @@ export interface components {
              * @enum {string}
              */
             delivery: "zitadel_invite" | "existing_account" | "email" | "failed";
+            /**
+             * Effective Status
+             * @enum {string}
+             */
+            effective_status: "pending" | "expired" | "accepted" | "revoked";
             /** Email */
             email: string;
             /**
@@ -1737,6 +1742,13 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Delivery */
+            delivery: ("sent" | "failed" | "existing_account" | "pending" | "zitadel_invite" | "email") | null;
+            /**
+             * Effective Status
+             * @enum {string}
+             */
+            effective_status: "pending" | "expired" | "accepted" | "revoked";
             /** Email */
             email: string;
             /**
