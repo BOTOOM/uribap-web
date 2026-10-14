@@ -6,6 +6,13 @@ const { serverApiFetch } = vi.hoisted(() => ({ serverApiFetch: vi.fn() }));
 vi.mock("@/lib/api/server-client", () => ({ serverApiFetch }));
 vi.mock("@/components/household/ActivityFeed", () => ({ ActivityFeed: () => null }));
 vi.mock("@/components/household/InvitationForm", () => ({ InvitationForm: () => null }));
+vi.mock("@/components/household/InvitationManagement", () => ({
+  InvitationManagement: ({ initialInvitations }: { initialInvitations: unknown[] | null }) => (
+    <section data-testid="invitation-management">
+      {initialInvitations === null ? "error" : initialInvitations.length}
+    </section>
+  ),
+}));
 vi.mock("@/components/household/MemberManagement", () => ({ MemberManagement: () => null }));
 vi.mock("@/components/household/PendingInvitations", () => ({
   PendingInvitations: ({ items }: { items: unknown[] }) => (
@@ -56,6 +63,9 @@ function setApiResponses(invitations: unknown = { items: [] }) {
         ? Promise.reject(invitations)
         : Promise.resolve(invitations);
     }
+    if (path === `/households/${HOUSEHOLD.id}/invitations?limit=100`) {
+      return Promise.resolve({ items: [], page_info: { limit: 100 } });
+    }
     throw new Error(`Unexpected API path: ${path}`);
   });
 }
@@ -72,6 +82,10 @@ describe("household settings pending invitations", () => {
 
     expect(screen.getByTestId("pending-invitations")).toHaveTextContent("1");
     expect(serverApiFetch).toHaveBeenCalledWith("/me/invitations");
+    expect(screen.getByTestId("invitation-management")).toHaveTextContent("0");
+    expect(serverApiFetch).toHaveBeenCalledWith(
+      `/households/${HOUSEHOLD.id}/invitations?limit=100`,
+    );
   });
 
   it("renders nothing for an empty pending invitation list", async () => {

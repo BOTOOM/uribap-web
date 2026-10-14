@@ -1,6 +1,7 @@
 import { ErrorState } from "@/components/states/ErrorState";
 import { ActivityFeed } from "@/components/household/ActivityFeed";
 import { InvitationForm } from "@/components/household/InvitationForm";
+import { InvitationManagement } from "@/components/household/InvitationManagement";
 import { MemberManagement } from "@/components/household/MemberManagement";
 import { PendingInvitations } from "@/components/household/PendingInvitations";
 import { serverApiFetch } from "@/lib/api/server-client";
@@ -61,6 +62,7 @@ type HouseholdPageData = {
   membership: CurrentUser["memberships"][number];
   activity: Activity | null;
   pendingInvitations: components["schemas"]["PendingInvitationResponse"][];
+  invitations: components["schemas"]["InvitationPage"] | null;
 };
 
 async function loadHouseholdData(): Promise<HouseholdPageData | { error: string }> {
@@ -70,7 +72,8 @@ async function loadHouseholdData(): Promise<HouseholdPageData | { error: string 
     if (!membership) {
       return { error: "Crea o acepta una invitación antes de administrar el hogar." };
     }
-    const [household, members, activity, pendingInvitations] = await Promise.all([
+    const canManage = membership.role === "owner" || membership.role === "admin";
+    const [household, members, activity, pendingInvitations, invitations] = await Promise.all([
       serverApiFetch<Household>(`/households/${membership.household_id}`),
       serverApiFetch<Members>(`/households/${membership.household_id}/members`),
       serverApiFetch<Activity>(`/households/${membership.household_id}/activity`).catch(
@@ -79,8 +82,13 @@ async function loadHouseholdData(): Promise<HouseholdPageData | { error: string 
       serverApiFetch<components["schemas"]["PendingInvitationPage"]>("/me/invitations")
         .then((page) => page.items)
         .catch(() => []),
+      canManage
+        ? serverApiFetch<components["schemas"]["InvitationPage"]>(
+            `/households/${membership.household_id}/invitations?limit=100`,
+          ).catch(() => null)
+        : Promise.resolve(null),
     ]);
-    return { household, members, membership, activity, pendingInvitations };
+    return { household, members, membership, activity, pendingInvitations, invitations };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Inténtalo de nuevo." };
   }
@@ -97,7 +105,7 @@ export default async function HouseholdSettingsPage() {
   if ("error" in data) {
     return <ErrorState description={data.error} title="No se pudo cargar el hogar" />;
   }
-  const { household, members, membership, activity, pendingInvitations } = data;
+  const { household, members, membership, activity, pendingInvitations, invitations } = data;
   const canInvite = membership.role === "owner" || membership.role === "admin";
 
   return (
@@ -144,6 +152,23 @@ export default async function HouseholdSettingsPage() {
           )}
         </article>
       </div>
+
+      {canInvite ? (
+        <article className="card card-flush" style={{ marginTop: 18 }}>
+          <div className="card-title">
+            <h2>Invitaciones del hogar</h2>
+            <span className="meta">
+              {invitations
+                ? `${invitations.items.length} enviadas`
+                : "No disponible"}
+            </span>
+          </div>
+          <InvitationManagement
+            householdId={household.id}
+            initialInvitations={invitations?.items ?? null}
+          />
+        </article>
+      ) : null}
 
       <article className="card card-flush" style={{ marginTop: 18 }}>
         <div className="card-title">
